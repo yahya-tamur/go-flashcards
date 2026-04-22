@@ -1,4 +1,23 @@
 #
+
+looking good and easy enough to use!
+
+to do
+ - reduce autocomplete in vscode!
+ - use svg to draw move tree
+ - implement go board and rules
+
+
+ - new movetree structure.
+
+ - actual tree: (data oriented)
+ - data: id => Node // (Vec<Node>)
+ - parent: id => id // (Vec<usize>)
+ - buildTree: generates // (Vec<Vec< usize > >)
+ - play: (can shift built tree)
+ - delete: needs to actually make new data array or something
+
+#
 trying out new architecture for previous project (tauri, hopefully material ui)
 
 cons:
