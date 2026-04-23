@@ -1,44 +1,23 @@
 import { useState } from "react";
 import reactLogo from "./assets/react.svg";
 import { invoke } from "@tauri-apps/api/core";
+import Board from "./Board.jsx";
 import "./App.css";
 
-import Button from '@mui/material/Button';
+import Button from "@mui/material/Button";
+import Box from "@mui/material/Box";
 
 function App() {
-  const [greetMsg, setGreetMsg] = useState("");
-  const [name, setName] = useState("");
-
-  async function greet() {
-    // Learn more about Tauri commands at https://tauri.app/develop/calling-rust/
-    setGreetMsg(await invoke("greet", { name }));
-  }
-
-  const greet2 = async () => {
-    setGreetMsg(JSON.stringify(await invoke("greet2")));
-  }
-
   return (
-    <main className="container">
-      <h1>Welcome to Tauri + React</h1>
-
-      <Button onClick={greet2} variant="contained">Hello world</Button>;
-
-      <form
-        className="row"
-        onSubmit={(e) => {
-          e.preventDefault();
-          greet();
-        }}
-      >
-        <input
-          id="greet-input"
-          onChange={(e) => setName(e.currentTarget.value)}
-          placeholder="Enter a name..."
-        />
-        <button type="submit">Greet</button>
-      </form>
-      <p>{greetMsg}</p>
+    <main style={{ display: "flex", flexDirection: "row" }}>
+      <Box sx={{ height: "100vh", flexBasis: "60%" }}>
+        <Board />
+      </Box>
+      <Box sx={{ display: "flex", flexGrow: 1, flexDirection: "column" }}>
+        <Box sx={{ flexBasis: "30%" }}>blorb 1</Box>
+        <Box sx={{ flexBasis: "20%" }}>blorb 2</Box>
+        <Box sx={{ flexGrow: 1 }}>blorb 3</Box>
+      </Box>
     </main>
   );
 }
