@@ -1,33 +1,36 @@
-use serde::{Deserialize, Serialize};
+// refactor later I guess
 
-#[derive(Serialize, Deserialize)]
-struct MyStruct {
-    board: Vec<Vec<u8>>,
-    comment: String,
+pub mod go_rules;
+
+#[derive(Clone, Copy, PartialEq, Eq, Debug, Serialize, Deserialize)]
+#[repr(u8)]
+pub enum Stone {
+    Black = 0,
+    White = 1,
 }
 
-impl MyStruct {
-    pub fn new() -> MyStruct {
-        MyStruct { board: vec![vec![0,1], vec![2,3]], comment: ("blorb".to_string()) }
+pub fn other_color(c: Stone) -> Stone {
+    match c {
+        Stone::Black => Stone::White,
+        Stone::White => Stone::Black,
     }
 }
 
-#[tauri::command]
-fn greet2() -> MyStruct {
-    MyStruct::new()
+#[derive(Clone, Copy, Serialize, Deserialize, Default)]
+pub struct GameState {
+    pub stones: [[Option<Stone>; 21]; 21],
+    pub captures: (usize, usize),
+    pub ko: Option<(usize, usize)>,
 }
 
-// Learn more about Tauri commands at https://tauri.app/develop/calling-rust/
-#[tauri::command]
-fn greet(name: &str) -> String {
-    format!("Hello, {}! You've been greeted from Rust!", name)
+#[derive(Serialize, Deserialize, Default)]
+pub struct MoveTree {
+    pub game: GameState,
 }
 
-#[cfg_attr(mobile, tauri::mobile_entry_point)]
-pub fn run() {
-    tauri::Builder::default()
-        .plugin(tauri_plugin_opener::init())
-        .invoke_handler(tauri::generate_handler![greet, greet2])
-        .run(tauri::generate_context!())
-        .expect("error while running tauri application");
+#[derive(Serialize, Deserialize, Default)]
+pub struct AppData {
+    pub move_tree: MoveTree,
 }
+
+use serde::{Deserialize, Serialize};

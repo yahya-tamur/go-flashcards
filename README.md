@@ -1,4 +1,53 @@
-#
+Implemented board. It works!
+
+- happy with journal entry style README
+  - probably README is wrong place for this but nice to
+    have a write up
+
+- Tauri sometimes got stuck on white screen on load.
+  I have no idea what fixed it. It probably didn't, but
+  also this might be an issue only for dev server
+
+- happy with ui potential. Nice way to shared state +
+  good looking widgets available.
+  - however, might take some work to implement.
+
+To Do:
+
+- add licence text to files?
+- figure out what you want from MoveTree and implement it
+  - Huge chunk of work:
+    - move tree component
+    - backend implementation of everything
+
+- user story idea:
+  - 'setup mode': Place stones B / W / BW.
+  - Click 'Init Tree'. Now only B/W
+  - make exercise, add comments, etc.
+
+- Then, what's needed?
+  - saving / loading from file. sgf? ...
+
+  -> Can now save and load exercises one by one.
+  - Make batch of exercises
+  - study batch of exercises
+  - flashcard backend, frontend
+
+- final product, folder structure ?:
+  - exercise file(s) / folders
+  - history file (one for all exercises?)
+  - config file:
+    - shared config
+    - exercise set: source file/folders, specific config
+      - shared history file between different exercise sets?
+
+    - can split off into multiple files?
+
+  - can edit exercise files when practicing (?!)
+
+- look back and see if I had any other ideas etc.
+
+---
 
 looking good and easy enough to use!
 
@@ -17,7 +66,7 @@ to do
 - play: (can shift built tree)
 - delete: needs to actually make new data array or something
 
-#
+---
 
 trying out new architecture for previous project (tauri, hopefully material ui)
 
