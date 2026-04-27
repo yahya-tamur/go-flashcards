@@ -1,68 +1,62 @@
 // refactor later I guess
 
+pub mod common;
 pub mod go_rules;
-
-#[derive(Clone, Copy, PartialEq, Eq, Debug, Serialize, Deserialize)]
-#[repr(u8)]
-pub enum Stone {
-    Black = 0,
-    White = 1,
-}
-
-pub fn other_color(c: Stone) -> Stone {
-    match c {
-        Stone::Black => Stone::White,
-        Stone::White => Stone::Black,
-    }
-}
-
-#[derive(Clone, Copy, Serialize, Deserialize, Default)]
-pub struct GameState {
-    pub stones: [[Option<Stone>; 21]; 21],
-    pub captures: (usize, usize),
-    pub ko: Option<(usize, usize)>,
-}
-
-#[derive(Serialize, Deserialize, Default)]
-pub struct MoveTree {
-    pub game: GameState,
-}
-
-#[derive(Serialize, Deserialize, Default)]
-pub struct AppData {
-    pub move_tree: MoveTree,
-}
-
-use serde::{Deserialize, Serialize};
+pub mod move_tree;
 
 use tauri::{Builder, Manager};
 use tokio::sync::Mutex;
 
-use go_rules::*;
+use common::*;
+use move_tree::*;
 
 // is std sync mutex better? is tauri multithreaded? probably doesn't matter, since
 // won't be getting too many requests / second. Probably didn't even need mutex.
 
+// is all this boilerplate? should I implement the impl appdata functions here for example?
+
+// do the two get functions need to be separate?
+
+#[tauri::command]
+async fn get_tree(state: tauri::State<'_, Mutex<AppData>>) -> Result<MoveTree, String> {
+    Ok(state
+        .lock()
+        .await
+        .move_tree
+        .clone()
+        .ok_or("tree not initialized")?)
+}
+
 #[tauri::command]
 async fn get_game(state: tauri::State<'_, Mutex<AppData>>) -> Result<GameState, String> {
-    Ok(state.lock().await.move_tree.game)
+    Ok(state.lock().await.game)
 }
 
 // later something should do something to move_tree, etc.
 #[tauri::command]
 async fn play(
     state: tauri::State<'_, Mutex<AppData>>,
-    i: usize,
-    j: usize,
+    loc: Option<(usize, usize)>,
+    r: usize,
+    c: usize,
     color: Stone,
-) -> Result<GameState, String> {
-    if place_stone(&mut state.lock().await.move_tree.game, i, j, color) {
-        Ok(state.lock().await.move_tree.game)
-    } else {
-        Err("invalid move".to_owned())
-    }
+) -> Result<(usize, usize), String> {
+    Ok(state.lock().await.play(loc, r, c, color).ok_or("err")?)
 }
 
+// I guess implement initialize, place_stone later.
+#[tauri::command]
+async fn jump(state: tauri::State<'_, Mutex<AppData>>, r: usize, c: usize) -> Result<bool, String> {
+    Ok(state.lock().await.jump(r, c))
+}
+// I guess implement initialize, place_stone later.
+#[tauri::command]
+async fn initialize_tree(
+    state: tauri::State<'_, Mutex<AppData>>,
+    stone: Stone,
+) -> Result<bool, String> {
+    Ok(state.lock().await.initialize_tree(stone))
+}
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
@@ -72,8 +66,13 @@ pub fn run() {
             app.manage(Mutex::new(AppData::default()));
             Ok(())
         })
-        .invoke_handler(tauri::generate_handler![get_game, play])
+        .invoke_handler(tauri::generate_handler![
+            get_tree,
+            get_game,
+            play,
+            jump,
+            initialize_tree
+        ])
         .run(tauri::generate_context!())
         .unwrap();
 }
-

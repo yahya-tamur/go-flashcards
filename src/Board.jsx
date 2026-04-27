@@ -66,6 +66,7 @@ const Board = (props) => {
     for (let i = 0; i < 19; i++) {
       for (let j = 0; j < 19; j++) {
         const w = props.game?.stones[i + 1][j + 1];
+
         if (w === null) {
           continue;
         }
@@ -154,9 +155,18 @@ const Board = (props) => {
             if (w === null) {
               return;
             }
-            invoke("play", { i: w[0] + 1, j: w[1] + 1, color: props.color })
-              .then((game_) => {
-                props.setGame(game_);
+            // assume initialized for now
+            invoke("play", {
+              loc: [w[0] + 1, w[1] + 1],
+              r: props.loc[0],
+              c: props.loc[1],
+              color: props.color,
+            })
+              .then(async (res) => {
+                props.setLoc(res);
+
+                props.setGame(await invoke("get_game"));
+                props.setTree(await invoke("get_tree"));
                 props.swapColor();
                 setGhost(null);
               })
