@@ -1,99 +1,30 @@
-use crate::common::{other_color, GameState, Stone};
+use crate::app_data::GameState;
+use crate::color::Color;
 use crate::go_rules::place_stone;
 use serde::{Deserialize, Serialize};
 
-// there is no initial colorless node, but
-// multiple nodes can have parent = -1 and current position can be -1 too.
-#[derive(Clone, Serialize, Deserialize)]
+#[derive(Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Move {
     pub loc: Option<(usize, usize)>,
     pub comment: String,
-    pub color: Stone,
+    pub color: Color,
 }
 
 // this thing is designed to be serialized and written to file.
 #[derive(Clone, Serialize, Deserialize)]
 pub struct MoveTree {
-    initial: GameState,
-    initial_color: Stone,
+    pub initial: GameState,
+    pub initial_color: Color,
     pub table: Vec<Vec<Option<Move>>>,
 }
 
-// two phases:
-// setup phase:
-// move_tree is None,
-// call place_stone to set up game.
-// tree phase:
-// call play to play move.
-#[derive(Serialize, Deserialize, Default)]
-pub struct AppData {
-    pub game: GameState,
-    pub move_tree: Option<MoveTree>,
-}
-
-impl AppData {
-    pub fn place_stone(&mut self, i: usize, j: usize, color: Option<Stone>) -> bool {
-        if self.move_tree.is_none() {
-            self.game.stones[i][j] = color;
-            true
-        } else {
-            false
-        }
-    }
-
-    pub fn initialize_tree(&mut self, color: Stone) -> bool {
-        if self.move_tree.is_none() {
-            self.move_tree = Some(MoveTree {
-                initial: self.game,
-                initial_color: color,
-                table: vec![vec![None]],
-            });
-            true
-        } else {
-            false
-        }
-    }
-
-    pub fn play(
-        &mut self,
-        loc: Option<(usize, usize)>,
-        r: usize,
-        c: usize,
-        color: Stone,
-    ) -> Option<(usize, usize)> {
-        if let Some(move_tree) = self.move_tree.as_mut() {
-            // advance game state
-            if let Some((i, j)) = loc {
-                if !place_stone(&mut self.game, i, j, color) {
-                    return None;
-                }
-            }
-            Some(move_tree.step(r, c, loc, color))
-        } else {
-            None
-        }
-    }
-
-    pub fn jump(&mut self, r: usize, c: usize) -> bool {
-        if let Some(move_tree) = self.move_tree.as_mut() {
-            if move_tree.table.len() <= r || move_tree.table[r].len() <= c {
-                return false;
-            }
-            self.game = move_tree.jump(r, c);
-            true
-        } else {
-            false
-        }
-    }
-}
-
 impl MoveTree {
-    fn step(
+    pub fn step(
         &mut self,
         r: usize,
         c: usize,
         loc: Option<(usize, usize)>,
-        color: Stone,
+        color: Color,
     ) -> (usize, usize) {
         // check if step is on table
 
@@ -121,9 +52,14 @@ impl MoveTree {
             self.table[r].push(new_move);
             (r, c + 1)
         } else {
-            self.table.insert(r + 1, vec![None; c + 1]);
-            self.table[r + 1].push(new_move);
-            (r + 1, c + 1)
+            let mut r_ = r + 1;
+            while r_ < self.table.len() && self.table[r_].len() > c && self.table[r_][c].is_none() {
+                r_ += 1;
+            }
+
+            self.table.insert(r_, vec![None; c + 1]);
+            self.table[r_].push(new_move);
+            (r_, c + 1)
         }
     }
 
@@ -131,11 +67,11 @@ impl MoveTree {
     //    true
     //}
 
-    fn jump(&mut self, mut r: usize, mut c: usize) -> GameState {
-        let mut moves: Vec<Option<(usize, usize)>> = Vec::new();
+    pub fn jump(&mut self, mut r: usize, mut c: usize) -> GameState {
+        let mut moves: Vec<&Move> = Vec::new();
 
         while let Some(mov) = &self.table[r][c] {
-            moves.push(mov.loc);
+            moves.push(mov);
             c -= 1; // r might be 0 but not -1 after this
             while self.table[r][c].is_none() && r > 0 {
                 r -= 1;
@@ -143,13 +79,11 @@ impl MoveTree {
         }
 
         let mut newgame = self.initial;
-        let mut color = self.initial_color;
 
-        for &loc in moves.iter().rev() {
-            if let Some((i, j)) = loc {
-                place_stone(&mut newgame, i, j, color);
+        for &mov in moves.iter().rev() {
+            if let Some((i, j)) = mov.loc {
+                place_stone(&mut newgame, i, j, mov.color);
             }
-            color = other_color(color);
         }
 
         newgame

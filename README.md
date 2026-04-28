@@ -1,3 +1,39 @@
+App is looking good. Did a lot of work including last commit.
+Completely implemented tree (backend + frontend).
+Try not to work on this until week end!
+
+To Do next:
+  - Partial Board:
+    - set up well by isolating board size logic
+    - mui sliders
+    - will need to go over how whole board is rendered
+    - should double check unseen board is always empty!
+
+  - Set up Exercise:
+
+    - comment box
+    - correct / incorrect nodes
+    - save and load
+    - set up + initialize phase
+  
+  - Delete Node
+
+  - Side View:
+    - lots of buttons
+    - captures
+
+  - Study Exercise:
+    - Hide (some of) tree? Hide comments?
+    - Get correct / incorrect, reveal
+
+Then:
+  - Set up list of exercises
+  - read
+  - flashcard phase
+  - etc.
+
+---
+
 Implemented board. It works!
 
 - happy with journal entry style README

@@ -1,10 +1,10 @@
-use crate::{other_color, GameState, Stone};
+use crate::{other_color, Color, GameState};
 
 fn try_capture(
-    board: &[[Option<Stone>; 21]; 21],
+    board: &[[Option<Color>; 21]; 21],
     i: usize,
     j: usize,
-    color: Stone,
+    color: Color,
     captures: &mut Vec<(usize, usize)>,
 ) {
     let out_of_bounds = |i, j| i == 0 || i == 20 || j == 0 || j == 20;
@@ -40,7 +40,7 @@ fn try_capture(
     }
 }
 
-pub fn place_stone(game: &mut GameState, i: usize, j: usize, color: Stone) -> bool {
+pub fn place_stone(game: &mut GameState, i: usize, j: usize, color: Color) -> bool {
     if game.ko == Some((i, j)) {
         return false;
     }
@@ -58,8 +58,8 @@ pub fn place_stone(game: &mut GameState, i: usize, j: usize, color: Stone) -> bo
             game.stones[i_][j_] = None;
         }
         match other_color(color) {
-            Stone::Black => game.captures.0 += captures.len(),
-            Stone::White => game.captures.1 += captures.len(),
+            Color::Black => game.captures.0 += captures.len(),
+            Color::White => game.captures.1 += captures.len(),
         }
         true
     } else if captures.len() == 1 {
@@ -70,8 +70,8 @@ pub fn place_stone(game: &mut GameState, i: usize, j: usize, color: Stone) -> bo
         }
         game.stones[i_][j_] = None;
         match other_color(color) {
-            Stone::Black => game.captures.0 += 1,
-            Stone::White => game.captures.1 += 1,
+            Color::Black => game.captures.0 += 1,
+            Color::White => game.captures.1 += 1,
         }
         true
     } else {
