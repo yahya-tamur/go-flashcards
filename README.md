@@ -3,12 +3,23 @@ Completely implemented tree (backend + frontend).
 Try not to work on this until week end!
 
 To Do next:
+
   - Partial Board:
     - set up well by isolating board size logic
     - mui sliders
     - will need to go over how whole board is rendered
     - should double check unseen board is always empty!
 
+  - Set up phase. Initialize tree, collapse tree buttons.
+    - Mark exercises as correct / incorrect. Add comments.
+
+  - Create home folder.
+    - Save (and load) exercises.
+    - later, it can include translations and assets
+    - figure out android?
+    - now, you can save exercises to it
+
+  - 
   - Set up Exercise:
 
     - comment box

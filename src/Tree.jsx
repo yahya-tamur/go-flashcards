@@ -53,7 +53,6 @@ const Tree = (props) => {
     if (treecontainer.current === null || props.data === null) {
       return;
     }
-    console.log(props.data);
 
     let tree = props.data?.tree;
     let num_columns = tree.reduce((m, a) => (a.length > m ? a.length : m), 1);
@@ -176,8 +175,7 @@ const Tree = (props) => {
         text.style.webkitUserSelect = "none";
         text.style.font = "bold 14px sans-serif";
         let [i, j] = mov.loc;
-        console.log(i, j);
-        text.textContent = `${"@ABCDEFGHJKLMNOPQRST"[i]}${j}`;
+        text.textContent = `${"@ABCDEFGHJKLMNOPQRST"[i]}${20 - j}`;
       });
     });
 
@@ -214,7 +212,6 @@ const Tree = (props) => {
           if ((r !== 0 || c !== 0) && props.data?.tree[r][c] === null) {
             return;
           }
-          console.log(r, c);
           if (r < props.data?.tree.length && c < props.data?.tree[r].length) {
             invoke("jump", { r: r, c: c })
               .then(() => invoke("get_data"))

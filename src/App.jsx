@@ -4,6 +4,7 @@ import { invoke } from "@tauri-apps/api/core";
 
 import Board from "./Board.jsx";
 import Tree from "./Tree.jsx";
+import Menu from "./Menu.jsx";
 import "./App.css";
 
 import Box from "@mui/material/Box";
@@ -29,8 +30,9 @@ const theme = createTheme({
 });
 
 function App() {
-  const [loc, setLoc] = useState(null);
   const [data, setData] = useState(null);
+  const [horizontalBound, setHorizontalBound] = useState([0, 18]);
+  const [verticalBound, setVerticalBound] = useState([0, 18]);
   const [color, setColor] = useState("Black");
 
   const swapColor = () => {
@@ -63,6 +65,10 @@ function App() {
             setData={setData}
             color={color}
             swapColor={swapColor}
+            horizontalBound={horizontalBound}
+            verticalBound={verticalBound}
+            setHorizontalBound={setHorizontalBound}
+            setVerticalBound={setVerticalBound}
           />
         </Box>
         <Box
@@ -77,8 +83,19 @@ function App() {
           <Box sx={{ flexBasis: "40%", minHeight: 0 }}>
             <Tree data={data} setData={setData} setColor={setColor} />
           </Box>
-          <Box sx={{ flexBasis: "30%", minHeight: 0 }}>menu 2</Box>
-          <Box sx={{ flexBasis: "30%", minHeight: 0 }}>menu 3</Box>
+          <Box sx={{ flexBasis: "60%", minHeight: 0 }}>
+            {
+              <Menu
+                data={data}
+                setData={setData}
+                setColor={setColor}
+                horizontalBound={horizontalBound}
+                verticalBound={verticalBound}
+                setHorizontalBound={setHorizontalBound}
+                setVerticalBound={setVerticalBound}
+              />
+            }
+          </Box>
         </Box>
       </main>
     </ThemeProvider>

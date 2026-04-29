@@ -5,17 +5,17 @@ import white_image from "./assets/white_anime.png";
 import { invoke } from "@tauri-apps/api/core";
 import { createSVGElement } from "./utils";
 
-import "./App.css";
-
 import Button from "@mui/material/Button";
 import Paper from "@mui/material/Paper";
 import Box from "@mui/material/Box";
 
 const Board = (props) => {
-  const board = useRef(null);
+  const board_svg = useRef(null);
   const ghostcontainer = useRef(null);
   const stonecontainer = useRef(null);
   const paper = useRef(null);
+
+  const [viewBox, setViewBox] = useState("0 0 2000 2000");
 
   const board_width = 2000;
   const board_margin = 150;
@@ -24,11 +24,11 @@ const Board = (props) => {
   const [ghost, setGhost] = useState(null);
 
   const get_coord = (e) => {
-    if (board.current === null) {
+    if (board_svg.current === null) {
       return null;
     }
     // get coord in board in [0, 1]
-    const rect = board.current.getBoundingClientRect();
+    const rect = board_svg.current.getBoundingClientRect();
     let i = (e.pageX - (rect.left + window.scrollX)) / rect.width;
     let j = (e.pageY - (rect.top + window.scrollY)) / rect.height;
 
@@ -60,6 +60,15 @@ const Board = (props) => {
     return null;
   };
 
+  // draws grid, background image, letters
+  useEffect(() => {
+   // setViewBox(`${0} ${0} ${board_width / 2} ${board_width / 2}`);
+
+
+
+  }, [props.horizontalBound, props.verticalBound])
+
+  // draws circle
   useEffect(() => {
     if (stonecontainer.current === null || props.data === null) {
       return;
@@ -119,6 +128,8 @@ const Board = (props) => {
   const [boardBoxWidth, setBoardBoxWidth] = useState(0);
   const [boardBoxHeight, setBoardBoxHeight] = useState(0);
 
+
+  // fits board in app. This was easier thatn pure css.
   useEffect(() => {
     if (paper.current === null) {
       return;
@@ -131,9 +142,8 @@ const Board = (props) => {
       if (current_size !== size_ref) {
         size_ref = current_size;
         let new_board_size = Math.min(...current_size) - 40;
-        setBoardBoxHeight(new_board_size);
-        setBoardBoxWidth(new_board_size);
-        console.log(new_board_size);
+        setBoardBoxHeight(`${new_board_size}px`);
+        setBoardBoxWidth(`${new_board_size}px`);
       }
     });
     observer.observe(paper.current);
@@ -146,22 +156,23 @@ const Board = (props) => {
     <Paper
       ref={paper}
       sx={{
-        height: "100%",
+        height: "100vh",
         maxHeight: "100%",
         minHeight: 0,
         width: "100%",
+        display: "grid",
+        placeItems: "center",
       }}
       elevation={2}
     >
       {
         <svg
-          ref={board}
+          ref={board_svg}
           id="board"
-          viewBox={`0 0 ${board_width} ${board_width}`}
+          viewBox={viewBox}
           style={{
             width: boardBoxWidth,
             height: boardBoxHeight,
-            margin: "20px",
           }}
           onClick={async (e) => {
             const w = get_coord(e);
@@ -211,7 +222,6 @@ const Board = (props) => {
 
           {Array.from({ length: 19 }).map((_, i) => (
             <line
-              key={i}
               x1={square_size * i + board_margin}
               y1={board_margin}
               x2={square_size * i + board_margin}
@@ -222,7 +232,6 @@ const Board = (props) => {
           ))}
           {Array.from({ length: 19 }).map((_, i) => (
             <line
-              key={i}
               y1={square_size * i + board_margin}
               x1={board_margin}
               y2={square_size * i + board_margin}
