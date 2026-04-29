@@ -34,7 +34,7 @@ const Menu = (props) => {
         step={1}
         min={0}
         max={18}
-        sx={{ margin: "5px 30px", width: "calc(100% - 40px)" }}
+        sx={{ margin: "5px 30px", width: "calc(100% - 60px)" }}
       />
       <Slider
         value={props.verticalBound}
@@ -46,7 +46,7 @@ const Menu = (props) => {
         step={1}
         min={0}
         max={18}
-        sx={{ margin: "5px 30px", width: "calc(100% - 40px)" }}
+        sx={{ margin: "5px 30px", width: "calc(100% - 60px)" }}
       />
     </Paper>
   );

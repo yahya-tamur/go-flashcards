@@ -5,21 +5,14 @@ import white_image from "./assets/white_anime.png";
 import { invoke } from "@tauri-apps/api/core";
 import { createSVGElement } from "./utils";
 
-import Button from "@mui/material/Button";
 import Paper from "@mui/material/Paper";
-import Box from "@mui/material/Box";
 
 const Board = (props) => {
   const board_svg = useRef(null);
   const ghostcontainer = useRef(null);
+  const gridcontainer = useRef(null);
   const stonecontainer = useRef(null);
   const paper = useRef(null);
-
-  const [viewBox, setViewBox] = useState("0 0 2000 2000");
-
-  const board_width = 2000;
-  const board_margin = 150;
-  const square_size = (board_width - 2 * board_margin) / 18;
 
   const [ghost, setGhost] = useState(null);
 
@@ -33,48 +26,244 @@ const Board = (props) => {
     let j = (e.pageY - (rect.top + window.scrollY)) / rect.height;
 
     // coord in board viewBox
-    i = board_width * i;
-    j = board_width * j;
+    i = viewBoxWidth * i;
+    j = viewBoxHeight * j;
 
-    // this value is 0, 0 for points near top left on the grid and 18, 18 bottom right on the grid
+    // if board is 19 x 19, this labels the top left square (0, 0),
+    // and linearly increases by 1 per square_size .
 
-    i = (i - board_margin) / square_size;
-    j = (j - board_margin) / square_size;
+    i = (i - margin) / square_size;
+    j = (j - margin) / square_size;
+
+    let [left, right] = props.horizontalBound;
+    let [top, bottom] = props.verticalBound;
+
+    // correction for partial boards
+    i += left + (left > 0 ? -partial / square_size : 0);
+    j += top + (top > 0 ? -partial / square_size : 0);
 
     const si = Math.round(i);
     const sj = Math.round(j);
 
-    if (si < 0 || si > 18 || sj < 0 || sj > 18) {
-      return null;
-    }
-
-    if (props.data?.game.stones[si + 1][sj + 1] !== null) {
-      return null;
-    }
-    // circle check
-    const r = (i - si) * (i - si) + (j - sj) * (j - sj);
-
-    if (r < 0.25) {
+    if (
+      si >= left &&
+      si <= right &&
+      sj >= top &&
+      sj <= bottom &&
+      props.data?.game.stones[si + 1][sj + 1] === null &&
+      (i - si) * (i - si) + (j - sj) * (j - sj) < 0.25
+    ) {
       return [si, sj];
     }
+
     return null;
   };
 
+  const [viewBoxHeight, setViewBoxHeight] = useState(2100);
+  const [viewBoxWidth, setViewBoxWidth] = useState(2100);
+  const [viewBoxLeft, setViewBoxLeft] = useState(0);
+  const [viewBoxTop, setViewBoxTop] = useState(0);
+
+  const square_size = 100;
+  const margin = 150;
+  const partial = 70; // dots for partial board.
+
   // draws grid, background image, letters
   useEffect(() => {
-   // setViewBox(`${0} ${0} ${board_width / 2} ${board_width / 2}`);
+    let [left, right] = props.horizontalBound;
+    let [top, bottom] = props.verticalBound;
 
+    // Offset viewBox.
 
+    //maybe add bigger margin for edges or letters on every side
+    setViewBoxLeft(square_size * left + (left > 0 ? -partial : 0));
+    setViewBoxTop(square_size * top + (top > 0 ? -partial : 0));
+    setViewBoxWidth(
+      2 * margin +
+        (right - left) * square_size +
+        (left > 0 ? partial : 0) +
+        (right < 18 ? partial : 0),
+    );
+    setViewBoxHeight(
+      2 * margin +
+        (bottom - top) * square_size +
+        (top > 0 ? partial : 0) +
+        (bottom < 18 ? partial : 0),
+    );
 
-  }, [props.horizontalBound, props.verticalBound])
+    createSVGElement(
+      "image",
+      {
+        x: 0,
+        y: 0,
+        width: 2 * margin + 18 * square_size,
+        height: 2 * margin + 18 * square_size,
+        href: board_image,
+        "clip-path": "url(#viewBoxClip)",
+      },
+      gridcontainer.current,
+    );
 
-  // draws circle
+    let stroke_width = 5;
+
+    let hline_start =
+      margin +
+      square_size * left +
+      (left > 0 ? -partial : 0) -
+      stroke_width / 2;
+    let hline_end =
+      margin +
+      square_size * right +
+      (right < 18 ? partial : 0) +
+      stroke_width / 2;
+    let vline_start = margin + square_size * top + (top > 0 ? -partial : 0);
+    let vline_end = margin + square_size * bottom + (bottom < 18 ? partial : 0);
+
+    for (let i = left; i <= right; i++) {
+      createSVGElement(
+        "line",
+        {
+          x1: margin + square_size * i,
+          y1: vline_start,
+          x2: margin + square_size * i,
+          y2: vline_end,
+          stroke: "black",
+          "stroke-width": "5",
+        },
+        gridcontainer.current,
+      );
+    }
+
+    for (let j = top; j <= bottom; j++) {
+      createSVGElement(
+        "line",
+        {
+          x1: hline_start,
+          y1: margin + square_size * j,
+          x2: hline_end,
+          y2: margin + square_size * j,
+          stroke: "black",
+          "stroke-width": "5",
+        },
+        gridcontainer.current,
+      );
+    }
+
+    for (let i = 3; i < 18; i += 6) {
+      for (let j = 3; j < 18; j += 6) {
+        if (top <= j && j <= bottom && left <= i && i <= right) {
+          createSVGElement(
+            "circle",
+            {
+              cx: margin + square_size * i,
+              cy: margin + square_size * j,
+              r: 12,
+              fill: "black",
+            },
+            gridcontainer.current,
+          );
+        }
+      }
+    }
+    let letters = "ABCDEFGHJKLMNOPQRST".split("");
+    if (left == 0) {
+      for (let j = top; j <= bottom; j++) {
+        let text = createSVGElement(
+          "text",
+          {
+            x: hline_start - 70,
+            y: margin + square_size * j,
+            width: square_size,
+            height: square_size,
+            "text-anchor": "middle",
+            "dominant-baseline": "central",
+          },
+          gridcontainer.current,
+        );
+        text.style.fill = "black";
+        text.style.webkitUserSelect = "none";
+        text.style.font = "bold 40pt sans-serif";
+        text.textContent = 19 - j;
+      }
+    }
+    if (right == 18) {
+      for (let j = top; j <= bottom; j++) {
+        let text = createSVGElement(
+          "text",
+          {
+            x: hline_end + 70,
+            y: margin + square_size * j,
+            width: square_size,
+            height: square_size,
+            "text-anchor": "middle",
+            "dominant-baseline": "central",
+          },
+          gridcontainer.current,
+        );
+        text.style.fill = "black";
+        text.style.webkitUserSelect = "none";
+        text.style.font = "bold 40pt sans-serif";
+        text.textContent = 19 - j;
+      }
+    }
+    if (top == 0) {
+      for (let i = left; i <= right; i++) {
+        let text = createSVGElement(
+          "text",
+          {
+            x: margin + square_size * i,
+            y: vline_start - 70,
+            width: square_size,
+            height: square_size,
+            "text-anchor": "middle",
+            "dominant-baseline": "central",
+          },
+          gridcontainer.current,
+        );
+        text.style.fill = "black";
+        text.style.webkitUserSelect = "none";
+        text.style.font = "bold 40pt sans-serif";
+        text.textContent = letters[i];
+      }
+    }
+    if (bottom == 18) {
+      for (let i = left; i <= right; i++) {
+        let text = createSVGElement(
+          "text",
+          {
+            x: margin + square_size * i,
+            y: vline_end + 70,
+            width: square_size,
+            height: square_size,
+            "text-anchor": "middle",
+            "dominant-baseline": "central",
+          },
+          gridcontainer.current,
+        );
+        text.style.fill = "black";
+        text.style.webkitUserSelect = "none";
+        text.style.font = "bold 40pt sans-serif";
+        text.textContent = letters[i];
+      }
+    }
+
+    return () => {
+      if (gridcontainer.current) {
+        gridcontainer.current.replaceChildren();
+      }
+    };
+  }, [gridcontainer, props.horizontalBound, props.verticalBound]);
+
+  // draws circles
   useEffect(() => {
     if (stonecontainer.current === null || props.data === null) {
       return;
     }
-    for (let i = 0; i < 19; i++) {
-      for (let j = 0; j < 19; j++) {
+    let [left, right] = props.horizontalBound;
+    let [top, bottom] = props.verticalBound;
+
+    for (let i = left; i <= right; i++) {
+      for (let j = top; j <= bottom; j++) {
         const w = props.data?.game.stones[i + 1][j + 1];
 
         if (w === null) {
@@ -83,8 +272,8 @@ const Board = (props) => {
         createSVGElement(
           "image",
           {
-            x: square_size * i + board_margin - 0.5 * square_size,
-            y: square_size * j + board_margin - 0.5 * square_size,
+            x: square_size * i + margin - 0.5 * square_size,
+            y: square_size * j + margin - 0.5 * square_size,
             width: square_size,
             height: square_size,
             href: w === "Black" ? black_image : white_image,
@@ -98,7 +287,9 @@ const Board = (props) => {
         stonecontainer.current.replaceChildren();
       }
     };
-  }, [props.data, stonecontainer]);
+  }, [props.data, stonecontainer, props.horizontalBound, props.verticalBound]);
+
+  // creates ghost
 
   useEffect(() => {
     if (ghost === null || ghostcontainer.current === null) {
@@ -107,8 +298,8 @@ const Board = (props) => {
     createSVGElement(
       "image",
       {
-        x: square_size * ghost[0] + board_margin - 0.5 * square_size,
-        y: square_size * ghost[1] + board_margin - 0.5 * square_size,
+        x: square_size * ghost[0] + margin - 0.5 * square_size,
+        y: square_size * ghost[1] + margin - 0.5 * square_size,
         width: square_size,
         height: square_size,
         href: props.color === "Black" ? black_image : white_image,
@@ -123,13 +314,12 @@ const Board = (props) => {
     };
   }, [ghostcontainer, ghost, props.color]);
 
-  let size_ref = useRef([null, null]);
+  let size_ref = useRef([null, null]); // there's a relevant stackexchange for this
 
   const [boardBoxWidth, setBoardBoxWidth] = useState(0);
   const [boardBoxHeight, setBoardBoxHeight] = useState(0);
 
-
-  // fits board in app. This was easier thatn pure css.
+  // fits board in app. This was easier than pure css.
   useEffect(() => {
     if (paper.current === null) {
       return;
@@ -141,16 +331,22 @@ const Board = (props) => {
       ];
       if (current_size !== size_ref) {
         size_ref = current_size;
+        let [width, height] = current_size;
+
+        let ratio = Math.min(
+          (height - 2 * 20) / viewBoxHeight,
+          (width - 2 * 20) / viewBoxWidth,
+        );
         let new_board_size = Math.min(...current_size) - 40;
-        setBoardBoxHeight(`${new_board_size}px`);
-        setBoardBoxWidth(`${new_board_size}px`);
+        setBoardBoxHeight(`${viewBoxHeight * ratio}px`);
+        setBoardBoxWidth(`${viewBoxWidth * ratio}px`);
       }
     });
     observer.observe(paper.current);
     return () => {
       observer.disconnect();
     };
-  }, [paper]);
+  }, [paper, viewBoxHeight, viewBoxWidth]);
 
   return (
     <Paper
@@ -169,13 +365,15 @@ const Board = (props) => {
         <svg
           ref={board_svg}
           id="board"
-          viewBox={viewBox}
+          viewBox={`${viewBoxLeft} ${viewBoxTop} ${viewBoxWidth} ${viewBoxHeight}`}
           style={{
             width: boardBoxWidth,
             height: boardBoxHeight,
+            margin: "20px",
           }}
           onClick={async (e) => {
             const w = get_coord(e);
+            console.log(w);
             if (w === null) {
               return;
             }
@@ -184,10 +382,12 @@ const Board = (props) => {
               loc: [w[0] + 1, w[1] + 1],
               color: props.color,
             })
-              .then(async (res) => {
-                props.setData(await invoke("get_data"));
+              .then(() => invoke("get_data"))
+              .then((data) => {
+                props.setData(data);
                 props.swapColor();
                 setGhost(null);
+                console.log(data);
               })
               .catch((e) => {
                 setGhost(null);
@@ -212,117 +412,18 @@ const Board = (props) => {
             setGhost(null);
           }}
         >
-          <image
-            x={0}
-            y={0}
-            width={board_width}
-            height={board_width}
-            href={board_image}
-          />
+          <defs>
+            <clipPath id="viewBoxClip">
+              <rect
+                width={viewBoxWidth}
+                height={viewBoxHeight}
+                x={viewBoxLeft}
+                y={viewBoxTop}
+              ></rect>
+            </clipPath>
+          </defs>
 
-          {Array.from({ length: 19 }).map((_, i) => (
-            <line
-              x1={square_size * i + board_margin}
-              y1={board_margin}
-              x2={square_size * i + board_margin}
-              y2={board_width - board_margin}
-              stroke="black"
-              strokeWidth="5"
-            />
-          ))}
-          {Array.from({ length: 19 }).map((_, i) => (
-            <line
-              y1={square_size * i + board_margin}
-              x1={board_margin}
-              y2={square_size * i + board_margin}
-              x2={board_width - board_margin}
-              stroke="black"
-              strokeWidth="5"
-            />
-          ))}
-          {Array.from({ length: 9 }).map((_, n) => {
-            const i = Math.floor(n / 3);
-            const j = n % 3;
-            return (
-              <circle
-                key={n}
-                cx={square_size * (6 * i + 3) + board_margin}
-                cy={square_size * (6 * j + 3) + board_margin}
-                r="12"
-                stroke="black"
-                strokeWidth="1"
-                fill="black"
-              />
-            );
-          })}
-          {"ABCDEFGHJKLMNOPQRST".split("").map((c, i) => (
-            <text
-              y={board_margin - square_size + 10}
-              x={square_size * i + board_margin}
-              width={square_size}
-              height={square_size}
-              textAnchor="middle"
-              dominantBaseline="central"
-              style={{
-                fill: "black",
-                WebkitUserSelect: "none",
-                font: "bold 35pt sans-serif",
-              }}
-            >
-              {c}
-            </text>
-          ))}
-          {"ABCDEFGHJKLMNOPQRST".split("").map((c, i) => (
-            <text
-              y={board_width - board_margin + square_size - 10}
-              x={square_size * i + board_margin}
-              width={square_size}
-              height={square_size}
-              textAnchor="middle"
-              dominantBaseline="central"
-              style={{
-                fill: "black",
-                WebkitUserSelect: "none",
-                font: "bold 35pt sans-serif",
-              }}
-            >
-              {c}
-            </text>
-          ))}
-          {Array.from({ length: 19 }).map((c, i) => (
-            <text
-              x={board_width - board_margin + square_size - 10}
-              y={square_size * i + board_margin}
-              width={square_size}
-              height={square_size}
-              textAnchor="middle"
-              dominantBaseline="central"
-              style={{
-                fill: "black",
-                WebkitUserSelect: "none",
-                font: "bold 35pt sans-serif",
-              }}
-            >
-              {19 - i}
-            </text>
-          ))}
-          {Array.from({ length: 19 }).map((c, i) => (
-            <text
-              x={board_margin - square_size + 10}
-              y={square_size * i + board_margin}
-              width={square_size}
-              height={square_size}
-              textAnchor="middle"
-              dominantBaseline="central"
-              style={{
-                fill: "black",
-                WebkitUserSelect: "none",
-                font: "bold 35pt sans-serif",
-              }}
-            >
-              {19 - i}
-            </text>
-          ))}
+          <g ref={gridcontainer} />
           <g ref={stonecontainer} />
           <g ref={ghostcontainer} />
         </svg>

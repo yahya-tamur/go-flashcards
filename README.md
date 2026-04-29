@@ -1,47 +1,55 @@
-App is looking good. Did a lot of work including last commit.
-Completely implemented tree (backend + frontend).
-Try not to work on this until week end!
+Partial Board implementation complete!!
+
+Try not to work on this until week end! => try to finish as soon as possible to move on
 
 To Do next:
 
-  - Partial Board:
-    - set up well by isolating board size logic
-    - mui sliders
-    - will need to go over how whole board is rendered
-    - should double check unseen board is always empty!
+  - Setup / Tree phases
+    - Set up phase:
+      - sliders only visible during setup + actually clear board.
+      - calls to place_stone, not play
+      - B, W, B/W buttons 
+      - Initialize Tree button
+    - Tree phase:
+      - comment box
+      - show captures
+      - Collapse Tree button
+      - Delete Node
+      - Mark nodes as correct / incorrect
 
-  - Set up phase. Initialize tree, collapse tree buttons.
-    - Mark exercises as correct / incorrect. Add comments.
+      - Initial "None" node should be able to have a comment??
+
+
 
   - Create home folder.
-    - Save (and load) exercises.
+    - Save (and load) exercise.
     - later, it can include translations and assets
     - figure out android?
-    - now, you can save exercises to it
 
-  - 
-  - Set up Exercise:
 
-    - comment box
-    - correct / incorrect nodes
-    - save and load
-    - set up + initialize phase
-  
-  - Delete Node
+ (?) Make Exercises Mode:
+    - back, forward buttons, append option
 
-  - Side View:
-    - lots of buttons
-    - captures
+ (?) Flashcard Mode
+  - configs:
+    - show comments before answer?
+    - percentage to show
+    - play both sides?
+    - randomize coordinates?
 
-  - Study Exercise:
-    - Hide (some of) tree? Hide comments?
-    - Get correct / incorrect, reveal
+  - one config file:
+    - global and 'modes'
+      - modes:
+        - source files
+        - can overwrite any config
+  - one history file / exercise file
 
-Then:
-  - Set up list of exercises
-  - read
-  - flashcard phase
-  - etc.
+  - new back, forward buttons
+
+  - stars? 
+  - customizable assets, theme?
+  - make default assets
+  - license file
 
 ---
 
@@ -128,13 +136,3 @@ pros:
 - can eventually compile to mobile
 - will hopefully look good using material ui
 - hopefully won't have to implement horizontal scrolling etc. myself
-
-below is default readme for tauri, I'll delete it later.
-
-# Tauri + React
-
-This template should help get you started developing with Tauri and React in Vite.
-
-## Recommended IDE Setup
-
-- [VS Code](https://code.visualstudio.com/) + [Tauri](https://marketplace.visualstudio.com/items?itemName=tauri-apps.tauri-vscode) + [rust-analyzer](https://marketplace.visualstudio.com/items?itemName=rust-lang.rust-analyzer)
