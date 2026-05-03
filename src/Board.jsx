@@ -377,7 +377,20 @@ const Board = (props) => {
             if (w === null) {
               return;
             }
-            // assume initialized for now
+            if (props.phase === "Initialize") {
+              invoke("set_stone", {i: w[0] + 1, j: w[1] + 1, color: props.color})
+              .then(() => invoke("get_data"))
+              .then((data) => {
+                props.setData(data);
+                if (props.colorMode === "BlackWhite") {
+                  props.setColor(props.color === "Black" ? "White" : "Black");
+                }
+            }).catch((e) => {
+                console.log(e);
+              });
+            } else {
+
+                          // assume initialized for now
             invoke("play", {
               loc: [w[0] + 1, w[1] + 1],
               color: props.color,
@@ -385,13 +398,15 @@ const Board = (props) => {
               .then(() => invoke("get_data"))
               .then((data) => {
                 props.setData(data);
-                props.swapColor();
+                props.setColor(data.tree?.color === "Black" ? "White" : "Black");
                 setGhost(null);
-                console.log(data);
               })
               .catch((e) => {
                 setGhost(null);
               });
+              
+            }
+
           }}
           onMouseMove={(e) => {
             const w = get_coord(e);

@@ -3,19 +3,43 @@ use crate::color::Color;
 use crate::go_rules::place_stone;
 use serde::{Deserialize, Serialize};
 
-#[derive(Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Clone, PartialEq, Eq, Serialize, Deserialize, Debug)]
 pub struct Move {
     pub loc: Option<(usize, usize)>,
     pub comment: String,
     pub color: Color,
 }
 
-// this thing is designed to be serialized and written to file.
-#[derive(Clone, Serialize, Deserialize)]
+// this struct is designed to be serialized and written to file.
+#[derive(Clone, Serialize, Deserialize, Debug)]
 pub struct MoveTree {
     pub initial: GameState,
     pub initial_color: Color,
     pub table: Vec<Vec<Option<Move>>>,
+}
+
+// MoveTree + location information
+#[derive(Debug)]
+pub struct TreeData {
+    pub move_tree: MoveTree,
+    pub row: usize,
+    pub col: usize,
+}
+
+impl TreeData {
+    pub fn step(&mut self, loc: Option<(usize, usize)>, color: Color) {
+        (self.row, self.col) = self.move_tree.step(self.row, self.col, loc, color);
+    }
+
+    pub fn color(&self) -> Color {
+        if self.row == 0 && self.col == 0 {
+            return self.move_tree.initial_color;
+        }
+        self.move_tree.table[self.row][self.col]
+            .as_ref()
+            .unwrap()
+            .color
+    }
 }
 
 impl MoveTree {

@@ -4,7 +4,7 @@ import { invoke } from "@tauri-apps/api/core";
 
 import Board from "./Board.jsx";
 import Tree from "./Tree.jsx";
-import Menu from "./Menu.jsx";
+import SetupMenu from "./SetupMenu.jsx";
 import "./App.css";
 
 import Box from "@mui/material/Box";
@@ -30,6 +30,9 @@ const theme = createTheme({
 });
 
 function App() {
+  // Initialize, EditTree, (later), Study, Config
+  const [phase, setPhase] = useState("Initialize");
+  const [colorMode, setColorMode] = useState("BlackWhite");
   const [data, setData] = useState(null);
   const [horizontalBound, setHorizontalBound] = useState([0, 18]);
   const [verticalBound, setVerticalBound] = useState([0, 18]);
@@ -47,8 +50,8 @@ function App() {
 
   useEffect(() => {
     const load_board = async () => {
-      invoke("initialize_tree", { stone: "Black" })
-        .then(() => invoke("get_data"))
+      //invoke("initialize_tree", { stone: "White" })
+      invoke("get_data")
         .then((data) => setData(data))
         .catch((e) => {}); // sometimes tries to initialize multiple times
     };
@@ -64,11 +67,14 @@ function App() {
             data={data}
             setData={setData}
             color={color}
+            setColor={setColor}
             swapColor={swapColor}
             horizontalBound={horizontalBound}
             verticalBound={verticalBound}
             setHorizontalBound={setHorizontalBound}
             setVerticalBound={setVerticalBound}
+            phase={phase}
+            colorMode={colorMode}
           />
         </Box>
         <Box
@@ -83,11 +89,13 @@ function App() {
           <Box sx={{ flexBasis: "40%", minHeight: 0 }}>
             <Tree data={data} setData={setData} setColor={setColor} />
           </Box>
-          <Box sx={{ flexBasis: "60%", minHeight: 0 }}>
+          <Box sx={{ flexBasis: "30%", minHeight: 0 }}>
             {
-              <Menu
+              <SetupMenu
                 data={data}
                 setData={setData}
+                colorMode={colorMode}
+                setColorMode={setColorMode}
                 setColor={setColor}
                 horizontalBound={horizontalBound}
                 verticalBound={verticalBound}

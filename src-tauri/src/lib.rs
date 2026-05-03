@@ -17,33 +17,52 @@ use serde::{Deserialize, Serialize};
 // is std sync mutex better? is tauri multithreaded? probably doesn't matter, since
 // won't be getting too many requests / second. Probably didn't even need mutex.
 
-// is all this boilerplate? should I implement the impl appdata functions here for example?
-
-// do the two get functions need to be separate?
-
-//maybe redundant, but is easier to add to in the future.
 #[derive(Serialize, Deserialize)]
-struct GameData {
-    game: GameState,
-    tree: Vec<Vec<Option<Move>>>,
+struct TreeSnapshot {
+    table: Vec<Vec<Option<Move>>>,
     row: usize,
     col: usize,
+    color: Color,
+}
+
+// struct that gets sent to frontend.
+#[derive(Serialize, Deserialize)]
+struct Snapshot {
+    game: GameState,
+    tree: Option<TreeSnapshot>,
+}
+
+#[tauri::command]
+async fn set_stone(
+    state: tauri::State<'_, Mutex<AppData>>,
+    i: usize,
+    j: usize,
+    color: Option<Color>,
+) -> Result<(), String> {
+    state
+        .lock()
+        .await
+        .place_stone(i, j, color)
+        .then_some(())
+        .ok_or("error".to_string())
 }
 
 //copies game and tree. If tauri serializes anyway, is that necessary?
 #[tauri::command]
-async fn get_data(state: tauri::State<'_, Mutex<AppData>>) -> Result<GameData, String> {
+async fn get_data(state: tauri::State<'_, Mutex<AppData>>) -> Result<Snapshot, String> {
     let state = state.lock().await;
-    Ok(GameData {
+    println!("{:?}", state.tree_data);
+    Ok(Snapshot {
         game: state.game,
-        tree: state
-            .move_tree
-            .as_ref()
-            .map_or_else(|| vec![vec![None]], |mt| mt.table.clone()),
-        row: state.row,
-        col: state.col,
+        tree: state.tree_data.as_ref().map(|tree_data| TreeSnapshot {
+            table: tree_data.move_tree.table.clone(),
+            row: tree_data.row,
+            col: tree_data.col,
+            color: tree_data.color(),
+        }),
     })
 }
+
 #[tauri::command]
 async fn play(
     state: tauri::State<'_, Mutex<AppData>>,
@@ -66,12 +85,12 @@ async fn jump(state: tauri::State<'_, Mutex<AppData>>, r: usize, c: usize) -> Re
 #[tauri::command]
 async fn initialize_tree(
     state: tauri::State<'_, Mutex<AppData>>,
-    stone: Color,
+    color: Color,
 ) -> Result<(), String> {
     state
         .lock()
         .await
-        .initialize_tree(stone)
+        .initialize_tree(color)
         .then_some(())
         .ok_or("err".to_string())
 }
@@ -88,6 +107,7 @@ pub fn run() {
             get_data,
             play,
             jump,
+            set_stone,
             initialize_tree
         ])
         .run(tauri::generate_context!())

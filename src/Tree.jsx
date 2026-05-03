@@ -50,20 +50,20 @@ const Tree = (props) => {
   };
 
   useEffect(() => {
-    if (treecontainer.current === null || props.data === null) {
+    if (treecontainer.current === null || props.data === null || props.data.tree === null) {
       return;
     }
 
-    let tree = props.data?.tree;
-    let num_columns = tree.reduce((m, a) => (a.length > m ? a.length : m), 1);
-    let num_rows = tree.length;
+    let table = props.data.tree.table;
+    let num_columns = table.reduce((m, a) => (a.length > m ? a.length : m), 1);
+    let num_rows = table.length;
     setTableWidth(2 * margin + gap_size * (num_columns - 1) + square_size);
     setTableHeight(2 * margin + gap_size * (num_rows - 1) + square_size);
     createSVGElement(
       "circle",
       {
-        cx: margin + gap_size * props.data?.col + square_size / 2,
-        cy: margin + gap_size * props.data?.row + square_size / 2,
+        cx: margin + gap_size * props.data?.tree?.col + square_size / 2,
+        cy: margin + gap_size * props.data?.tree?.row + square_size / 2,
         r: hl_size / 2,
         stroke: "none",
         strokeWidth: "0",
@@ -100,25 +100,25 @@ const Tree = (props) => {
       );
     };
     // horizontal lines
-    tree.forEach((line, r) => {
+    table.forEach((line, r) => {
       for (let c = 0; c < line.length - 1; c++) {
         if (line[c] !== null && line[c + 1] !== null) {
           draw_line(r, c, r, c + 1);
         }
       }
     });
-    if (tree[0].length > 1) {
+    if (table[0].length > 1) {
       draw_line(0, 0, 0, 1);
     }
     //diagonal lines
-    for (let r = 1; r < tree.length; r++) {
+    for (let r = 1; r < table.length; r++) {
       let c = 0;
-      while (tree[r][c] === null) {
+      while (table[r][c] === null) {
         c += 1;
       }
       let c_ = c - 1;
       let r_ = r - 1;
-      while (r_ > 0 && tree[r_][c_] === null) {
+      while (r_ > 0 && table[r_][c_] === null) {
         r_ -= 1;
       }
       const x1 = margin + gap_size * c + square_size / 2;
@@ -138,7 +138,7 @@ const Tree = (props) => {
       // draw_line(r, c, r_, c_);
     }
 
-    tree.forEach((line, r) => {
+    table.forEach((line, r) => {
       line.forEach((mov, c) => {
         if (mov === null) {
           return;
@@ -206,26 +206,18 @@ const Tree = (props) => {
             return;
           }
           let [c, r] = w;
-          if (r >= props.data?.tree.length || c >= props.data?.tree[r].length) {
+          if (r >= props.data?.tree?.table.length || c >= props.data?.tree?.table[r].length) {
             return;
           }
-          if ((r !== 0 || c !== 0) && props.data?.tree[r][c] === null) {
+          if ((r !== 0 || c !== 0) && props.data?.tree?.table[r][c] === null) {
             return;
           }
-          if (r < props.data?.tree.length && c < props.data?.tree[r].length) {
+          if (r < props.data?.tree?.table.length && c < props.data?.tree?.table[r].length) {
             invoke("jump", { r: r, c: c })
               .then(() => invoke("get_data"))
               .then((data) => {
                 props.setData(data);
-                if (data.row === 0 && data.col === 0) {
-                  props.setColor("Black");
-                } else {
-                  props.setColor(
-                    data.tree[data.row][data.col].color === "Black"
-                      ? "White"
-                      : "Black",
-                  );
-                }
+                props.setColor(data.tree?.color === "Black" ? "White" : "Black");
               })
               .catch((e) => {
                 console.log(e);
