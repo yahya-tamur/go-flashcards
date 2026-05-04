@@ -3,18 +3,28 @@ use crate::color::Color;
 use crate::go_rules::place_stone;
 use serde::{Deserialize, Serialize};
 
+
+#[derive(Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Debug)]
+#[repr(u8)]
+pub enum Variant {
+    Correct,
+    Incorrect,
+    None,
+    New,
+}
+
 #[derive(Clone, PartialEq, Eq, Serialize, Deserialize, Debug)]
 pub struct Move {
     pub loc: Option<(usize, usize)>,
     pub comment: String,
     pub color: Color,
+    pub variant: Variant,
 }
 
 // this struct is designed to be serialized and written to file.
 #[derive(Clone, Serialize, Deserialize, Debug)]
 pub struct MoveTree {
     pub initial: GameState,
-    pub initial_color: Color,
     pub table: Vec<Vec<Option<Move>>>,
 }
 
@@ -31,14 +41,35 @@ impl TreeData {
         (self.row, self.col) = self.move_tree.step(self.row, self.col, loc, color);
     }
 
-    pub fn color(&self) -> Color {
-        if self.row == 0 && self.col == 0 {
-            return self.move_tree.initial_color;
-        }
+    pub fn color(&self) -> Result<Color, String> {
         self.move_tree.table[self.row][self.col]
             .as_ref()
-            .unwrap()
-            .color
+            .map(|a| a.color)
+            .ok_or("error".to_string())
+
+    }
+
+    pub fn comment(&self) -> Result<String, String> {
+        self.move_tree.table[self.row][self.col]
+            .as_ref()
+            .map(|a| a.comment.clone())
+            .ok_or("error".to_string())
+    }
+
+    pub fn set_comment(&mut self, comment: String) -> Result<(), String> {
+        self.move_tree.table[self.row][self.col].as_mut().map(|mov| {mov.comment = comment;}).ok_or("error".to_string())
+    }
+
+    pub fn mark(&self) -> Result<Variant, String> {
+        self.move_tree.table[self.row][self.col]
+            .as_ref()
+            .map(|a| a.variant)
+            .ok_or("error".to_string())
+    }
+
+    pub fn set_mark(&mut self, variant: Variant) -> Result<(), String> {
+        println!("{:?}", variant);
+        self.move_tree.table[self.row][self.col].as_mut().map(|mov| {mov.variant = variant;}).ok_or("error".to_string())
     }
 }
 
@@ -70,6 +101,7 @@ impl MoveTree {
             loc,
             comment: String::new(),
             color,
+            variant: Variant::None,
         });
 
         if self.table[r].len() == c + 1 {
@@ -96,6 +128,9 @@ impl MoveTree {
 
         while let Some(mov) = &self.table[r][c] {
             moves.push(mov);
+            if c == 0 {
+                break;
+            }
             c -= 1; // r might be 0 but not -1 after this
             while self.table[r][c].is_none() && r > 0 {
                 r -= 1;

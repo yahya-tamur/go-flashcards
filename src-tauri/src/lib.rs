@@ -23,6 +23,8 @@ struct TreeSnapshot {
     row: usize,
     col: usize,
     color: Color,
+    comment: String,
+    mark: Variant
 }
 
 // struct that gets sent to frontend.
@@ -51,16 +53,27 @@ async fn set_stone(
 #[tauri::command]
 async fn get_data(state: tauri::State<'_, Mutex<AppData>>) -> Result<Snapshot, String> {
     let state = state.lock().await;
-    println!("{:?}", state.tree_data);
-    Ok(Snapshot {
+    if let Some(tree_data) = state.tree_data.as_ref() {
+        let color = tree_data.color()?;
+        let comment = tree_data.comment()?;
+        let mark = tree_data.mark()?;
+        Ok(Snapshot {
         game: state.game,
-        tree: state.tree_data.as_ref().map(|tree_data| TreeSnapshot {
+        tree:  Some(TreeSnapshot {
             table: tree_data.move_tree.table.clone(),
             row: tree_data.row,
             col: tree_data.col,
-            color: tree_data.color(),
-        }),
-    })
+            color,
+            comment,
+            mark,
+        })})
+    } else {
+        Ok(Snapshot {
+            game: state.game,
+            tree: None
+        })
+    }
+    
 }
 
 #[tauri::command]
@@ -83,6 +96,16 @@ async fn jump(state: tauri::State<'_, Mutex<AppData>>, r: usize, c: usize) -> Re
 }
 
 #[tauri::command]
+async fn clear_to(state: tauri::State<'_, Mutex<AppData>>, rows: (usize, usize), cols: (usize, usize)) -> Result<(), String> {
+    state
+        .lock()
+        .await
+        .clear_to(rows, cols)
+        .then_some(())
+        .ok_or("err".to_string())
+}
+
+#[tauri::command]
 async fn initialize_tree(
     state: tauri::State<'_, Mutex<AppData>>,
     color: Color,
@@ -93,6 +116,40 @@ async fn initialize_tree(
         .initialize_tree(color)
         .then_some(())
         .ok_or("err".to_string())
+}
+
+#[tauri::command]
+async fn collapse_tree(state: tauri::State<'_, Mutex<AppData>>) -> Result<(), String> {
+    state
+        .lock()
+        .await
+        .collapse_tree()
+        .then_some(())
+        .ok_or("err".to_string())
+}
+
+#[tauri::command]
+async fn comment(state: tauri::State<'_, Mutex<AppData>>, comment: String) -> Result<(), String> {
+    state
+        .lock()
+        .await
+        .tree_data
+        .as_mut()
+        .ok_or("err".to_string())
+        .and_then(|td| {td.set_comment(comment)})
+}
+
+#[tauri::command]
+async fn set_mark(state: tauri::State<'_, Mutex<AppData>>, variant: Variant) -> Result<(), String> {
+    println!("aaa {:?}", variant);
+    state
+        .lock()
+        .await
+        .tree_data
+        .as_mut()
+        .ok_or("err".to_string())
+        .and_then(|td| {td.set_mark(variant)})
+
 }
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
@@ -108,7 +165,11 @@ pub fn run() {
             play,
             jump,
             set_stone,
-            initialize_tree
+            initialize_tree,
+            collapse_tree,
+            clear_to,
+            comment,
+            set_mark,
         ])
         .run(tauri::generate_context!())
         .unwrap();

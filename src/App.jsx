@@ -4,35 +4,40 @@ import { invoke } from "@tauri-apps/api/core";
 
 import Board from "./Board.jsx";
 import Tree from "./Tree.jsx";
-import SetupMenu from "./SetupMenu.jsx";
+import InitializeMenu from "./InitializeMenu.jsx";
+import MakeTreeMenu from "./MakeTreeMenu.jsx";
+import EditCommentBox from "./EditCommentBox";
 import "./App.css";
 
 import Box from "@mui/material/Box";
 import { ThemeProvider, createTheme } from "@mui/material/styles";
 import CssBaseline from "@mui/material/CssBaseline";
+import theme_import from "./assets/theme.json" with { type: "json" };
 
-const theme = createTheme({
-  palette: {
-    primary: {
-      light: "#757ce8",
-      main: "#3f50b5",
-      dark: "#002884",
-      contrastText: "#fff",
+let theme = createTheme(theme_import);
+
+theme = createTheme(theme, {
+  components: {
+    MuiToggleButton: {
+      styleOverrides: {
+        root: {
+          "&.Mui-selected": {
+            backgroundColor: theme.palette.primary.main,
+          },
+          "&.Mui-selected:hover": {
+            backgroundColor: theme.palette.primary.main,
+          },
+        },
+      },
     },
-    secondary: {
-      light: "#ff7961",
-      main: "#f44336",
-      dark: "#ba000d",
-      contrastText: "#000",
-    },
-    mode: "dark",
   },
 });
 
 function App() {
   // Initialize, EditTree, (later), Study, Config
   const [phase, setPhase] = useState("Initialize");
-  const [colorMode, setColorMode] = useState("BlackWhite");
+  const [keyPress, setKeyPress] = useState("");
+  const [colorMode, setColorMode] = useState("Black");
   const [data, setData] = useState(null);
   const [horizontalBound, setHorizontalBound] = useState([0, 18]);
   const [verticalBound, setVerticalBound] = useState([0, 18]);
@@ -83,6 +88,7 @@ function App() {
             flexBasis: "40%",
             flexDirection: "column",
             minWidth: 0,
+            maxHeight: "100vh",
             overflow: "hidden",
           }}
         >
@@ -90,19 +96,37 @@ function App() {
             <Tree data={data} setData={setData} setColor={setColor} />
           </Box>
           <Box sx={{ flexBasis: "30%", minHeight: 0 }}>
-            {
-              <SetupMenu
+            {phase === "Initialize" ? (
+              <InitializeMenu
                 data={data}
                 setData={setData}
+                setPhase={setPhase}
                 colorMode={colorMode}
                 setColorMode={setColorMode}
                 setColor={setColor}
+                color={color}
                 horizontalBound={horizontalBound}
                 verticalBound={verticalBound}
                 setHorizontalBound={setHorizontalBound}
                 setVerticalBound={setVerticalBound}
               />
-            }
+            ) : phase === "MakeTree" ? (
+              <MakeTreeMenu
+                data={data}
+                setData={setData}
+                setColorMode={setColorMode}
+                setPhase={setPhase}
+              />
+            ) : (
+              <Box> unknown phase? </Box>
+            )}
+          </Box>
+          <Box sx={{ flexBasis: "30%", minHeight: 0 }}>
+            {phase === "MakeTree" ? (
+              <EditCommentBox data={data} setData={setData} />
+            ) : (
+              <Box />
+            )}
           </Box>
         </Box>
       </main>

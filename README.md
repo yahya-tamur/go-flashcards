@@ -48,6 +48,7 @@ To Do next:
 
   - stars? 
   - customizable assets, theme?
+    - sounds ??? can i not??
   - make default assets
   - license file
 

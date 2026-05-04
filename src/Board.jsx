@@ -2,6 +2,7 @@ import { useEffect, useState, useRef } from "react";
 import board_image from "./assets/oak.jpg";
 import black_image from "./assets/black_night.png";
 import white_image from "./assets/white_anime.png";
+import mui_clear from "./assets/mui_clear.svg";
 import { invoke } from "@tauri-apps/api/core";
 import { createSVGElement } from "./utils";
 
@@ -50,7 +51,8 @@ const Board = (props) => {
       si <= right &&
       sj >= top &&
       sj <= bottom &&
-      props.data?.game.stones[si + 1][sj + 1] === null &&
+      (props.phase === "Initialize" ||
+        props.data?.game.stones[si + 1][sj + 1] === null) &&
       (i - si) * (i - si) + (j - sj) * (j - sj) < 0.25
     ) {
       return [si, sj];
@@ -302,7 +304,12 @@ const Board = (props) => {
         y: square_size * ghost[1] + margin - 0.5 * square_size,
         width: square_size,
         height: square_size,
-        href: props.color === "Black" ? black_image : white_image,
+        href:
+          props.colorMode === "Delete"
+            ? mui_clear
+            : props.color === "Black"
+              ? black_image
+              : white_image,
         opacity: 0.6,
       },
       ghostcontainer.current,
@@ -348,6 +355,8 @@ const Board = (props) => {
     };
   }, [paper, viewBoxHeight, viewBoxWidth]);
 
+  const [mouseDown, setMouseDown] = useState(false);
+
   return (
     <Paper
       ref={paper}
@@ -359,7 +368,7 @@ const Board = (props) => {
         display: "grid",
         placeItems: "center",
       }}
-      elevation={2}
+      elevation={3}
     >
       {
         <svg
@@ -371,6 +380,52 @@ const Board = (props) => {
             height: boardBoxHeight,
             margin: "20px",
           }}
+          onMouseDown={() => {
+            setMouseDown(true);
+          }}
+          onMouseUp={() => {
+            setMouseDown(false);
+          }}
+          onMouseMove={async (e) => {
+            const w = get_coord(e);
+            if (w === null && ghost === null) {
+              return;
+            }
+            if (
+              !(
+                w !== null &&
+                ghost !== null &&
+                w[0] === ghost[0] &&
+                w[1] === ghost[1]
+              )
+            ) {
+              setGhost(w);
+            }
+
+            if (
+              mouseDown &&
+              w !== null &&
+              props.phase === "Initialize" &&
+              props.data?.game.stones[w[0] + 1][w[1] + 1] !== props.colorMode &&
+              props.colorMode !== "BlackWhite"
+            ) {
+              invoke("set_stone", {
+                i: w[0] + 1,
+                j: w[1] + 1,
+                color: props.colorMode === "Delete" ? undefined : props.color,
+              })
+                .then(() => invoke("get_data"))
+                .then((data) => {
+                  props.setData(data);
+                  if (props.colorMode === "BlackWhite") {
+                    props.setColor(props.color === "Black" ? "White" : "Black");
+                  }
+                })
+                .catch((e) => {
+                  console.log(e);
+                });
+            }
+          }}
           onClick={async (e) => {
             const w = get_coord(e);
             console.log(w);
@@ -378,53 +433,43 @@ const Board = (props) => {
               return;
             }
             if (props.phase === "Initialize") {
-              invoke("set_stone", {i: w[0] + 1, j: w[1] + 1, color: props.color})
-              .then(() => invoke("get_data"))
-              .then((data) => {
-                props.setData(data);
-                if (props.colorMode === "BlackWhite") {
-                  props.setColor(props.color === "Black" ? "White" : "Black");
-                }
-            }).catch((e) => {
-                console.log(e);
-              });
-            } else {
-
-                          // assume initialized for now
-            invoke("play", {
-              loc: [w[0] + 1, w[1] + 1],
-              color: props.color,
-            })
-              .then(() => invoke("get_data"))
-              .then((data) => {
-                props.setData(data);
-                props.setColor(data.tree?.color === "Black" ? "White" : "Black");
-                setGhost(null);
+              invoke("set_stone", {
+                i: w[0] + 1,
+                j: w[1] + 1,
+                color: props.colorMode === "Delete" ? undefined : props.color,
               })
-              .catch((e) => {
-                setGhost(null);
-              });
-              
+                .then(() => invoke("get_data"))
+                .then((data) => {
+                  props.setData(data);
+                  if (props.colorMode === "BlackWhite") {
+                    props.setColor(props.color === "Black" ? "White" : "Black");
+                  }
+                })
+                .catch((e) => {
+                  console.log(e);
+                });
+            } else {
+              // assume initialized for now
+              invoke("play", {
+                loc: [w[0] + 1, w[1] + 1],
+                color: props.color,
+              })
+                .then(() => invoke("get_data"))
+                .then((data) => {
+                  props.setData(data);
+                  props.setColor(
+                    data.tree?.color === "Black" ? "White" : "Black",
+                  );
+                  setGhost(null);
+                })
+                .catch((e) => {
+                  setGhost(null);
+                });
             }
-
-          }}
-          onMouseMove={(e) => {
-            const w = get_coord(e);
-            if (w === null && ghost === null) {
-              return;
-            }
-            if (
-              w !== null &&
-              ghost !== null &&
-              w[0] === ghost[0] &&
-              w[1] === ghost[1]
-            ) {
-              return;
-            }
-            setGhost(w);
           }}
           onMouseLeave={() => {
             setGhost(null);
+            setMouseDown(false);
           }}
         >
           <defs>

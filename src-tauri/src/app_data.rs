@@ -2,7 +2,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::color::Color;
 use crate::go_rules::place_stone;
-use crate::move_tree::{MoveTree, TreeData};
+use crate::move_tree::{Variant, Move, MoveTree, TreeData};
 
 #[derive(Clone, Copy, Serialize, Deserialize, Default, Debug)]
 pub struct GameState {
@@ -62,12 +62,18 @@ impl AppData {
     }
 
     pub fn initialize_tree(&mut self, color: Color) -> bool {
+        self.game.captures = (0, 0);
+        self.game.ko = None;
         if self.tree_data.is_none() {
             self.tree_data = Some(TreeData {
                 move_tree: MoveTree {
                     initial: self.game,
-                    initial_color: color,
-                    table: vec![vec![None]],
+                    table: vec![vec![Some(Move {
+                        loc: None,
+                        color: color,
+                        comment: String::new(),
+                        variant: Variant::None,
+                    })]],
                 },
                 row: 0,
                 col: 0,
@@ -77,4 +83,34 @@ impl AppData {
             false
         }
     }
+
+    pub fn collapse_tree(&mut self) -> bool {
+        if self.tree_data.is_none() {
+            false
+        } else {
+            self.game.captures = (0, 0);
+            self.game.ko = None;
+            self.tree_data = None;
+            true
+        }
+    }
+
+    // caller will account for border themselves. values inclusive
+    pub fn clear_to(&mut self, rows: (usize, usize), cols: (usize, usize)) -> bool {
+        let (row_start, row_end) = rows;
+        let (col_start, col_end) = cols;
+        if self.tree_data.is_some() {
+            false
+        } else {
+            for i in 0..21 {
+                for j in 0..21 {
+                    if i > row_end || i < row_start || j < col_start || j > col_end {
+                        self.game.stones[i][j] = None;
+                    }
+                }
+            }
+            true
+        }
+    }
+
 }

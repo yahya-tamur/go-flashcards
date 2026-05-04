@@ -10,18 +10,92 @@ import "./App.css";
 import Button from "@mui/material/Button";
 import Box from "@mui/material/Box";
 import Paper from "@mui/material/Paper";
+import { useTheme } from "@mui/material/styles";
 
 const Tree = (props) => {
   const svgNS = "http://www.w3.org/2000/svg";
   const treecontainer = useRef(null);
   const treeBox = useRef(null);
-  const [tableWidth, setTableWidth] = useState(0);
-  const [tableHeight, setTableHeight] = useState(0);
+  const [tableWidth, setTableWidth] = useState(100);
+  const [tableHeight, setTableHeight] = useState(100);
 
-  const square_size = 40;
-  const hl_size = 50;
+  const theme = useTheme();
+  const square_size = 35;
+  const hl_radius = 25;
+  const variant_square_diff = 3;
   const gap_size = 50;
   const margin = 20;
+
+  useEffect(() => {
+    const handle_key = (e) => {
+      console.log("handling key");
+      if (/INPUT|TEXTAREA|SELECT/.test(event.target.tagName)) {
+        return;
+      }
+      console.log("not input");
+      console.log(props.data);
+      if (
+        props.data === undefined ||
+        props.data.tree === undefined ||
+        props.data.tree === null
+      ) {
+        return;
+      }
+      console.log("tree is real");
+      let [r, c] = [props.data.tree.row, props.data.tree.col];
+      if (e.key === "ArrowRight") {
+        c += 1;
+      } else if (e.key === "ArrowUp") {
+        r -= 1;
+        while (
+          r > 0 &&
+          (props.data.tree.table[r][c] === null ||
+            props.data.tree.table[r][c] === undefined)
+        ) {
+          r -= 1;
+        }
+      } else if (e.key === "ArrowDown") {
+        r += 1;
+        while (
+          r < props.data.tree.table.length - 1 &&
+          (props.data.tree.table[r][c] === null ||
+            props.data.tree.table[r][c] === undefined)
+        ) {
+          r += 1;
+        }
+      } else if (e.key === "ArrowLeft") {
+        c -= 1;
+        while (r > 0 && props.data.tree.table[r][c] === null) {
+          r -= 1;
+        }
+      }
+      console.log("new:", r, c);
+      if (
+        props.data.tree.table[r] !== undefined &&
+        props.data.tree.table[r][c] !== null &&
+        props.data.tree.table[r][c] !== undefined
+      ) {
+        invoke("jump", { r: r, c: c })
+          .then(() => invoke("get_data"))
+          .then((data) => {
+            props.setData(data);
+            props.setColor(data.tree?.color === "Black" ? "White" : "Black");
+          })
+          .catch((e) => {
+            console.log(e);
+          });
+      }
+
+      props.data?.tree?.col;
+      console.log(e.key);
+    };
+
+    window.addEventListener("keydown", handle_key);
+
+    return () => {
+      window.removeEventListener("keydown", handle_key);
+    };
+  }, [props.data]);
 
   const get_coord = (e) => {
     // coord in viewBox
@@ -50,7 +124,13 @@ const Tree = (props) => {
   };
 
   useEffect(() => {
-    if (treecontainer.current === null || props.data === null || props.data.tree === null) {
+    if (
+      treecontainer.current === null ||
+      props.data === null ||
+      props.data === undefined ||
+      props.data.tree === undefined ||
+      props.data.tree === null
+    ) {
       return;
     }
 
@@ -59,18 +139,6 @@ const Tree = (props) => {
     let num_rows = table.length;
     setTableWidth(2 * margin + gap_size * (num_columns - 1) + square_size);
     setTableHeight(2 * margin + gap_size * (num_rows - 1) + square_size);
-    createSVGElement(
-      "circle",
-      {
-        cx: margin + gap_size * props.data?.tree?.col + square_size / 2,
-        cy: margin + gap_size * props.data?.tree?.row + square_size / 2,
-        r: hl_size / 2,
-        stroke: "none",
-        strokeWidth: "0",
-        fill: "green",
-      },
-      treecontainer.current,
-    );
 
     createSVGElement(
       "circle",
@@ -138,9 +206,58 @@ const Tree = (props) => {
       // draw_line(r, c, r_, c_);
     }
 
+    console.log(theme.palette);
+    // draw each node
     table.forEach((line, r) => {
       line.forEach((mov, c) => {
         if (mov === null) {
+          return;
+        }
+        createSVGElement(
+          "rect",
+          {
+            x:
+              margin +
+              gap_size * c -
+              (gap_size - square_size) / 2 +
+              variant_square_diff,
+            y:
+              margin +
+              gap_size * r -
+              (gap_size - square_size) / 2 +
+              variant_square_diff,
+            width: gap_size - variant_square_diff * 2,
+            height: gap_size - variant_square_diff * 2,
+            stroke: "none",
+            strokeWidth: "0",
+            fill:
+              mov.variant === "Correct"
+                ? theme.palette.success.dark
+                : mov.variant === "Incorrect"
+                  ? theme.palette.error.dark
+                  : "none",
+          },
+          treecontainer.current,
+        );
+      });
+    });
+
+    createSVGElement(
+      "circle",
+      {
+        cx: margin + gap_size * props.data?.tree?.col + square_size / 2,
+        cy: margin + gap_size * props.data?.tree?.row + square_size / 2,
+        r: hl_radius,
+        stroke: "black",
+        "stroke-width": 2,
+        fill: theme.palette.primary.main,
+        opacity: 0.8,
+      },
+      treecontainer.current,
+    );
+    table.forEach((line, r) => {
+      line.forEach((mov, c) => {
+        if (mov === null || (r === 0 && c === 0)) {
           return;
         }
         createSVGElement(
@@ -197,36 +314,49 @@ const Tree = (props) => {
       elevation={5}
       ref={treeBox}
     >
-      <svg
-        viewBox={`0 0 ${tableWidth} ${tableHeight}`}
-        style={{ width: `${tableWidth}px`, height: `${tableHeight}px` }}
-        onClick={(e) => {
-          const w = get_coord(e);
-          if (w === null) {
-            return;
-          }
-          let [c, r] = w;
-          if (r >= props.data?.tree?.table.length || c >= props.data?.tree?.table[r].length) {
-            return;
-          }
-          if ((r !== 0 || c !== 0) && props.data?.tree?.table[r][c] === null) {
-            return;
-          }
-          if (r < props.data?.tree?.table.length && c < props.data?.tree?.table[r].length) {
-            invoke("jump", { r: r, c: c })
-              .then(() => invoke("get_data"))
-              .then((data) => {
-                props.setData(data);
-                props.setColor(data.tree?.color === "Black" ? "White" : "Black");
-              })
-              .catch((e) => {
-                console.log(e);
-              });
-          }
-        }}
-      >
-        <g ref={treecontainer} />
-      </svg>
+      {
+        <svg
+          viewBox={`0 0 ${tableWidth} ${tableHeight}`}
+          style={{
+            width: `${tableWidth}px`,
+            height: `${tableHeight}px`,
+          }}
+          onClick={(e) => {
+            const w = get_coord(e);
+            if (w === null) {
+              return;
+            }
+            let [c, r] = w;
+            if (
+              r >= props.data?.tree?.table.length ||
+              c >= props.data?.tree?.table[r].length
+            ) {
+              return;
+            }
+            if (props.data?.tree?.table[r][c] === null) {
+              return;
+            }
+            if (
+              r < props.data?.tree?.table.length &&
+              c < props.data?.tree?.table[r].length
+            ) {
+              invoke("jump", { r: r, c: c })
+                .then(() => invoke("get_data"))
+                .then((data) => {
+                  props.setData(data);
+                  props.setColor(
+                    data.tree?.color === "Black" ? "White" : "Black",
+                  );
+                })
+                .catch((e) => {
+                  console.log(e);
+                });
+            }
+          }}
+        >
+          <g ref={treecontainer} />
+        </svg>
+      }
     </Paper>
   );
 };

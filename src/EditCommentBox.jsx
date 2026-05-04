@@ -1,0 +1,61 @@
+import { useEffect, useState, useRef } from "react";
+import board_image from "./assets/oak.jpg";
+import black_image from "./assets/black_night.png";
+import white_image from "./assets/white_anime.png";
+import { invoke } from "@tauri-apps/api/core";
+import { createSVGElement } from "./utils";
+
+import "./App.css";
+
+import Button from "@mui/material/Button";
+import Paper from "@mui/material/Paper";
+import Box from "@mui/material/Box";
+import TextField from "@mui/material/TextField";
+import Slider from "@mui/material/Slider";
+import ClearIcon from "@mui/icons-material/Clear";
+
+import { Avatar, Icon, IconButton, SvgIcon } from "@mui/material";
+import { createSvgIcon } from "@mui/material/utils";
+
+const EditCommentBox = (props) => {
+  const [comment, setComment] = useState("");
+  //  useEffect(
+  //    setComment(props.data?.tree?.comment)
+  //
+  //  , [props.data])
+  return (
+    <Paper
+      sx={{
+        height: "100%",
+        minHeight: 0,
+        width: "100%",
+        maxWidth: "100%",
+        display: "flex",
+        flexDirection: "column",
+        overflow: "scroll",
+        justifyContent: "space-around",
+      }}
+      elevation={10}
+    >
+      <TextField
+        placeholder="Comment"
+        multiline
+        value={props.data?.tree?.comment ?? ""}
+        onChange={(e) => {
+          invoke("comment", {
+            comment: e.target.value,
+          })
+            .then(() => invoke("get_data"))
+            .then((data) => {
+              props.setData(data);
+            });
+          console.log(e.target.value);
+          console.log(props.data?.tree?.comment);
+        }}
+        sx={{ display: "flex", flexGrow: 1 }}
+        slotProps={{ input: { sx: { height: "100%", alignItems: "start" } } }}
+      />
+    </Paper>
+  );
+};
+export default EditCommentBox;
