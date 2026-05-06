@@ -5,10 +5,28 @@ Small things:
   - Sliders during tree phase (but limited)
   - transform exercises. In comments, moves marked like {S1} also get transformed.
   - save width in movetree
+  - captures?
+  - timer?
+  - sounds? custom visuals?
+  - initialize with app data
+  
+  - advanced config.
+    - custom art per flashcard set.
+    - custom letters, numbers.
+    - randomize color?
+    - randomize orientation?
+    - history length
+    - what problems to see
+    - board color. Theme.
+    - sources: multiple, shared.
+
 
 Big Things:
-  - config
-  - study mode
+  - main menu / config mode
+  - very basic study mode. Just says 'correct', 'incorrect', then 'next'.
+    No history. No edits. Yes random exercises from backend.
+  - edit file in study mode.
+  - basic history file in study mode.
   
 -------------------------------------
 
