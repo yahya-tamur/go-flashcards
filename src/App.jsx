@@ -30,13 +30,21 @@ theme = createTheme(theme, {
         },
       },
     },
+    MuiFormLabel: {
+      styleOverrides: {
+        root: {
+          "&.Mui-focused": {
+            color: theme.palette.primary.contrastText,
+          },
+        },
+      },
+    },
   },
 });
 
 function App() {
   // Initialize, EditTree, (later), Study, Config
   const [phase, setPhase] = useState("Initialize");
-  const [keyPress, setKeyPress] = useState("");
   const [colorMode, setColorMode] = useState("Black");
   const [data, setData] = useState(null);
   const [horizontalBound, setHorizontalBound] = useState([0, 18]);
@@ -55,8 +63,9 @@ function App() {
 
   useEffect(() => {
     const load_board = async () => {
-      //invoke("initialize_tree", { stone: "White" })
-      invoke("get_data")
+      invoke("edit_new")
+        .then(() => invoke("start_setup"))
+        .then(() => invoke("get_data"))
         .then((data) => setData(data))
         .catch((e) => {}); // sometimes tries to initialize multiple times
     };
@@ -115,6 +124,7 @@ function App() {
                 data={data}
                 setData={setData}
                 setColorMode={setColorMode}
+                setColor={setColor}
                 setPhase={setPhase}
               />
             ) : (

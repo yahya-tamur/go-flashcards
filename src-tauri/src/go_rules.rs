@@ -1,4 +1,25 @@
-use crate::{other_color, Color, GameState};
+use serde::{Deserialize, Serialize};
+
+#[derive(Clone, Copy, PartialEq, Eq, Debug, Serialize, Deserialize)]
+#[repr(u8)]
+pub enum Color {
+    Black = 0,
+    White = 1,
+}
+
+pub fn other_color(c: Color) -> Color {
+    match c {
+        Color::Black => Color::White,
+        Color::White => Color::Black,
+    }
+}
+
+#[derive(Clone, Copy, Serialize, Deserialize, Default, Debug)]
+pub struct GameState {
+    pub stones: [[Option<Color>; 21]; 21],
+    pub captures: (usize, usize),
+    pub ko: Option<(usize, usize)>,
+}
 
 fn try_capture(
     board: &[[Option<Color>; 21]; 21],

@@ -162,7 +162,7 @@ const InitializeMenu = (props) => {
         <Button
           variant="contained"
           onClick={async () => {
-            invoke("initialize_tree", {
+            invoke("finish_setup", {
               color: props.color === "Black" ? "White" : "Black",
             })
               .then(() => invoke("get_data"))
@@ -174,7 +174,7 @@ const InitializeMenu = (props) => {
               });
           }}
         >
-          Start Tree
+          Start
         </Button>
       </Box>
 

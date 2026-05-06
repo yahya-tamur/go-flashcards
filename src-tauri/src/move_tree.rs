@@ -1,8 +1,6 @@
-use crate::app_data::GameState;
-use crate::color::Color;
-use crate::go_rules::place_stone;
+use crate::go_rules::{place_stone, Color, GameState};
 use serde::{Deserialize, Serialize};
-
+use uuid::Uuid;
 
 #[derive(Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Debug)]
 #[repr(u8)]
@@ -24,53 +22,9 @@ pub struct Move {
 // this struct is designed to be serialized and written to file.
 #[derive(Clone, Serialize, Deserialize, Debug)]
 pub struct MoveTree {
+    pub id: Uuid,
     pub initial: GameState,
     pub table: Vec<Vec<Option<Move>>>,
-}
-
-// MoveTree + location information
-#[derive(Debug)]
-pub struct TreeData {
-    pub move_tree: MoveTree,
-    pub row: usize,
-    pub col: usize,
-}
-
-impl TreeData {
-    pub fn step(&mut self, loc: Option<(usize, usize)>, color: Color) {
-        (self.row, self.col) = self.move_tree.step(self.row, self.col, loc, color);
-    }
-
-    pub fn color(&self) -> Result<Color, String> {
-        self.move_tree.table[self.row][self.col]
-            .as_ref()
-            .map(|a| a.color)
-            .ok_or("error".to_string())
-
-    }
-
-    pub fn comment(&self) -> Result<String, String> {
-        self.move_tree.table[self.row][self.col]
-            .as_ref()
-            .map(|a| a.comment.clone())
-            .ok_or("error".to_string())
-    }
-
-    pub fn set_comment(&mut self, comment: String) -> Result<(), String> {
-        self.move_tree.table[self.row][self.col].as_mut().map(|mov| {mov.comment = comment;}).ok_or("error".to_string())
-    }
-
-    pub fn mark(&self) -> Result<Variant, String> {
-        self.move_tree.table[self.row][self.col]
-            .as_ref()
-            .map(|a| a.variant)
-            .ok_or("error".to_string())
-    }
-
-    pub fn set_mark(&mut self, variant: Variant) -> Result<(), String> {
-        println!("{:?}", variant);
-        self.move_tree.table[self.row][self.col].as_mut().map(|mov| {mov.variant = variant;}).ok_or("error".to_string())
-    }
 }
 
 impl MoveTree {

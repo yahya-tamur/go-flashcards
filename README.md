@@ -1,6 +1,21 @@
+
+Small things:
+  - pass button
+  - Markings on board during setup
+  - Sliders during tree phase (but limited)
+  - transform exercises. In comments, moves marked like {S1} also get transformed.
+  - save width in movetree
+
+Big Things:
+  - config
+  - study mode
+  
+-------------------------------------
+
 Partial Board implementation complete!!
 
 Try not to work on this until week end! => try to finish as soon as possible to move on
+
 
 To Do next:
 
