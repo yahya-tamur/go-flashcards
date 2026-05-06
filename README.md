@@ -9,6 +9,7 @@ Small things:
   - timer?
   - sounds? custom visuals?
   - initialize with app data
+  - syntax highlighting, error reporting for config.
   
   - advanced config.
     - custom art per flashcard set.

@@ -1,11 +1,11 @@
 // refactor later I guess
 
 pub mod app_data;
+pub mod config_parser;
 pub mod editing_data;
 pub mod fs;
 pub mod go_rules;
 pub mod move_tree;
-//pub mod tree_data;
 
 use tauri::{Builder, Manager};
 
