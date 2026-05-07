@@ -1,11 +1,12 @@
 use crate::editing_data::EditingData;
+use crate::config::Config;
 
 #[allow(clippy::large_enum_variant)]
 #[derive(Default, Debug)]
 pub enum AppData {
     Editing(EditingData),
+    Config(Config),
     #[default]
-    Config,
     Study,
 }
 

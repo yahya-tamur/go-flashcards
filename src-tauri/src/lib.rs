@@ -1,7 +1,7 @@
 // refactor later I guess
 
 pub mod app_data;
-pub mod config_parser;
+pub mod config;
 pub mod editing_data;
 pub mod fs;
 pub mod go_rules;
@@ -263,6 +263,46 @@ async fn load(
     }
 }
 
+use crate::config::read_toml;
+
+#[tauri::command]
+async fn get_config(app: tauri::AppHandle) -> Result<String, String> {
+    fs::load_config(&app.path().app_data_dir().unwrap()).await.map_err(|err| {
+        println!("{:?}", err);
+        "aa".to_string()
+    })
+
+}
+
+#[tauri::command]
+async fn set_config(
+    app: tauri::AppHandle,
+    config: String,
+) -> Result<(), (String, usize, usize)> {
+    match read_toml(&config) {
+        Ok(_config_obj) => {
+            crate::fs::save_config(&app.path().app_data_dir().unwrap(), &config).await.unwrap();
+            println!("{:?}", config);
+        Ok(())
+        },
+        Err(error) => Err(error)
+    }   
+}
+
+#[tauri::command]
+async fn list_exercises(
+    app:tauri::AppHandle
+) -> Result<Vec<String>, String> {
+    match fs::list_exercises(&app.path().app_data_dir().unwrap()).await {
+        Ok(v) => Ok(v),
+        Err(e) => {
+            println!("{:?}", e);
+            Err("aa".to_string())
+        }
+    }
+
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     Builder::default()
@@ -288,7 +328,10 @@ pub fn run() {
             edit_new,
             jump_to_exercise,
             save,
-            load
+            load,
+            get_config,
+            set_config,
+            list_exercises,
         ])
         .run(tauri::generate_context!())
         .unwrap();

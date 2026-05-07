@@ -1,17 +1,23 @@
 
 Small things:
-  - pass button
-  - Markings on board during setup
-  - Sliders during tree phase (but limited)
-  - transform exercises. In comments, moves marked like {S1} also get transformed.
-  - save width in movetree
-  - captures?
-  - timer?
-  - sounds? custom visuals?
-  - initialize with app data
-  - syntax highlighting, error reporting for config.
+  - Yes, right away:
+    - save width in movetree
+    - pass button
+    - Markings on board during setup
+    - Sliders during tree phase (but limited)
   
-  - advanced config.
+  - Nice project. Do eventually. 
+    - play moves automatically
+    - transform exercises. In comments, moves marked like {S1} also get transformed.
+    - captures? nicer menus at least
+
+  - consider
+    - timer?
+    - sounds? custom visuals?
+    - initialize with app data
+  
+  
+   - advanced config.
     - custom art per flashcard set.
     - custom letters, numbers.
     - randomize color?
@@ -24,6 +30,11 @@ Small things:
 
 Big Things:
   - main menu / config mode
+    - almost done!!
+      - make list of files in MainMenu. Make new file button. Delete file button?
+      - Make load exercises load from file. Same with save exercises.
+      - One fileInEditing useState for both
+      - make editconfig just slightly nicer
   - very basic study mode. Just says 'correct', 'incorrect', then 'next'.
     No history. No edits. Yes random exercises from backend.
   - edit file in study mode.

@@ -1,5 +1,5 @@
 use flate2::{read::GzDecoder, write::GzEncoder, Compression};
-use std::{io::Result, path::Path};
+use std::{io::Result, path::Path, time::SystemTime};
 use tokio::fs;
 
 use serde_json;
@@ -51,3 +51,43 @@ pub async fn load_exercises(app_data: &Path) -> Result<Vec<MoveTree>> {
 
     Ok(ans)
 }
+
+pub async fn save_config(app_data: &Path, s: &str) -> Result<()> {
+    fs::write(
+        app_data
+            .join("app_data")
+            .join("config.toml"),
+        s,
+    ).await
+}
+
+pub async fn load_config(app_data: &Path) -> Result<String> {
+    fs::read_to_string(
+        app_data
+            .join("app_data")
+            .join("config.toml"),
+    ).await
+}
+
+
+use std::cmp::Reverse;
+
+// returns list of exercises in order of most recently modified
+pub async fn list_exercises(app_data: &Path) -> Result<Vec<String>> {
+    let mut v : Vec::<(String, SystemTime)> = Vec::new();
+
+    let mut entries = fs::read_dir(app_data.join("app_data").join("exercises")).await?;
+
+    while let Some(entry) = entries.next_entry().await? {
+        v.push((entry.path().file_prefix().unwrap().to_str().unwrap().to_string(), entry.metadata().await?.modified()?))
+    }
+    v.sort_by_key(|(_a, b) | Reverse(b.clone()));
+    
+    Ok(v.into_iter().map(|(a, _b)| a).collect())
+}
+
+//pub async fn load_config(app_data: &Path) -> Result<Config> {
+//
+//}
+
+//pub async fn get_config()
