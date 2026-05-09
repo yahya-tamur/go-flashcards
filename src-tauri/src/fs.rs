@@ -22,7 +22,11 @@ pub async fn create_directory_structure(app_data: &Path) -> Result<()> {
     Ok(())
 }
 
-pub async fn save_exercises(app_data: &Path, vec: &Vec<MoveTree>) -> Result<()> {
+pub async fn save_exercises(
+    app_data: &Path,
+    vec: &Vec<MoveTree>,
+    exercise_file: &str,
+) -> Result<()> {
     create_directory_structure(app_data).await?;
     let mut gz = GzEncoder::new(Vec::new(), Compression::best());
     serde_json::to_writer(&mut gz, &vec)?;
@@ -30,59 +34,94 @@ pub async fn save_exercises(app_data: &Path, vec: &Vec<MoveTree>) -> Result<()> 
         app_data
             .join("app_data")
             .join("exercises")
-            .join("test.json.gz"),
+            .join(exercise_file.to_owned() + ".json.gz"),
         gz.finish()?,
     )
     .await?;
     Ok(())
 }
 
-pub async fn load_exercises(app_data: &Path) -> Result<Vec<MoveTree>> {
-    let compressed = fs::read(
-        app_data
-            .join("app_data")
-            .join("exercises")
-            .join("test.json.gz"),
-    )
-    .await?;
+pub async fn load_exercises(app_data: &Path, exercise_file: &str) -> Result<Vec<MoveTree>> {
+    let file = app_data
+        .join("app_data")
+        .join("exercises")
+        .join(exercise_file.to_owned() + ".json.gz");
 
-    let gz = GzDecoder::new(&compressed[..]);
-    let ans = serde_json::from_reader(gz)?;
+    if file.exists() {
+        let compressed = fs::read(file).await?;
 
-    Ok(ans)
+        let gz = GzDecoder::new(&compressed[..]);
+        let ans = serde_json::from_reader(gz)?;
+        Ok(ans)
+    } else {
+        Ok(Vec::new())
+    }
 }
 
-pub async fn save_config(app_data: &Path, s: &str) -> Result<()> {
+use crate::study_data::History;
+
+pub async fn load_history(app_data: &Path, exercise_file: &str) -> Result<Vec<History>> {
+    let file = app_data
+        .join("app_data")
+        .join("history")
+        .join(exercise_file.to_owned() + ".json.gz");
+
+    if file.exists() {
+        let compressed = fs::read(file).await?;
+
+        let gz = GzDecoder::new(&compressed[..]);
+        let ans = serde_json::from_reader(gz)?;
+        Ok(ans)
+    } else {
+        Ok(Vec::new())
+    }
+}
+
+pub async fn save_history(app_data: &Path, vec: &Vec<History>, exercise_file: &str) -> Result<()> {
+    create_directory_structure(app_data).await?;
+    let mut gz = GzEncoder::new(Vec::new(), Compression::best());
+    serde_json::to_writer(&mut gz, &vec)?;
     fs::write(
         app_data
             .join("app_data")
-            .join("config.toml"),
-        s,
-    ).await
+            .join("history")
+            .join(exercise_file.to_owned() + ".json.gz"),
+        gz.finish()?,
+    )
+    .await?;
+    Ok(())
+}
+
+pub async fn save_config(app_data: &Path, s: &str) -> Result<()> {
+    fs::write(app_data.join("app_data").join("config.toml"), s).await
 }
 
 pub async fn load_config(app_data: &Path) -> Result<String> {
-    fs::read_to_string(
-        app_data
-            .join("app_data")
-            .join("config.toml"),
-    ).await
+    fs::read_to_string(app_data.join("app_data").join("config.toml")).await
 }
-
 
 use std::cmp::Reverse;
 
 // returns list of exercises in order of most recently modified
 pub async fn list_exercises(app_data: &Path) -> Result<Vec<String>> {
-    let mut v : Vec::<(String, SystemTime)> = Vec::new();
+    let mut v: Vec<(String, SystemTime)> = Vec::new();
 
     let mut entries = fs::read_dir(app_data.join("app_data").join("exercises")).await?;
 
     while let Some(entry) = entries.next_entry().await? {
-        v.push((entry.path().file_prefix().unwrap().to_str().unwrap().to_string(), entry.metadata().await?.modified()?))
+        v.push((
+            entry
+                .path()
+                .file_prefix()
+                .unwrap()
+                .to_str()
+                .unwrap()
+                .to_string(),
+            entry.metadata().await?.modified()?,
+        ))
     }
-    v.sort_by_key(|(_a, b) | Reverse(b.clone()));
-    
+    v.sort_by_key(|(_a, b)| Reverse(*b));
+
     Ok(v.into_iter().map(|(a, _b)| a).collect())
 }
 

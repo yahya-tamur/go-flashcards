@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useContext } from "react";
 import board_image from "./assets/oak.jpg";
 import black_image from "./assets/black_night.png";
 import white_image from "./assets/white_anime.png";
@@ -17,7 +17,10 @@ import ToggleButtonGroup from "@mui/material/ToggleButtonGroup";
 
 import { createSvgIcon } from "@mui/material/utils";
 
-const InitializeMenu = (props) => {
+import AppContext from "./AppContext";
+
+export default (props) => {
+  let context = useContext(AppContext);
   const button_size = 70;
   return (
     <Paper
@@ -44,19 +47,18 @@ const InitializeMenu = (props) => {
         }}
       >
         <Slider
-          value={props.horizontalBound}
+          value={context.data?.game.window.slice(0, 2) ?? [0, 18]}
           marks
           onChange={(event, newValue) => {
-            props.setHorizontalBound(newValue);
+            //to DO: INvoke SetWindow
             let [row_start, row_end] = newValue;
-            let [col_start, col_end] = props.verticalBound;
-            invoke("clear_to", {
-              rows: [row_start + 1, row_end + 1],
-              cols: [col_start + 1, col_end + 1],
+            let [col_start, col_end] = context.data?.game.window.slice(2, 4);
+            invoke("set_window", {
+              window: [row_start, row_end, col_start, col_end],
             })
               .then(() => invoke("get_data"))
               .then((data) => {
-                props.setData(data);
+                context.setData(data);
               })
               .catch((e) => {
                 console.log("error");
@@ -68,20 +70,18 @@ const InitializeMenu = (props) => {
           sx={{ margin: "5px 30px", width: "calc(100% - 60px)" }}
         />
         <Slider
-          value={props.verticalBound}
+          value={context.data?.game.window.slice(2, 4) ?? [0, 18]}
           marks
           onChange={(event, newValue) => {
-            props.setVerticalBound(newValue);
-            let [row_start, row_end] = props.horizontalBound;
+            let [row_start, row_end] = context.data?.game.window.slice(0, 2);
             let [col_start, col_end] = newValue;
 
-            invoke("clear_to", {
-              rows: [row_start + 1, row_end + 1],
-              cols: [col_start + 1, col_end + 1],
+            invoke("set_window", {
+              window: [row_start, row_end, col_start, col_end],
             })
               .then(() => invoke("get_data"))
               .then((data) => {
-                props.setData(data);
+                context.setData(data);
               })
               .catch((e) => {
                 console.log("error");
@@ -103,13 +103,13 @@ const InitializeMenu = (props) => {
         }}
       >
         <ToggleButtonGroup
-          value={props.colorMode}
+          value={context.colorMode}
           exclusive
           size="small"
           onChange={(e, newValue) => {
-            props.setColorMode(newValue);
+            context.setColorMode(newValue);
             if (newValue === "Black" || newValue === "White") {
-              props.setColor(newValue);
+              context.setColor(newValue);
             }
           }}
         >
@@ -163,14 +163,13 @@ const InitializeMenu = (props) => {
           variant="contained"
           onClick={async () => {
             invoke("finish_setup", {
-              color: props.color === "Black" ? "White" : "Black",
+              color: context.color === "Black" ? "White" : "Black",
             })
               .then(() => invoke("get_data"))
               .then((data) => {
-                props.setData(data);
-                props.setColorMode(props.color);
-                props.setPhase("MakeTree");
-                console.log("AAA");
+                context.setData(data);
+                context.setColorMode(context.color);
+                context.setEditingPhase("MakeTree");
               });
           }}
         >
@@ -182,5 +181,3 @@ const InitializeMenu = (props) => {
     </Paper>
   );
 };
-
-export default InitializeMenu;

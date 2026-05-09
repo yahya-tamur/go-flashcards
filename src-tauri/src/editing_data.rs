@@ -1,18 +1,21 @@
 use uuid::Uuid;
 
+use crate::fs;
 use crate::go_rules::{place_stone, Color, GameState};
 use crate::move_tree::{Move, MoveTree, Variant};
+
+use std::path::Path;
 
 // setup phase:
 // tree_loc is None,
 // call place_stone to set up game.
 // tree phase:
 // call play to play move.
-#[derive(Default, Debug)]
+#[derive(Debug)]
 pub struct EditingData {
     pub game: GameState,
     pub tree_loc: Option<(usize, usize)>,
-    pub exercises: Vec<MoveTree>,
+    exercises: Vec<MoveTree>,
     // should this also be an option?
     pub current_exercise: usize,
 }
@@ -42,7 +45,7 @@ impl EditingData {
                 }
             }
             self.tree_loc =
-                Some(self.exercises[self.current_exercise].step(row, column, loc, color));
+                Some(self.exercises[self.current_exercise].step(row, column, loc, color, false));
             true
         } else {
             false
@@ -107,16 +110,20 @@ impl EditingData {
         }
     }
 
-    // caller will account for border themselves. values inclusive
-    pub fn clear_to(&mut self, rows: (usize, usize), cols: (usize, usize)) -> bool {
+    // caller will NOT account for border themselves. values inclusive
+    pub fn clear_to(&mut self, window: (usize, usize, usize, usize)) -> bool {
+        // this is checked twice then!:
         if self.tree_loc.is_some() {
             false
         } else {
-            let (row_start, row_end) = rows;
-            let (col_start, col_end) = cols;
+            let (row_start, row_end, col_start, col_end) = window;
             for i in 0..21 {
                 for j in 0..21 {
-                    if i > row_end || i < row_start || j < col_start || j > col_end {
+                    if i > (row_end + 1)
+                        || i < (row_start + 1)
+                        || j < (col_start + 1)
+                        || j > (col_end + 1)
+                    {
                         self.game.stones[i][j] = None;
                     }
                 }
@@ -145,5 +152,39 @@ impl EditingData {
             .get(row)?
             .get(col)?
             .as_ref()
+    }
+
+    pub fn location(&self) -> (usize, usize) {
+        (self.current_exercise, self.exercises.len())
+    }
+
+    pub async fn load(path: &Path, exercise_file: &str) -> EditingData {
+        let exercises = fs::load_exercises(path, exercise_file).await.unwrap();
+        if exercises.is_empty() {
+            EditingData {
+                game: GameState::default(),
+                tree_loc: None,
+                exercises,
+                current_exercise: 0,
+            }
+        } else {
+            let i = exercises.len() - 1;
+            EditingData {
+                game: exercises[i].initial,
+                tree_loc: Some((0, 0)),
+                exercises,
+                current_exercise: i,
+            }
+        }
+    }
+
+    pub fn get_table(&self) -> Vec<Vec<Option<Move>>> {
+        self.exercises[self.current_exercise].table.clone()
+    }
+
+    pub async fn save(&self, path: &Path, exercise_file: &str) {
+        fs::save_exercises(path, &self.exercises, exercise_file)
+            .await
+            .unwrap()
     }
 }

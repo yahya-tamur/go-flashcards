@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useContext } from "react";
 import board_image from "./assets/persimmon.jpg";
 import black_image from "./assets/black_night.png";
 import white_image from "./assets/white_anime.png";
@@ -12,7 +12,10 @@ import Box from "@mui/material/Box";
 import Paper from "@mui/material/Paper";
 import { useTheme } from "@mui/material/styles";
 
-const Tree = (props) => {
+import AppContext from "./AppContext";
+
+export default (props) => {
+  let context = useContext(AppContext);
   const svgNS = "http://www.w3.org/2000/svg";
   const treecontainer = useRef(null);
   const treeBox = useRef(null);
@@ -28,66 +31,58 @@ const Tree = (props) => {
 
   useEffect(() => {
     const handle_key = (e) => {
-      console.log("handling key");
       if (/INPUT|TEXTAREA|SELECT/.test(event.target.tagName)) {
         return;
       }
-      console.log("not input");
-      console.log(props.data);
       if (
-        props.data === undefined ||
-        props.data.tree === undefined ||
-        props.data.tree === null
+        context.data === undefined ||
+        context.data.tree === undefined ||
+        context.data.tree === null
       ) {
         return;
       }
-      console.log("tree is real");
-      let [r, c] = [props.data.tree.row, props.data.tree.col];
+      let [r, c] = [context.data.tree.row, context.data.tree.col];
       if (e.key === "ArrowRight") {
         c += 1;
       } else if (e.key === "ArrowUp") {
         r -= 1;
         while (
           r > 0 &&
-          (props.data.tree.table[r][c] === null ||
-            props.data.tree.table[r][c] === undefined)
+          (context.data.tree.table[r][c] === null ||
+            context.data.tree.table[r][c] === undefined)
         ) {
           r -= 1;
         }
       } else if (e.key === "ArrowDown") {
         r += 1;
         while (
-          r < props.data.tree.table.length - 1 &&
-          (props.data.tree.table[r][c] === null ||
-            props.data.tree.table[r][c] === undefined)
+          r < context.data.tree.table.length - 1 &&
+          (context.data.tree.table[r][c] === null ||
+            context.data.tree.table[r][c] === undefined)
         ) {
           r += 1;
         }
       } else if (e.key === "ArrowLeft") {
         c -= 1;
-        while (r > 0 && props.data.tree.table[r][c] === null) {
+        while (r > 0 && context.data.tree.table[r][c] === null) {
           r -= 1;
         }
       }
-      console.log("new:", r, c);
       if (
-        props.data.tree.table[r] !== undefined &&
-        props.data.tree.table[r][c] !== null &&
-        props.data.tree.table[r][c] !== undefined
+        context.data.tree.table[r] !== undefined &&
+        context.data.tree.table[r][c] !== null &&
+        context.data.tree.table[r][c] !== undefined
       ) {
         invoke("jump", { r: r, c: c })
           .then(() => invoke("get_data"))
           .then((data) => {
-            props.setData(data);
-            props.setColor(data.tree?.color === "Black" ? "White" : "Black");
+            context.setData(data);
+            context.setColor(data.tree?.color === "Black" ? "White" : "Black");
           })
           .catch((e) => {
             console.log(e);
           });
       }
-
-      props.data?.tree?.col;
-      console.log(e.key);
     };
 
     window.addEventListener("keydown", handle_key);
@@ -95,7 +90,7 @@ const Tree = (props) => {
     return () => {
       window.removeEventListener("keydown", handle_key);
     };
-  }, [props.data]);
+  }, [context.data]);
 
   const get_coord = (e) => {
     // coord in viewBox
@@ -126,15 +121,15 @@ const Tree = (props) => {
   useEffect(() => {
     if (
       treecontainer.current === null ||
-      props.data === null ||
-      props.data === undefined ||
-      props.data.tree === undefined ||
-      props.data.tree === null
+      context.data === null ||
+      context.data === undefined ||
+      context.data.tree === undefined ||
+      context.data.tree === null
     ) {
       return;
     }
 
-    let table = props.data.tree.table;
+    let table = context.data.tree.table;
     let num_columns = table.reduce((m, a) => (a.length > m ? a.length : m), 1);
     let num_rows = table.length;
     setTableWidth(2 * margin + gap_size * (num_columns - 1) + square_size);
@@ -206,8 +201,6 @@ const Tree = (props) => {
       // draw_line(r, c, r_, c_);
     }
 
-    console.log(theme.palette);
-    // draw each node
     table.forEach((line, r) => {
       line.forEach((mov, c) => {
         if (mov === null) {
@@ -245,8 +238,8 @@ const Tree = (props) => {
     createSVGElement(
       "circle",
       {
-        cx: margin + gap_size * props.data?.tree?.col + square_size / 2,
-        cy: margin + gap_size * props.data?.tree?.row + square_size / 2,
+        cx: margin + gap_size * context.data?.tree?.col + square_size / 2,
+        cy: margin + gap_size * context.data?.tree?.row + square_size / 2,
         r: hl_radius,
         stroke: "black",
         "stroke-width": 2,
@@ -301,7 +294,7 @@ const Tree = (props) => {
         treecontainer.current.replaceChildren();
       }
     };
-  }, [props.data, treecontainer]);
+  }, [context.data, treecontainer]);
 
   return (
     <Paper
@@ -328,23 +321,23 @@ const Tree = (props) => {
             }
             let [c, r] = w;
             if (
-              r >= props.data?.tree?.table.length ||
-              c >= props.data?.tree?.table[r].length
+              r >= context.data?.tree?.table.length ||
+              c >= context.data?.tree?.table[r].length
             ) {
               return;
             }
-            if (props.data?.tree?.table[r][c] === null) {
+            if (context.data?.tree?.table[r][c] === null) {
               return;
             }
             if (
-              r < props.data?.tree?.table.length &&
-              c < props.data?.tree?.table[r].length
+              r < context.data?.tree?.table.length &&
+              c < context.data?.tree?.table[r].length
             ) {
               invoke("jump", { r: r, c: c })
                 .then(() => invoke("get_data"))
                 .then((data) => {
-                  props.setData(data);
-                  props.setColor(
+                  context.setData(data);
+                  context.setColor(
                     data.tree?.color === "Black" ? "White" : "Black",
                   );
                 })
@@ -360,5 +353,3 @@ const Tree = (props) => {
     </Paper>
   );
 };
-
-export default Tree;

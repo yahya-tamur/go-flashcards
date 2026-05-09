@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useContext } from "react";
 import board_image from "./assets/oak.jpg";
 import black_image from "./assets/black_night.png";
 import white_image from "./assets/white_anime.png";
@@ -6,9 +6,13 @@ import mui_clear from "./assets/mui_clear.svg";
 import { invoke } from "@tauri-apps/api/core";
 import { createSVGElement } from "./utils";
 
-import Paper from "@mui/material/Paper";
+import AppContext from "./AppContext";
 
-const Board = (props) => {
+import Paper from "@mui/material/Paper";
+import { PasswordOutlined } from "@mui/icons-material";
+
+export default (props) => {
+  const context = useContext(AppContext);
   const board_svg = useRef(null);
   const ghostcontainer = useRef(null);
   const gridcontainer = useRef(null);
@@ -36,8 +40,9 @@ const Board = (props) => {
     i = (i - margin) / square_size;
     j = (j - margin) / square_size;
 
-    let [left, right] = props.horizontalBound;
-    let [top, bottom] = props.verticalBound;
+    let [left, right, top, bottom] = context.data?.game.window ?? [
+      0, 18, 0, 18,
+    ];
 
     // correction for partial boards
     i += left + (left > 0 ? -partial / square_size : 0);
@@ -51,8 +56,8 @@ const Board = (props) => {
       si <= right &&
       sj >= top &&
       sj <= bottom &&
-      (props.phase === "Initialize" ||
-        props.data?.game.stones[si + 1][sj + 1] === null) &&
+      (context.editingPhase === "Initialize" ||
+        context.data?.game.stones[si + 1][sj + 1] === null) &&
       (i - si) * (i - si) + (j - sj) * (j - sj) < 0.25
     ) {
       return [si, sj];
@@ -72,8 +77,9 @@ const Board = (props) => {
 
   // draws grid, background image, letters
   useEffect(() => {
-    let [left, right] = props.horizontalBound;
-    let [top, bottom] = props.verticalBound;
+    let [left, right, top, bottom] = context.data?.game.window ?? [
+      0, 18, 0, 18,
+    ];
 
     // Offset viewBox.
 
@@ -254,19 +260,20 @@ const Board = (props) => {
         gridcontainer.current.replaceChildren();
       }
     };
-  }, [gridcontainer, props.horizontalBound, props.verticalBound]);
+  }, [gridcontainer, context.data]);
 
   // draws circles
   useEffect(() => {
-    if (stonecontainer.current === null || props.data === null) {
+    if (stonecontainer.current === null || context.data === null) {
       return;
     }
-    let [left, right] = props.horizontalBound;
-    let [top, bottom] = props.verticalBound;
+    let [left, right, top, bottom] = context.data?.game.window ?? [
+      0, 18, 0, 18,
+    ];
 
     for (let i = left; i <= right; i++) {
       for (let j = top; j <= bottom; j++) {
-        const w = props.data?.game.stones[i + 1][j + 1];
+        const w = context.data?.game.stones[i + 1][j + 1];
 
         if (w === null) {
           continue;
@@ -289,7 +296,7 @@ const Board = (props) => {
         stonecontainer.current.replaceChildren();
       }
     };
-  }, [props.data, stonecontainer, props.horizontalBound, props.verticalBound]);
+  }, [context.data, stonecontainer]);
 
   // creates ghost
 
@@ -305,9 +312,9 @@ const Board = (props) => {
         width: square_size,
         height: square_size,
         href:
-          props.colorMode === "Delete"
+          context.colorMode === "Delete"
             ? mui_clear
-            : props.color === "Black"
+            : context.color === "Black"
               ? black_image
               : white_image,
         opacity: 0.6,
@@ -319,7 +326,7 @@ const Board = (props) => {
         ghostcontainer.current.replaceChildren();
       }
     };
-  }, [ghostcontainer, ghost, props.color]);
+  }, [ghostcontainer, ghost, context.color]);
 
   let size_ref = useRef([null, null]); // there's a relevant stackexchange for this
 
@@ -405,20 +412,24 @@ const Board = (props) => {
             if (
               mouseDown &&
               w !== null &&
-              props.phase === "Initialize" &&
-              props.data?.game.stones[w[0] + 1][w[1] + 1] !== props.colorMode &&
-              props.colorMode !== "BlackWhite"
+              context.editingPhase === "Initialize" &&
+              context.data?.game.stones[w[0] + 1][w[1] + 1] !==
+                context.colorMode &&
+              context.colorMode !== "BlackWhite"
             ) {
               invoke("set_stone", {
                 i: w[0] + 1,
                 j: w[1] + 1,
-                color: props.colorMode === "Delete" ? undefined : props.color,
+                color:
+                  context.colorMode === "Delete" ? undefined : context.color,
               })
                 .then(() => invoke("get_data"))
                 .then((data) => {
-                  props.setData(data);
-                  if (props.colorMode === "BlackWhite") {
-                    props.setColor(props.color === "Black" ? "White" : "Black");
+                  context.setData(data);
+                  if (context.colorMode === "BlackWhite") {
+                    context.setColor(
+                      context.color === "Black" ? "White" : "Black",
+                    );
                   }
                 })
                 .catch((e) => {
@@ -428,21 +439,24 @@ const Board = (props) => {
           }}
           onClick={async (e) => {
             const w = get_coord(e);
-            console.log(w);
             if (w === null) {
               return;
             }
-            if (props.phase === "Initialize") {
+            if (context.editingPhase === "Initialize") {
+              // yes, dragging is not enough.
               invoke("set_stone", {
                 i: w[0] + 1,
                 j: w[1] + 1,
-                color: props.colorMode === "Delete" ? undefined : props.color,
+                color:
+                  context.colorMode === "Delete" ? undefined : context.color,
               })
                 .then(() => invoke("get_data"))
                 .then((data) => {
-                  props.setData(data);
-                  if (props.colorMode === "BlackWhite") {
-                    props.setColor(props.color === "Black" ? "White" : "Black");
+                  context.setData(data);
+                  if (context.colorMode === "BlackWhite") {
+                    context.setColor(
+                      context.color === "Black" ? "White" : "Black",
+                    );
                   }
                 })
                 .catch((e) => {
@@ -452,12 +466,12 @@ const Board = (props) => {
               // assume initialized for now
               invoke("play", {
                 loc: [w[0] + 1, w[1] + 1],
-                color: props.color,
+                color: context.color,
               })
                 .then(() => invoke("get_data"))
                 .then((data) => {
-                  props.setData(data);
-                  props.setColor(
+                  context.setData(data);
+                  context.setColor(
                     data.tree?.color === "Black" ? "White" : "Black",
                   );
                   setGhost(null);
@@ -491,5 +505,3 @@ const Board = (props) => {
     </Paper>
   );
 };
-
-export default Board;

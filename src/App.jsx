@@ -2,14 +2,11 @@ import { useState, useEffect } from "react";
 
 import { invoke } from "@tauri-apps/api/core";
 
-import Board from "./Board.jsx";
-import Tree from "./Tree.jsx";
-import EditConfig from "./EditConfig.jsx";
-import InitializeMenu from "./InitializeMenu.jsx";
-import MakeTreeMenu from "./MakeTreeMenu.jsx";
-import EditCommentBox from "./EditCommentBox";
-import MainMenu from "./MainMenu";
 import "./App.css";
+
+import AppContext from "./AppContext";
+import MainScreen from "./MainScreen";
+import EditingScreen from "./EditingScreen";
 
 import Box from "@mui/material/Box";
 import { ThemeProvider, createTheme } from "@mui/material/styles";
@@ -45,16 +42,18 @@ theme = createTheme(theme, {
 });
 
 function App() {
-  // (Editing:) Initialize, EditTree,
+  // (Editing:) ,
   // Main = config / select exercise or flashcard screen
   // Config (Select Exercise / Flashcard)
-  //
+  // Main, Editing, Study.
   const [phase, setPhase] = useState("Main");
+  // Initialize, MakeTree
+  const [editingPhase, setEditingPhase] = useState("Initialize");
   const [colorMode, setColorMode] = useState("Black");
   const [data, setData] = useState(null);
-  const [horizontalBound, setHorizontalBound] = useState([0, 18]);
-  const [verticalBound, setVerticalBound] = useState([0, 18]);
   const [color, setColor] = useState("Black");
+
+  const [exerciseFile, setExerciseFile] = useState("");
 
   //still necessary?
   const swapColor = () => {
@@ -81,81 +80,24 @@ function App() {
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
-      <main style={{ display: "flex", flexDirection: "row" }}>
-        <Box sx={{ height: "100vh", flexBasis: "60%", minWidth: 0 }}>
-          {phase == "Main" ? (
-            <EditConfig />
-          ) : (
-            <Board
-              data={data}
-              setData={setData}
-              color={color}
-              setColor={setColor}
-              swapColor={swapColor}
-              horizontalBound={horizontalBound}
-              verticalBound={verticalBound}
-              setHorizontalBound={setHorizontalBound}
-              setVerticalBound={setVerticalBound}
-              phase={phase}
-              colorMode={colorMode}
-            />
-          )}
-        </Box>
-        <Box
-          sx={{
-            display: "flex",
-            flexBasis: "40%",
-            flexDirection: "column",
-            minWidth: 0,
-            maxHeight: "100vh",
-            overflow: "hidden",
-          }}
-        >
-          {phase === "Main" ? (
-            <MainMenu setPhase={setPhase} />
-          ) : (
-            <>
-              <Box sx={{ flexBasis: "40%", minHeight: 0 }}>
-                <Tree data={data} setData={setData} setColor={setColor} />
-              </Box>
-              <Box sx={{ flexBasis: "30%", minHeight: 0 }}>
-                {phase === "Initialize" ? (
-                  <InitializeMenu
-                    data={data}
-                    setData={setData}
-                    setPhase={setPhase}
-                    colorMode={colorMode}
-                    setColorMode={setColorMode}
-                    setColor={setColor}
-                    color={color}
-                    horizontalBound={horizontalBound}
-                    verticalBound={verticalBound}
-                    setHorizontalBound={setHorizontalBound}
-                    setVerticalBound={setVerticalBound}
-                  />
-                ) : phase === "MakeTree" ? (
-                  <MakeTreeMenu
-                    data={data}
-                    setData={setData}
-                    setColorMode={setColorMode}
-                    setColor={setColor}
-                    setPhase={setPhase}
-                  />
-                ) : (
-                  <Box> unknown phase? </Box>
-                )}
-              </Box>
-              <Box sx={{ flexBasis: "30%", minHeight: 0 }}>
-                {phase === "MakeTree" ? (
-                  <EditCommentBox data={data} setData={setData} />
-                ) : (
-                  <Box />
-                )}
-              </Box>
-            </>
-          )}
-        </Box>
-      </main>
+      <AppContext
+        value={{
+          phase,
+          setPhase,
+          editingPhase,
+          setEditingPhase,
+          colorMode,
+          setColorMode,
+          data,
+          setData,
+          color,
+          setColor,
+          exerciseFile,
+          setExerciseFile,
+        }}
+      >
+        {phase === "Main" ? <MainScreen /> : <EditingScreen />}
+      </AppContext>
     </ThemeProvider>
   );
 }

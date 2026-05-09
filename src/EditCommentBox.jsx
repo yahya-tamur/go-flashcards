@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useContext } from "react";
 import board_image from "./assets/oak.jpg";
 import black_image from "./assets/black_night.png";
 import white_image from "./assets/white_anime.png";
@@ -14,10 +14,13 @@ import TextField from "@mui/material/TextField";
 import Slider from "@mui/material/Slider";
 import ClearIcon from "@mui/icons-material/Clear";
 
+import AppContext from "./AppContext";
+
 import { Avatar, Icon, IconButton, SvgIcon } from "@mui/material";
 import { createSvgIcon } from "@mui/material/utils";
 
-const EditCommentBox = (props) => {
+export default (props) => {
+  let context = useContext(AppContext);
   const [comment, setComment] = useState("");
   //  useEffect(
   //    setComment(props.data?.tree?.comment)
@@ -40,17 +43,16 @@ const EditCommentBox = (props) => {
       <TextField
         placeholder="Comment"
         multiline
-        value={props.data?.tree?.comment ?? ""}
+        value={context.data?.tree?.comment ?? ""}
         onChange={(e) => {
           invoke("comment", {
             comment: e.target.value,
           })
             .then(() => invoke("get_data"))
             .then((data) => {
-              props.setData(data);
+              context.setData(data);
             });
-          console.log(e.target.value);
-          console.log(props.data?.tree?.comment);
+          console.log(context.data?.tree?.comment);
         }}
         sx={{ display: "flex", flexGrow: 1 }}
         slotProps={{ input: { sx: { height: "100%", alignItems: "start" } } }}
@@ -58,4 +60,3 @@ const EditCommentBox = (props) => {
     </Paper>
   );
 };
-export default EditCommentBox;

@@ -1,17 +1,27 @@
-use crate::editing_data::EditingData;
-use crate::config::Config;
+use std::path::Path;
+
+use crate::{editing_data::EditingData, study_data::StudyData};
 
 #[allow(clippy::large_enum_variant)]
 #[derive(Default, Debug)]
 pub enum AppData {
     Editing(EditingData),
-    Config(Config),
     #[default]
-    Study,
+    Main,
+    Study(StudyData),
 }
 
 impl AppData {
-    pub fn edit_new(&mut self) {
-        *self = AppData::Editing(EditingData::default());
+    pub async fn edit_new(&mut self, path: &Path, exercise_file: &str) {
+        *self = AppData::Editing(EditingData::load(path, exercise_file).await);
+    }
+
+    pub fn main(&mut self) {
+        *self = AppData::Main;
+    }
+
+    // Will read relevant stuff off of config.
+    pub async fn study_new(&mut self, path: &Path, study_file: &str) {
+        *self = AppData::Study(StudyData::load(path, study_file).await)
     }
 }

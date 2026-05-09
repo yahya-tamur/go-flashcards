@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useContext } from "react";
 import board_image from "./assets/oak.jpg";
 import black_image from "./assets/black_night.png";
 import white_image from "./assets/white_anime.png";
@@ -12,20 +12,39 @@ import Paper from "@mui/material/Paper";
 import Box from "@mui/material/Box";
 import TextField from "@mui/material/TextField";
 import Slider from "@mui/material/Slider";
+import Dialog from "@mui/material/Dialog";
+import DialogActions from "@mui/material/DialogActions";
+import DialogContent from "@mui/material/DialogContent";
+import DialogContentText from "@mui/material/DialogContentText";
+import DialogTitle from "@mui/material/DialogTitle";
 
 import ToggleButton from "@mui/material/ToggleButton";
 import ToggleButtonGroup from "@mui/material/ToggleButtonGroup";
 import NumberSpinner from "./components/NumberSpinner";
 
+import AppContext from "./AppContext";
+
 import CheckIcon from "@mui/icons-material/Check";
 import ClearIcon from "@mui/icons-material/Clear";
 
-const MakeTreeMenu = (props) => {
-  const [mark, setMark] = useState("None");
+export default (props) => {
+  let context = useContext(AppContext);
+  const [variant, setVariant] = useState("None");
+
+  // i think the array access interfered with state ?
+  const [currentExercise, setCurrentExercise] = useState(-1);
+  const [maxExercise, setMaxExercise] = useState(-1);
 
   useEffect(() => {
-    setMark(props.data?.tree?.mark);
-  }, [props.data]);
+    setCurrentExercise(context.data.edit_location[0] + 1);
+    setMaxExercise(context.data.edit_location[1]);
+  }, [context.data]);
+
+  const [savedMsgOpen, setSavedMsgOpen] = useState(false);
+
+  useEffect(() => {
+    setVariant(context.data?.tree?.variant);
+  }, [context.data]);
 
   return (
     <Paper
@@ -56,9 +75,9 @@ const MakeTreeMenu = (props) => {
             invoke("collapse_tree")
               .then(() => invoke("get_data"))
               .then((data) => {
-                props.setData(data);
-                props.setColorMode("BlackWhite");
-                props.setPhase("Initialize");
+                context.setData(data);
+                context.setColorMode("BlackWhite");
+                context.setEditingPhase("Initialize");
               });
           }}
           variant="contained"
@@ -67,19 +86,18 @@ const MakeTreeMenu = (props) => {
         </Button>
 
         <ToggleButtonGroup
-          value={mark}
+          value={variant}
           exclusive
           size="small"
           onChange={async (_e, newValue) => {
-            setMark(newValue);
+            setVariant(newValue);
             if (newValue === null) {
               newValue = "None";
             }
-            console.log(newValue, mark);
-            invoke("set_mark", { variant: newValue })
+            invoke("set_variant", { variant: newValue })
               .then(() => invoke("get_data"))
               .then((data) => {
-                props.setData(data);
+                context.setData(data);
               })
               .catch((e) => {
                 console.log(e, "error");
@@ -105,35 +123,42 @@ const MakeTreeMenu = (props) => {
         <NumberSpinner
           label="Exercise"
           size="small"
-          defaultValue={props.data.edit_location[1]}
+          value={currentExercise}
           min={1}
-          max={props.data.edit_location[1]}
+          max={maxExercise}
           onValueChange={async (v, e) => {
-            console.log(v);
             invoke("jump_to_exercise", { index: v - 1 })
               .then(() => invoke("get_data"))
               .then((data) => {
-                console.log(data);
-                props.setData(data);
-                props.setColor(data.tree.color === "Black" ? "White" : "Black");
+                context.setData(data);
+                context.setColor(
+                  data.tree.color === "Black" ? "White" : "Black",
+                );
               });
           }}
         />{" "}
+      </Box>
+      <Box
+        sx={{
+          width: "100%",
+          maxWidth: "100%",
+          display: "flex",
+          flexDirection: "row",
+        }}
+      >
         <Box sx={{ marginTop: "auto", marginLeft: "20px", height: "40px" }}>
           <Button
             variant="contained"
             sx={{ height: "100%" }}
             onClick={async () => {
-              console.log(props.data);
-              invoke("start_setup", { index: props.data["edit_location"][1] })
+              invoke("start_setup", { index: context.data["edit_location"][1] })
                 .then(() => invoke("get_data"))
                 .then((data) => {
-                  console.log(data);
-                  props.setData(data);
-                  props.setColorMode("Black");
-                  props.setColor("Black");
+                  context.setData(data);
+                  context.setColorMode("Black");
+                  context.setColor("Black");
 
-                  props.setPhase("Initialize");
+                  context.setEditingPhase("Initialize");
                 });
             }}
           >
@@ -144,8 +169,9 @@ const MakeTreeMenu = (props) => {
             variant="contained"
             sx={{ height: "100%" }}
             onClick={async () => {
-              console.log(props.data);
-              invoke("save").then(() => alert("saved!"));
+              invoke("save_exercises", {
+                exercise: context.exerciseFile,
+              }).then(() => setSavedMsgOpen(true));
             }}
           >
             Save
@@ -154,22 +180,27 @@ const MakeTreeMenu = (props) => {
             variant="contained"
             sx={{ height: "100%" }}
             onClick={async () => {
-              console.log(props.data);
-              invoke("load")
-                .then(() => invoke("get_data"))
-                .then((data) => {
-                  props.setData(data);
-                  props.setColor(
-                    data.tree.color === "Black" ? "White" : "Black",
-                  );
-                });
+              // unsaved alert?
+              invoke("main_menu").then(() => context.setPhase("Main"));
             }}
           >
-            Load
+            Back
           </Button>
         </Box>
       </Box>
+      <Dialog
+        open={savedMsgOpen}
+        fullWidth
+        maxWidth="xs"
+        onClose={() => setSavedMsgOpen(false)}
+      >
+        <DialogContent>
+          <DialogContentText>Saved.</DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setSavedMsgOpen(false)}>Ok</Button>
+        </DialogActions>
+      </Dialog>
     </Paper>
   );
 };
-export default MakeTreeMenu;

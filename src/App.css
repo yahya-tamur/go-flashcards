@@ -22,7 +22,7 @@ body {
 
 @font-face {
   font-family: "Roboto Mono";
-  src: url('./fonts/Roboto_Mono/RobotoMono-VariableFont_wght.ttf');
+  src: url("./fonts/Roboto_Mono/RobotoMono-VariableFont_wght.ttf");
   font-optical-sizing: auto;
   font-weight: 400;
   font-style: normal;

@@ -14,11 +14,25 @@ pub fn other_color(c: Color) -> Color {
     }
 }
 
-#[derive(Clone, Copy, Serialize, Deserialize, Default, Debug)]
+#[derive(Clone, Copy, Serialize, Deserialize, Debug)]
 pub struct GameState {
+    // only used for display.
+    pub window: (usize, usize, usize, usize),
     pub stones: [[Option<Color>; 21]; 21],
     pub captures: (usize, usize),
     pub ko: Option<(usize, usize)>,
+}
+
+impl Default for GameState {
+    fn default() -> GameState {
+        GameState {
+            // only used for display.
+            window: (0, 18, 0, 18),
+            stones: [[None; 21]; 21],
+            captures: (0, 0),
+            ko: None,
+        }
+    }
 }
 
 fn try_capture(

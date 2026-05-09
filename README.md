@@ -1,20 +1,54 @@
+Finished backend of study mode.
+  Next:
+    - make frontend (copy editing mode a lot) (isolate components?)
+    - fix anything that comes up
+    - do some stuff in 'Yes, right away' below to try to reach 'very usable'
+      goal right away.
+    - once that goal is actually met (!):
+      - read this whole document and make good list of extra things
+        to do.
+
+    - timeline:
+      - will shift focus soon.
+      - but should get into phase where I can start slowly using it and
+      - making small fixes.
+--
 
 Small things:
   - Yes, right away:
-    - save width in movetree
+    - make corresponding flashcard file on new exercise
     - pass button
     - Markings on board during setup
     - Sliders during tree phase (but limited)
+    - set variant in study mode
+
+
+    ~~ here: very usable.
+
+    - delete file?
+    - delete branch?
+    - delete exercise? insert? in editing mode
   
   - Nice project. Do eventually. 
+    - go over all past readmes. Refactor all into better action items.
     - play moves automatically
     - transform exercises. In comments, moves marked like {S1} also get transformed.
     - captures? nicer menus at least
+    - to / from sgf
+    - make editconfig just slightly nicer
+      - make all ui nicer.
+    - code quality
+    - consistent error handling
+    - better algorithm (config etc)
+    - phone app
+      - phone ui
+      - android file situation
 
   - consider
     - timer?
     - sounds? custom visuals?
     - initialize with app data
+    - even better algorithm
   
   
    - advanced config.
@@ -29,16 +63,8 @@ Small things:
 
 
 Big Things:
-  - main menu / config mode
-    - almost done!!
-      - make list of files in MainMenu. Make new file button. Delete file button?
-      - Make load exercises load from file. Same with save exercises.
-      - One fileInEditing useState for both
-      - make editconfig just slightly nicer
-  - very basic study mode. Just says 'correct', 'incorrect', then 'next'.
-    No history. No edits. Yes random exercises from backend.
-  - edit file in study mode.
-  - basic history file in study mode.
+
+  - finish study mode as is. connect everything.
   
 -------------------------------------
 

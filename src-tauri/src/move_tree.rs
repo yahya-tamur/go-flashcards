@@ -34,6 +34,7 @@ impl MoveTree {
         c: usize,
         loc: Option<(usize, usize)>,
         color: Color,
+        mark_new: bool,
     ) -> (usize, usize) {
         // check if step is on table
 
@@ -55,7 +56,11 @@ impl MoveTree {
             loc,
             comment: String::new(),
             color,
-            variant: Variant::None,
+            variant: if mark_new {
+                Variant::New
+            } else {
+                Variant::None
+            },
         });
 
         if self.table[r].len() == c + 1 {
