@@ -43,7 +43,7 @@ export default (props) => {
       <TextField
         placeholder="Comment"
         multiline
-        value={context.data?.tree?.comment ?? ""}
+        value={context.data?.comment ?? ""}
         onChange={(e) => {
           invoke("comment", {
             comment: e.target.value,
@@ -52,7 +52,7 @@ export default (props) => {
             .then((data) => {
               context.setData(data);
             });
-          console.log(context.data?.tree?.comment);
+          console.log(context.data?.comment);
         }}
         sx={{ display: "flex", flexGrow: 1 }}
         slotProps={{ input: { sx: { height: "100%", alignItems: "start" } } }}

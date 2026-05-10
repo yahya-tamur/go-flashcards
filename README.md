@@ -1,3 +1,9 @@
+- find first six exercises and add them as a file.
+- implement study mode to study those six exercises.
+- clean up todo.
+
+-- 
+
 Finished backend of study mode.
   Next:
     - make frontend (copy editing mode a lot) (isolate components?)
@@ -27,6 +33,7 @@ Small things:
 
     - delete file?
     - delete branch?
+    - refactor config? where is it? how do I get it?
     - delete exercise? insert? in editing mode
   
   - Nice project. Do eventually. 

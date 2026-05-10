@@ -1,8 +1,7 @@
-use uuid::Uuid;
 
 use crate::fs;
 use crate::go_rules::{place_stone, Color, GameState};
-use crate::move_tree::{Move, MoveTree, Variant};
+use crate::move_tree::{Move, MoveTree};
 
 use std::path::Path;
 
@@ -14,7 +13,7 @@ use std::path::Path;
 #[derive(Debug)]
 pub struct EditingData {
     pub game: GameState,
-    pub tree_loc: Option<(usize, usize)>,
+    pub tree_loc: (usize, usize),
     exercises: Vec<MoveTree>,
     // should this also be an option?
     pub current_exercise: usize,
@@ -24,116 +23,72 @@ impl EditingData {
     pub fn jump_to_exercise(&mut self, index: usize) {
         self.current_exercise = index;
         self.game = self.exercises[index].initial;
-        self.tree_loc = Some((0, 0));
+        self.tree_loc = (0, 0);
     }
 
-    pub fn place_stone(&mut self, i: usize, j: usize, color: Option<Color>) -> bool {
-        if self.tree_loc.is_none() {
-            self.game.stones[i][j] = color;
-            true
-        } else {
-            false
-        }
+    // maybe check if tree is empty.
+    pub fn place_stone(&mut self, i: usize, j: usize, color: Option<Color>) {
+        self.game.stones[i][j] = color;
     }
 
     pub fn play(&mut self, loc: Option<(usize, usize)>, color: Color) -> bool {
-        if let Some((row, column)) = self.tree_loc {
-            // advance state
-            if let Some((i, j)) = loc {
-                if !place_stone(&mut self.game, i, j, color) {
-                    return false;
-                }
+        if let Some((i, j)) = loc {
+            if !place_stone(&mut self.game, i, j, color) {
+                return false;
             }
-            self.tree_loc =
-                Some(self.exercises[self.current_exercise].step(row, column, loc, color, false));
-            true
-        } else {
-            false
         }
+        let (row, column) = self.tree_loc;
+        self.tree_loc = self.exercises[self.current_exercise].step(row, column, loc, color, false);
+        true
     }
 
-    pub fn jump(&mut self, r: usize, c: usize) -> bool {
-        if self.tree_loc.is_some() {
-            // decided to do no error handling here.
-            self.game = self.exercises[self.current_exercise].jump(r, c);
-            self.tree_loc = Some((r, c));
-            true
-        } else {
-            false
-        }
+    pub fn jump(&mut self, r: usize, c: usize) {
+        self.game = self.exercises[self.current_exercise].jump(r, c);
+        self.tree_loc = (r, c);
     }
 
-    pub fn start_setup(&mut self, index: usize) -> bool {
-        if self.tree_loc.is_some() {
-            self.game = GameState::default();
-            self.current_exercise = index;
-            self.tree_loc = None;
-            true
-        } else {
-            false
-        }
+    pub fn start_setup(&mut self, index: usize) {
+        println!("start setup");
+        self.game = GameState::default();
+        self.current_exercise = index;
+        self.tree_loc = (0, 0);
+        self.exercises.insert(index, MoveTree::new());
     }
 
-    pub fn finish_setup(&mut self, color: Color) -> bool {
-        if self.tree_loc.is_none() {
-            self.game.captures = (0, 0);
-            self.game.ko = None;
-            self.exercises.insert(
-                self.current_exercise,
-                MoveTree {
-                    id: Uuid::new_v4(),
-                    initial: self.game,
-                    table: vec![vec![Some(Move {
-                        loc: None,
-                        color,
-                        comment: String::new(),
-                        variant: Variant::None,
-                    })]],
-                },
-            );
-            self.tree_loc = Some((0, 0));
-            true
-        } else {
-            false
-        }
+    pub fn finish_setup(&mut self, color: Color) {
+        println!("end setup");
+        self.exercises[self.current_exercise].initial = self.game;
+        self.exercises[self.current_exercise].table[0][0].as_mut().unwrap().color = color;
     }
 
-    pub fn collapse_tree(&mut self) -> bool {
-        if self.tree_loc.is_none() {
-            false
-        } else {
-            self.game.captures = (0, 0);
-            self.exercises.remove(self.current_exercise);
-            self.game.ko = None;
-            self.tree_loc = None;
-            true
-        }
+
+    pub fn collapse_tree(&mut self) {
+        self.game.captures = (0, 0);
+        self.game.ko = None;
+        self.tree_loc = (0, 0);
+        self.exercises[self.current_exercise].table.truncate(1);
+        self.exercises[self.current_exercise].table[0].truncate(1);
     }
 
     // caller will NOT account for border themselves. values inclusive
-    pub fn clear_to(&mut self, window: (usize, usize, usize, usize)) -> bool {
+    pub fn clear_to(&mut self, window: (usize, usize, usize, usize)) {
         // this is checked twice then!:
-        if self.tree_loc.is_some() {
-            false
-        } else {
-            let (row_start, row_end, col_start, col_end) = window;
-            for i in 0..21 {
-                for j in 0..21 {
-                    if i > (row_end + 1)
-                        || i < (row_start + 1)
-                        || j < (col_start + 1)
-                        || j > (col_end + 1)
-                    {
-                        self.game.stones[i][j] = None;
-                    }
+        let (row_start, row_end, col_start, col_end) = window;
+        for i in 0..21 {
+            for j in 0..21 {
+                if i > (row_end + 1)
+                    || i < (row_start + 1)
+                    || j < (col_start + 1)
+                    || j > (col_end + 1)
+                {
+                    self.game.stones[i][j] = None;
                 }
             }
-            true
         }
     }
 
     pub fn get_current_move_mut(&mut self) -> Option<&mut Move> {
-        let (row, col) = self.tree_loc?;
+        let (row, col) = self.tree_loc;
 
         self.exercises
             .get_mut(self.current_exercise)?
@@ -144,7 +99,7 @@ impl EditingData {
     }
 
     pub fn get_current_move(&self) -> Option<&Move> {
-        let (row, col) = self.tree_loc?;
+        let (row, col) = self.tree_loc;
 
         self.exercises
             .get(self.current_exercise)?
@@ -163,15 +118,15 @@ impl EditingData {
         if exercises.is_empty() {
             EditingData {
                 game: GameState::default(),
-                tree_loc: None,
-                exercises,
+                tree_loc: (0, 0),
+                exercises: vec![MoveTree::new()],
                 current_exercise: 0,
             }
         } else {
             let i = exercises.len() - 1;
             EditingData {
                 game: exercises[i].initial,
-                tree_loc: Some((0, 0)),
+                tree_loc: (0, 0),
                 exercises,
                 current_exercise: i,
             }

@@ -29,22 +29,13 @@ async fn set_stone(
     j: usize,
     color: Option<Color>,
 ) -> Result<(), String> {
-    if let AppData::Editing(editing_data) = &mut *(state.lock().await) {
-        if editing_data.place_stone(i, j, color) {
-            return Ok(());
+    match &mut *(state.lock().await) {
+        AppData::Editing(editing_data) => {
+            editing_data.place_stone(i, j, color);
+            Ok(())
         }
+        _ => unimplemented!(),
     }
-    Err("error".to_string())
-}
-
-#[derive(Serialize, Deserialize)]
-pub struct TreeSnapshot {
-    pub table: Vec<Vec<Option<Move>>>,
-    pub row: usize,
-    pub col: usize,
-    pub color: Color,
-    pub comment: String,
-    pub variant: Variant,
 }
 
 // struct that gets sent to frontend.
@@ -54,42 +45,43 @@ pub struct TreeSnapshot {
 #[derive(Serialize, Deserialize)]
 pub struct Snapshot {
     pub game: GameState,
-    pub tree: Option<TreeSnapshot>,
-    pub edit_location: (usize, usize),
+    pub table: Vec<Vec<Option<Move>>>,
+    pub row: usize,
+    pub col: usize,
+    pub color: Color,
+    pub comment: String,
+    pub variant: Variant,
+    pub current_location: usize,
+    pub max_location: usize,
 }
 
 //copies game and tree. If tauri serializes anyway, is that necessary?
 #[tauri::command]
 async fn get_data(state: tauri::State<'_, Mutex<AppData>>) -> Result<Snapshot, String> {
     println!("getting data.");
-    if let AppData::Editing(editing_data) = &*state.lock().await {
-        println!("{:?}", editing_data);
-        if let Some((row, col)) = editing_data.tree_loc {
+    match &*state.lock().await {
+        AppData::Editing(editing_data) => {
+            let (row, col) = editing_data.tree_loc;
             let current_move = editing_data.get_current_move().unwrap();
             let color = current_move.color;
             let comment = current_move.comment.clone();
             let variant = current_move.variant;
+            let (current_location, max_location) = editing_data.location();
             Ok(Snapshot {
                 game: editing_data.game,
-                tree: Some(TreeSnapshot {
-                    table: editing_data.get_table(),
-                    row,
-                    col,
-                    color,
-                    comment,
-                    variant,
-                }),
-                edit_location: editing_data.location(),
-            })
-        } else {
-            Ok(Snapshot {
-                game: editing_data.game,
-                tree: None,
-                edit_location: editing_data.location(),
+
+                table: editing_data.get_table(),
+                row,
+                col,
+                color,
+                comment,
+                variant,
+
+                current_location,
+                max_location,
             })
         }
-    } else {
-        Err("unimplemented!".to_string())
+        _ => unimplemented!(),
     }
 }
 
@@ -99,16 +91,13 @@ async fn set_window(
     state: tauri::State<'_, Mutex<AppData>>,
     window: (usize, usize, usize, usize),
 ) -> Result<(), String> {
-    if let AppData::Editing(editing_data) = &mut *state.lock().await {
-        if editing_data.tree_loc.is_none() {
+    match &mut *state.lock().await {
+        AppData::Editing(editing_data) => {
             editing_data.game.window = window;
             editing_data.clear_to(window);
             Ok(())
-        } else {
-            Err("tree already there?".to_string())
         }
-    } else {
-        Err("unimplemented!".to_string())
+        _ => unimplemented!(),
     }
 }
 
@@ -259,21 +248,6 @@ async fn load_exercises(
     Ok(())
 }
 
-#[tauri::command]
-async fn load_study(
-    state: tauri::State<'_, Mutex<AppData>>,
-    app: tauri::AppHandle,
-    flashcard_set: &str,
-) -> Result<(), String> {
-    state
-        .lock()
-        .await
-        .study_new(&app.path().app_data_dir().unwrap(), flashcard_set)
-        .await;
-
-    Ok(())
-}
-
 use crate::config::read_toml;
 
 #[tauri::command]
@@ -316,19 +290,48 @@ async fn main_menu(state: tauri::State<'_, Mutex<AppData>>) -> Result<(), String
     Ok(())
 }
 
-// later also edit config file.
 #[tauri::command]
-async fn edit_new(
-    app: tauri::AppHandle,
+async fn load_study(
     state: tauri::State<'_, Mutex<AppData>>,
-    exercise: &str,
+    app: tauri::AppHandle,
+    flashcard_set: &str,
 ) -> Result<(), String> {
     state
         .lock()
         .await
-        .edit_new(&app.path().app_data_dir().unwrap(), exercise)
+        .study_new(&app.path().app_data_dir().unwrap(), flashcard_set)
         .await;
+
     Ok(())
+}
+
+use crate::fs::load_config;
+#[tauri::command]
+async fn list_studies(app: tauri::AppHandle) -> Result<Vec<String>, String> {
+    let config_str = load_config(&app.path().app_data_dir().unwrap())
+        .await
+        .unwrap();
+    match crate::config::read_toml(&config_str) {
+        Ok(config) => Ok(config.flashcard_set.into_iter().map(|f| f.name).collect()),
+        Err(_) => Err("invalid config".to_string()),
+    }
+}
+
+#[tauri::command]
+async fn answer(
+    state: tauri::State<'_, Mutex<AppData>>,
+    app: tauri::AppHandle,
+    correct: bool,
+) -> Result<Vec<bool>, String> {
+    match &mut *state.lock().await {
+        AppData::Study(study_data) => Ok(study_data
+            .answer(&app.path().app_data_dir().unwrap(), correct)
+            .await
+            .iter()
+            .map(|a| *a)
+            .collect()),
+        _ => unimplemented!(),
+    }
 }
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
@@ -356,10 +359,11 @@ pub fn run() {
             get_config,
             set_config,
             list_exercises,
+            list_studies,
             main_menu,
             set_window,
-            edit_new,
             load_study,
+            answer,
         ])
         .run(tauri::generate_context!())
         .unwrap();

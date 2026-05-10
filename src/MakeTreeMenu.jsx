@@ -32,18 +32,11 @@ export default (props) => {
   const [variant, setVariant] = useState("None");
 
   // i think the array access interfered with state ?
-  const [currentExercise, setCurrentExercise] = useState(-1);
-  const [maxExercise, setMaxExercise] = useState(-1);
-
-  useEffect(() => {
-    setCurrentExercise(context.data.edit_location[0] + 1);
-    setMaxExercise(context.data.edit_location[1]);
-  }, [context.data]);
 
   const [savedMsgOpen, setSavedMsgOpen] = useState(false);
 
   useEffect(() => {
-    setVariant(context.data?.tree?.variant);
+    setVariant(context.data?.variant ?? "None");
   }, [context.data]);
 
   return (
@@ -76,8 +69,9 @@ export default (props) => {
               .then(() => invoke("get_data"))
               .then((data) => {
                 context.setData(data);
-                context.setColorMode("BlackWhite");
                 context.setEditingPhase("Initialize");
+                context.setColorMode("Black");
+                context.setColor("Black");
               });
           }}
           variant="contained"
@@ -123,17 +117,18 @@ export default (props) => {
         <NumberSpinner
           label="Exercise"
           size="small"
-          value={currentExercise}
+          value={(context.data?.current_location ?? 0) + 1}
           min={1}
-          max={maxExercise}
+          max={context.data?.max_location ?? 1}
           onValueChange={async (v, e) => {
+            if (context.data === null || context.data === undefined) {
+              return;
+            }
             invoke("jump_to_exercise", { index: v - 1 })
               .then(() => invoke("get_data"))
               .then((data) => {
                 context.setData(data);
-                context.setColor(
-                  data.tree.color === "Black" ? "White" : "Black",
-                );
+                context.setColor(data.color === "Black" ? "White" : "Black");
               });
           }}
         />{" "}
@@ -151,13 +146,13 @@ export default (props) => {
             variant="contained"
             sx={{ height: "100%" }}
             onClick={async () => {
-              invoke("start_setup", { index: context.data["edit_location"][1] })
+              invoke("start_setup", { index: context.data?.max_location ?? 0 })
                 .then(() => invoke("get_data"))
                 .then((data) => {
                   context.setData(data);
                   context.setColorMode("Black");
                   context.setColor("Black");
-
+                  console.log("AA");
                   context.setEditingPhase("Initialize");
                 });
             }}

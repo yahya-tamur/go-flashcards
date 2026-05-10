@@ -19,12 +19,9 @@ export default () => {
     invoke("load_exercises", { exercise: context.exerciseFile })
       .then(() => invoke("get_data"))
       .then((data) => {
-        if (data.tree === null) {
-          context.setEditingPhase("Initialize");
-        } else {
-          context.setEditingPhase("MakeTree");
-        }
+        console.log(data);
         context.setData(data);
+        context.setColor(data.color === "Black" ? "White" : "Black");
       })
       .catch((e) => {
         console.log(e);

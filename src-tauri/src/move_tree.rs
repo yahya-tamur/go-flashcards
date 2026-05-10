@@ -28,6 +28,19 @@ pub struct MoveTree {
 }
 
 impl MoveTree {
+    pub fn new() -> MoveTree{
+        MoveTree {
+                id: Uuid::new_v4(),
+                initial: GameState::default(),
+                table: vec![vec![Some(Move {
+                    loc: None,
+                    color: Color::White,
+                comment: String::new(),
+                variant: Variant::None,
+            })]],
+        }
+    }
+
     pub fn step(
         &mut self,
         r: usize,

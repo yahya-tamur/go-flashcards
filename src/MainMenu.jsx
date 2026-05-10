@@ -94,18 +94,24 @@ export default (props) => {
                 </ListItemButton>
               </ListItem>
             ))}
-            <ListItem
-              secondaryAction={
-                <Button
-                  variant="contained"
-                  onClick={() => {
-                    invoke("load_exercises", { exercise: newExercise }).then(
+            <form onSubmit = {(e) => {
+                    e.preventDefault();
+                    invoke("load_exercises", { exercise: newExercise })
+                    .then(() => invoke("get_data"))
+                    .then((data) => context.setData(data))
+                    .then(
                       () => {
                         context.setExerciseFile(newExercise);
                         context.setPhase("Editing");
+                        context.setEditingPhase("Initialize");
                       },
-                    );
-                  }}
+                    )
+                  }}>
+            <ListItem
+              secondaryAction={
+                <Button
+                  type="submit"
+                  variant="contained"
                 >
                   New
                 </Button>
@@ -120,9 +126,11 @@ export default (props) => {
                 size="small"
               />
             </ListItem>
+            </form>
           </List>
           <Button
             variant="contained"
+            
             sx={{ margin: "20px" }}
             onClick={() => {
               setMenu("main");

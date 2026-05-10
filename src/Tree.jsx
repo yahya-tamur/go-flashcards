@@ -34,50 +34,46 @@ export default (props) => {
       if (/INPUT|TEXTAREA|SELECT/.test(event.target.tagName)) {
         return;
       }
-      if (
-        context.data === undefined ||
-        context.data.tree === undefined ||
-        context.data.tree === null
-      ) {
+      if (context.data === undefined || context.data === null) {
         return;
       }
-      let [r, c] = [context.data.tree.row, context.data.tree.col];
+      let [r, c] = [context.data.row, context.data.col];
       if (e.key === "ArrowRight") {
         c += 1;
       } else if (e.key === "ArrowUp") {
         r -= 1;
         while (
           r > 0 &&
-          (context.data.tree.table[r][c] === null ||
-            context.data.tree.table[r][c] === undefined)
+          (context.data.table[r][c] === null ||
+            context.data.table[r][c] === undefined)
         ) {
           r -= 1;
         }
       } else if (e.key === "ArrowDown") {
         r += 1;
         while (
-          r < context.data.tree.table.length - 1 &&
-          (context.data.tree.table[r][c] === null ||
-            context.data.tree.table[r][c] === undefined)
+          r < context.data.table.length - 1 &&
+          (context.data.table[r][c] === null ||
+            context.data.table[r][c] === undefined)
         ) {
           r += 1;
         }
       } else if (e.key === "ArrowLeft") {
         c -= 1;
-        while (r > 0 && context.data.tree.table[r][c] === null) {
+        while (r > 0 && context.data.table[r][c] === null) {
           r -= 1;
         }
       }
       if (
-        context.data.tree.table[r] !== undefined &&
-        context.data.tree.table[r][c] !== null &&
-        context.data.tree.table[r][c] !== undefined
+        context.data.table[r] !== undefined &&
+        context.data.table[r][c] !== null &&
+        context.data.table[r][c] !== undefined
       ) {
         invoke("jump", { r: r, c: c })
           .then(() => invoke("get_data"))
           .then((data) => {
             context.setData(data);
-            context.setColor(data.tree?.color === "Black" ? "White" : "Black");
+            context.setColor(data.color === "Black" ? "White" : "Black");
           })
           .catch((e) => {
             console.log(e);
@@ -122,14 +118,12 @@ export default (props) => {
     if (
       treecontainer.current === null ||
       context.data === null ||
-      context.data === undefined ||
-      context.data.tree === undefined ||
-      context.data.tree === null
+      context.data === undefined
     ) {
       return;
     }
 
-    let table = context.data.tree.table;
+    let table = context.data.table;
     let num_columns = table.reduce((m, a) => (a.length > m ? a.length : m), 1);
     let num_rows = table.length;
     setTableWidth(2 * margin + gap_size * (num_columns - 1) + square_size);
@@ -238,8 +232,8 @@ export default (props) => {
     createSVGElement(
       "circle",
       {
-        cx: margin + gap_size * context.data?.tree?.col + square_size / 2,
-        cy: margin + gap_size * context.data?.tree?.row + square_size / 2,
+        cx: margin + gap_size * context.data.col + square_size / 2,
+        cy: margin + gap_size * context.data.row + square_size / 2,
         r: hl_radius,
         stroke: "black",
         "stroke-width": 2,
@@ -316,30 +310,32 @@ export default (props) => {
           }}
           onClick={(e) => {
             const w = get_coord(e);
-            if (w === null) {
+            if (
+              w === null ||
+              context.data === null ||
+              context.data === undefined
+            ) {
               return;
             }
             let [c, r] = w;
             if (
-              r >= context.data?.tree?.table.length ||
-              c >= context.data?.tree?.table[r].length
+              r >= context.data.table.length ||
+              c >= context.data.table[r].length
             ) {
               return;
             }
-            if (context.data?.tree?.table[r][c] === null) {
+            if (context.data.table[r][c] === null) {
               return;
             }
             if (
-              r < context.data?.tree?.table.length &&
-              c < context.data?.tree?.table[r].length
+              r < context.data.table.length &&
+              c < context.data.table[r].length
             ) {
               invoke("jump", { r: r, c: c })
                 .then(() => invoke("get_data"))
                 .then((data) => {
                   context.setData(data);
-                  context.setColor(
-                    data.tree?.color === "Black" ? "White" : "Black",
-                  );
+                  context.setColor(data.color === "Black" ? "White" : "Black");
                 })
                 .catch((e) => {
                   console.log(e);

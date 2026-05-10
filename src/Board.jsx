@@ -22,7 +22,11 @@ export default (props) => {
   const [ghost, setGhost] = useState(null);
 
   const get_coord = (e) => {
-    if (board_svg.current === null) {
+    if (
+      board_svg.current === null ||
+      context.data === null ||
+      context.data === undefined
+    ) {
       return null;
     }
     // get coord in board in [0, 1]
@@ -40,9 +44,7 @@ export default (props) => {
     i = (i - margin) / square_size;
     j = (j - margin) / square_size;
 
-    let [left, right, top, bottom] = context.data?.game.window ?? [
-      0, 18, 0, 18,
-    ];
+    let [left, right, top, bottom] = context.data.game.window;
 
     // correction for partial boards
     i += left + (left > 0 ? -partial / square_size : 0);
@@ -57,7 +59,7 @@ export default (props) => {
       sj >= top &&
       sj <= bottom &&
       (context.editingPhase === "Initialize" ||
-        context.data?.game.stones[si + 1][sj + 1] === null) &&
+        context.data.game.stones[si + 1][sj + 1] === null) &&
       (i - si) * (i - si) + (j - sj) * (j - sj) < 0.25
     ) {
       return [si, sj];
@@ -264,16 +266,18 @@ export default (props) => {
 
   // draws circles
   useEffect(() => {
-    if (stonecontainer.current === null || context.data === null) {
+    if (
+      stonecontainer.current === null ||
+      context.data === null ||
+      context.data === undefined
+    ) {
       return;
     }
-    let [left, right, top, bottom] = context.data?.game.window ?? [
-      0, 18, 0, 18,
-    ];
+    let [left, right, top, bottom] = context.data.game.window;
 
     for (let i = left; i <= right; i++) {
       for (let j = top; j <= bottom; j++) {
-        const w = context.data?.game.stones[i + 1][j + 1];
+        const w = context.data.game.stones[i + 1][j + 1];
 
         if (w === null) {
           continue;
@@ -339,6 +343,9 @@ export default (props) => {
       return;
     }
     const observer = new ResizeObserver(() => {
+      if (paper.current === null) {
+        return;
+      }
       const current_size = [
         paper.current.offsetWidth,
         paper.current.offsetHeight,
@@ -408,12 +415,13 @@ export default (props) => {
             ) {
               setGhost(w);
             }
-
             if (
+              context.data !== undefined &&
+              context.data !== null &&
               mouseDown &&
               w !== null &&
               context.editingPhase === "Initialize" &&
-              context.data?.game.stones[w[0] + 1][w[1] + 1] !==
+              context.data.game.stones[w[0] + 1][w[1] + 1] !==
                 context.colorMode &&
               context.colorMode !== "BlackWhite"
             ) {
@@ -471,9 +479,7 @@ export default (props) => {
                 .then(() => invoke("get_data"))
                 .then((data) => {
                   context.setData(data);
-                  context.setColor(
-                    data.tree?.color === "Black" ? "White" : "Black",
-                  );
+                  context.setColor(data.color === "Black" ? "White" : "Black");
                   setGhost(null);
                 })
                 .catch((e) => {

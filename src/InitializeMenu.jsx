@@ -22,6 +22,7 @@ import AppContext from "./AppContext";
 export default (props) => {
   let context = useContext(AppContext);
   const button_size = 70;
+
   return (
     <Paper
       sx={{
@@ -47,12 +48,15 @@ export default (props) => {
         }}
       >
         <Slider
-          value={context.data?.game.window.slice(0, 2) ?? [0, 18]}
+          value={context.data?.game?.window?.slice(0, 2) ?? [0, 18]}
           marks
           onChange={(event, newValue) => {
+            if (context.data === null || context.data === undefined) {
+              return;
+            }
             //to DO: INvoke SetWindow
             let [row_start, row_end] = newValue;
-            let [col_start, col_end] = context.data?.game.window.slice(2, 4);
+            let [col_start, col_end] = context.data.game.window.slice(2, 4);
             invoke("set_window", {
               window: [row_start, row_end, col_start, col_end],
             })
@@ -70,10 +74,13 @@ export default (props) => {
           sx={{ margin: "5px 30px", width: "calc(100% - 60px)" }}
         />
         <Slider
-          value={context.data?.game.window.slice(2, 4) ?? [0, 18]}
+          value={context.data?.game?.window?.slice(2, 4) ?? [0, 18]}
           marks
           onChange={(event, newValue) => {
-            let [row_start, row_end] = context.data?.game.window.slice(0, 2);
+            if (context.data === null || context.data === undefined) {
+              return;
+            }
+            let [row_start, row_end] = context.data.game.window.slice(0, 2);
             let [col_start, col_end] = newValue;
 
             invoke("set_window", {
