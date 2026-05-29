@@ -164,9 +164,7 @@ export default (props) => {
             variant="contained"
             sx={{ height: "100%" }}
             onClick={async () => {
-              invoke("save_exercises", {
-                exercise: context.exerciseFile,
-              }).then(() => setSavedMsgOpen(true));
+              invoke("save_exercises").then(() => setSavedMsgOpen(true));
             }}
           >
             Save

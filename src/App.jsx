@@ -7,6 +7,7 @@ import "./App.css";
 import AppContext from "./AppContext";
 import MainScreen from "./MainScreen";
 import EditingScreen from "./EditingScreen";
+import StudyScreen from "./StudyScreen";
 
 import Box from "@mui/material/Box";
 import { ThemeProvider, createTheme } from "@mui/material/styles";
@@ -48,12 +49,14 @@ function App() {
   // Main, Editing, Study.
   const [phase, setPhase] = useState("Main");
   // Initialize, MakeTree
+  // set to null or undefined??
   const [editingPhase, setEditingPhase] = useState("Initialize");
+  // Guess, View, Edit.
+  const [studyPhase, setStudyPhase] = useState("Guess");
   const [colorMode, setColorMode] = useState("Black");
+  const [feedback, setFeedback] = useState("");
   const [data, setData] = useState(null);
   const [color, setColor] = useState("Black");
-
-  const [exerciseFile, setExerciseFile] = useState("");
 
   //still necessary?
   const swapColor = () => {
@@ -86,17 +89,19 @@ function App() {
           setPhase,
           editingPhase,
           setEditingPhase,
+          studyPhase,
+          setStudyPhase,
           colorMode,
           setColorMode,
           data,
           setData,
           color,
           setColor,
-          exerciseFile,
-          setExerciseFile,
+          feedback,
+          setFeedback,
         }}
       >
-        {phase === "Main" ? <MainScreen /> : <EditingScreen />}
+        {phase === "Main" ? <MainScreen /> : phase === "Editing" ? <EditingScreen /> : <StudyScreen />}
       </AppContext>
     </ThemeProvider>
   );

@@ -12,7 +12,13 @@ use rand::random_range;
 // returns index in selection_pool.
 
 pub fn pick(_config: &Config, selection_pool: &[Vec<Uuid>]) -> (usize, usize) {
-    let i = random_range(0..selection_pool.len());
+    println!("{:?}", selection_pool);
+    // slightly inefficient + can infinite loop. better algorithm later.
+
+    let mut i = random_range(0..selection_pool.len());
+    while selection_pool[i].is_empty() {
+        i = random_range(0..selection_pool.len());
+    }
     let j = random_range(0..selection_pool[i].len());
     (i, j)
 }

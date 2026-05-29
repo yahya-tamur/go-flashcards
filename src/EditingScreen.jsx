@@ -16,12 +16,16 @@ export default () => {
   // useEffect: load exercise.
 
   useEffect(() => {
-    invoke("load_exercises", { exercise: context.exerciseFile })
-      .then(() => invoke("get_data"))
+    invoke("get_data")
       .then((data) => {
-        console.log(data);
+        if (data.table.length === 1 && data.table[0].length === 1) {
+          context.setEditingPhase("Initialize");
+        } else {
+          context.setEditingPhase("MakeTree");
+        }
         context.setData(data);
         context.setColor(data.color === "Black" ? "White" : "Black");
+        context.setColorMode(data.color === "Black" ? "White" : "Black");
       })
       .catch((e) => {
         console.log(e);

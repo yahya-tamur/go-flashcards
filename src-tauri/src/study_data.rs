@@ -44,8 +44,8 @@ impl History {
 
 #[derive(Debug)]
 pub struct StudyData {
-    game: GameState,
-    tree_loc: (usize, usize),
+    pub game: GameState,
+    pub tree_loc: (usize, usize),
     config: Config,
 
     // think about current
@@ -61,7 +61,7 @@ pub struct StudyData {
 
     names: Vec<String>,
 
-    // can make this an option and separate phases here too.
+    // make this an option and separate phases here too?
     current_selection: (usize, usize),
     selection_pool: Vec<Vec<Uuid>>,
 }
@@ -159,7 +159,7 @@ impl StudyData {
         }
     }
 
-    pub async fn answer(&mut self, app_data: &Path, correct: bool) -> &VecDeque<bool> {
+    pub async fn answer(&mut self, app_data: &Path, correct: bool) {
         let (sel_i, sel_j) = self.current_selection;
 
         if self.current_exercise != self.past_exercises.len() - 1
@@ -179,6 +179,11 @@ impl StudyData {
             .await
             .unwrap();
 
+    }
+
+    pub fn get_history(&self) -> &VecDeque<bool> {
+        let current_id = self.past_exercises[self.current_exercise];
+        let (i, j) = self.coords[&current_id];
         self.history_srcs[i][j].hist.as_ref().unwrap()
     }
 
@@ -195,45 +200,57 @@ impl StudyData {
     }
 
     //pub?
-    fn get_move_tree(&mut self) -> &mut MoveTree {
+    fn get_move_tree_mut(&mut self) -> &mut MoveTree {
         let (i, j) = self.coords[&self.past_exercises[self.current_exercise]];
         &mut self.exercise_srcs[i][j]
     }
 
+    pub fn get_move_tree(&self) -> &MoveTree {
+        let (i, j) = self.coords[&self.past_exercises[self.current_exercise]];
+        &self.exercise_srcs[i][j]
+    }
+
+    pub fn location(&self) -> (usize, usize) {
+        (self.current_exercise, self.past_exercises.len())
+    }
+
     // makes blue nodes
 
-    pub async fn try_play(&mut self, loc: Option<(usize, usize)>, color: Color) -> bool {
+    pub fn try_play(&mut self, loc: Option<(usize, usize)>, color: Color) -> bool {
         if let Some((i, j)) = loc {
             if !place_stone(&mut self.game, i, j, color) {
                 return false;
             }
         }
         let (row, column) = self.tree_loc;
-        self.tree_loc = self.get_move_tree().step(row, column, loc, color, true);
+        self.tree_loc = self.get_move_tree_mut().step(row, column, loc, color, true);
         true
     }
 
-    pub async fn jump(&mut self, r: usize, c: usize) {
-        self.game = self.get_move_tree().jump(r, c);
+    pub fn jump(&mut self, r: usize, c: usize) {
+        self.game = self.get_move_tree_mut().jump(r, c);
         self.tree_loc = (r, c);
     }
 
-    pub async fn set_comment(&mut self, comment: &str) {
+    pub fn set_comment(&mut self, comment: &str) {
         let (r, c) = self.tree_loc;
-        self.get_move_tree().table[r][c].as_mut().unwrap().comment = comment.to_string();
+        self.get_move_tree_mut().table[r][c]
+            .as_mut()
+            .unwrap()
+            .comment = comment.to_string();
     }
 
     //change name globally + make sure every node keeps blue vs. not blue.
     //may add field to struct
 
     // create go_rules -> get path
-    pub async fn set_variant() {
+    pub fn set_variant() {
         unimplemented!()
     }
 
     pub async fn save_edits(&mut self, app_data: &Path) {
         // remove new variants
-        let move_tree = self.get_move_tree();
+        let move_tree = self.get_move_tree_mut();
         for r in 0..move_tree.table.len() {
             for c in 0..move_tree.table[r].len() {
                 if let Some(mov) = move_tree.table[r][c].as_mut() {

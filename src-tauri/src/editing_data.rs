@@ -1,4 +1,3 @@
-
 use crate::fs;
 use crate::go_rules::{place_stone, Color, GameState};
 use crate::move_tree::{Move, MoveTree};
@@ -12,6 +11,7 @@ use std::path::Path;
 // call play to play move.
 #[derive(Debug)]
 pub struct EditingData {
+    pub file: String,
     pub game: GameState,
     pub tree_loc: (usize, usize),
     exercises: Vec<MoveTree>,
@@ -58,9 +58,11 @@ impl EditingData {
     pub fn finish_setup(&mut self, color: Color) {
         println!("end setup");
         self.exercises[self.current_exercise].initial = self.game;
-        self.exercises[self.current_exercise].table[0][0].as_mut().unwrap().color = color;
+        self.exercises[self.current_exercise].table[0][0]
+            .as_mut()
+            .unwrap()
+            .color = color;
     }
-
 
     pub fn collapse_tree(&mut self) {
         self.game.captures = (0, 0);
@@ -121,6 +123,7 @@ impl EditingData {
                 tree_loc: (0, 0),
                 exercises: vec![MoveTree::new()],
                 current_exercise: 0,
+                file: exercise_file.to_string(),
             }
         } else {
             let i = exercises.len() - 1;
@@ -129,6 +132,7 @@ impl EditingData {
                 tree_loc: (0, 0),
                 exercises,
                 current_exercise: i,
+                file: exercise_file.to_string(),
             }
         }
     }
@@ -137,8 +141,8 @@ impl EditingData {
         self.exercises[self.current_exercise].table.clone()
     }
 
-    pub async fn save(&self, path: &Path, exercise_file: &str) {
-        fs::save_exercises(path, &self.exercises, exercise_file)
+    pub async fn save(&self, path: &Path) {
+        fs::save_exercises(path, &self.exercises, &self.file)
             .await
             .unwrap()
     }

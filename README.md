@@ -4,6 +4,20 @@
 
 -- 
 
+  - Marking mode
+    - Add markings to Move.
+    - Markings cleared when the stone they're pertaining to changes.
+    - Circle in most recent move.
+    - Markings automatically transferred on 'play'
+
+UI IMPROVEMENTS:
+  - make editconfig just slightly nicer
+  - problems: who to play?
+  - separate top menu.
+    - put exercise num, fwd, back, back to menu, from to sgf, in there
+  - less tall tree view with smaller stones
+  - disable 'new exercise' if exercise already exists.
+
 Finished backend of study mode.
   Next:
     - make frontend (copy editing mode a lot) (isolate components?)
@@ -27,6 +41,8 @@ Small things:
     - Markings on board during setup
     - Sliders during tree phase (but limited)
     - set variant in study mode
+    - Automatically number moves, or at least have the option to.
+      - Maybe with comments on or with 
 
 
     ~~ here: very usable.
@@ -42,8 +58,7 @@ Small things:
     - transform exercises. In comments, moves marked like {S1} also get transformed.
     - captures? nicer menus at least
     - to / from sgf
-    - make editconfig just slightly nicer
-      - make all ui nicer.
+
     - code quality
     - consistent error handling
     - better algorithm (config etc)

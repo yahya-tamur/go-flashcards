@@ -58,7 +58,7 @@ export default (props) => {
       si <= right &&
       sj >= top &&
       sj <= bottom &&
-      (context.editingPhase === "Initialize" ||
+      ((context.phase === "Editing" && context.editingPhase === "Initialize") ||
         context.data.game.stones[si + 1][sj + 1] === null) &&
       (i - si) * (i - si) + (j - sj) * (j - sj) < 0.25
     ) {
@@ -420,10 +420,10 @@ export default (props) => {
               context.data !== null &&
               mouseDown &&
               w !== null &&
+              context.phase === "Editing" &&
               context.editingPhase === "Initialize" &&
               context.data.game.stones[w[0] + 1][w[1] + 1] !==
-                context.colorMode &&
-              context.colorMode !== "BlackWhite"
+                context.colorMode
             ) {
               invoke("set_stone", {
                 i: w[0] + 1,
@@ -450,7 +450,7 @@ export default (props) => {
             if (w === null) {
               return;
             }
-            if (context.editingPhase === "Initialize") {
+            if (context.phase === "Editing" && context.editingPhase === "Initialize") {
               // yes, dragging is not enough.
               invoke("set_stone", {
                 i: w[0] + 1,
@@ -480,6 +480,34 @@ export default (props) => {
                 .then((data) => {
                   context.setData(data);
                   context.setColor(data.color === "Black" ? "White" : "Black");
+                  if (context.phase === "Study" && context.studyPhase === "Guess") {
+                    console.log(data, data.variant);
+                    switch (data.variant) {
+                      case "Correct":
+                        invoke("answer", {correct: true})
+                          .then(() => invoke("get_data"))
+                          .then((data) => {
+                            context.setData(data);
+                            context.setFeedback("Correct");
+                            context.setStudyPhase("View");
+                          });
+                        break;
+                      case "Incorrect":
+                        invoke("answer", {correct: false})
+                          .then(() => invoke("get_data"))
+                          .then((data) => {
+                            context.setData(data);
+                            context.setFeedback("Incorrect");
+                            context.setStudyPhase("View");
+                          });
+                        break;
+                      case "New":
+                        context.setStudyPhase("UnknownGuess");
+                        break;
+                      default:
+                        break;
+                    }
+                  }
                   setGhost(null);
                 })
                 .catch((e) => {

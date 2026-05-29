@@ -33,11 +33,15 @@ export default (props) => {
 
   const [menu, setMenu] = useState("main");
   const [exercises, setExercises] = useState([]);
+  const [studies, setStudies] = useState([]);
   const [newExercise, setNewExercise] = useState("");
 
   useEffect(() => {
     invoke("list_exercises").then((a) => {
       setExercises(a);
+    });
+    invoke("list_studies").then((a) => {
+      setStudies(a);
     });
   }, []);
 
@@ -83,54 +87,43 @@ export default (props) => {
               <ListItem key={i} disablePadding>
                 <ListItemButton
                   onClick={() => {
-                    context.setExerciseFile(e);
-                    context.setPhase("Editing");
+                    invoke("load_exercises", { exercise: e }).then(() => {
+                  context.setPhase("Editing");
+                });
                   }}
                 >
-                  {/*<ListItemIcon>
-                <DraftsIcon />
-              </ListItemIcon>*/}
                   <ListItemText primary={e} />
                 </ListItemButton>
               </ListItem>
             ))}
-            <form onSubmit = {(e) => {
-                    e.preventDefault();
-                    invoke("load_exercises", { exercise: newExercise })
-                    .then(() => invoke("get_data"))
-                    .then((data) => context.setData(data))
-                    .then(
-                      () => {
-                        context.setExerciseFile(newExercise);
-                        context.setPhase("Editing");
-                        context.setEditingPhase("Initialize");
-                      },
-                    )
-                  }}>
-            <ListItem
-              secondaryAction={
-                <Button
-                  type="submit"
-                  variant="contained"
-                >
-                  New
-                </Button>
-              }
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                invoke("load_exercises", { exercise: newExercise }).then(() => {
+                  context.setPhase("Editing");
+                });
+              }}
             >
-              <TextField
-                value={newExercise}
-                onChange={(e) => {
-                  setNewExercise(e.target.value);
-                }}
-                variant="outlined"
-                size="small"
-              />
-            </ListItem>
+              <ListItem
+                secondaryAction={
+                  <Button type="submit" variant="contained">
+                    New
+                  </Button>
+                }
+              >
+                <TextField
+                  value={newExercise}
+                  onChange={(e) => {
+                    setNewExercise(e.target.value);
+                  }}
+                  variant="outlined"
+                  size="small"
+                />
+              </ListItem>
             </form>
           </List>
           <Button
             variant="contained"
-            
             sx={{ margin: "20px" }}
             onClick={() => {
               setMenu("main");
@@ -141,7 +134,23 @@ export default (props) => {
         </>
       ) : (
         <>
-          not implemented!
+          <List>
+            {studies.map((e, i) => (
+              <ListItem key={i} disablePadding>
+                <ListItemButton
+                  onClick={() => {
+                    console.log("AA");
+                    invoke("load_study", { flashcardSet: e }).then(() => {
+                      console.log("setting phase!")
+                      context.setPhase("Study");
+                    });
+                  }}
+                >
+                  <ListItemText primary={e} />
+                </ListItemButton>
+              </ListItem>
+            ))}
+          </List>
           <Button
             variant="contained"
             sx={{ margin: "20px" }}

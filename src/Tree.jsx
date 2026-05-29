@@ -217,12 +217,14 @@ export default (props) => {
             height: gap_size - variant_square_diff * 2,
             stroke: "none",
             strokeWidth: "0",
+            opacity: "0.8",
             fill:
               mov.variant === "Correct"
                 ? theme.palette.success.dark
                 : mov.variant === "Incorrect"
                   ? theme.palette.error.dark
-                  : "none",
+                  : mov.variant === "New" ?
+                  theme.palette.primary.light : "none",
           },
           treecontainer.current,
         );

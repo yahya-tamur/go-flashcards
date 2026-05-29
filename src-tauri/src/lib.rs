@@ -81,6 +81,24 @@ async fn get_data(state: tauri::State<'_, Mutex<AppData>>) -> Result<Snapshot, S
                 max_location,
             })
         }
+        AppData::Study(study_data) => {
+            let move_tree = study_data.get_move_tree();
+            let (row, col) = study_data.tree_loc;
+            let current_move = move_tree.table[row][col].as_ref().unwrap();
+            let (current_location, max_location) = study_data.location();
+
+            Ok(Snapshot {
+                game: study_data.game,
+                table: move_tree.table.clone(),
+                row,
+                col,
+                color: current_move.color,
+                comment: current_move.comment.clone(),
+                variant: current_move.variant,
+                current_location,
+                max_location,
+            })
+        }
         _ => unimplemented!(),
     }
 }
@@ -107,21 +125,20 @@ async fn play(
     loc: Option<(usize, usize)>,
     color: Color,
 ) -> Result<bool, String> {
-    if let AppData::Editing(editing_data) = &mut *state.lock().await {
-        Ok(editing_data.play(loc, color))
-    } else {
-        Err("aa".to_string())
+    match &mut *state.lock().await {
+        AppData::Editing(editing_data) => Ok(editing_data.play(loc, color)),
+        AppData::Study(study_data) => Ok(study_data.try_play(loc, color)),
+        _ => unimplemented!(),
     }
 }
 
 #[tauri::command]
 async fn jump(state: tauri::State<'_, Mutex<AppData>>, r: usize, c: usize) -> Result<(), String> {
-    if let AppData::Editing(editing_data) = &mut *state.lock().await {
-        editing_data.jump(r, c);
-        Ok(())
-    } else {
-        Err("aa".to_string())
-    }
+        match &mut *state.lock().await {
+        AppData::Editing(editing_data) => {editing_data.jump(r, c); Ok(())},
+        AppData::Study(study_data) => {study_data.jump(r, c); Ok(())},
+        _ => unimplemented!(),
+    }   
 }
 
 #[tauri::command]
@@ -215,13 +232,10 @@ async fn jump_to_exercise(
 async fn save_exercises(
     state: tauri::State<'_, Mutex<AppData>>,
     app: tauri::AppHandle,
-    exercise: String,
 ) -> Result<(), String> {
     match &mut *state.lock().await {
         AppData::Editing(editing_data) => {
-            editing_data
-                .save(&app.path().app_data_dir().unwrap(), &exercise)
-                .await;
+            editing_data.save(&app.path().app_data_dir().unwrap()).await;
             Ok(())
         }
         aaa => {
@@ -322,11 +336,23 @@ async fn answer(
     state: tauri::State<'_, Mutex<AppData>>,
     app: tauri::AppHandle,
     correct: bool,
-) -> Result<Vec<bool>, String> {
+) -> Result<(), String> {
     match &mut *state.lock().await {
         AppData::Study(study_data) => Ok(study_data
             .answer(&app.path().app_data_dir().unwrap(), correct)
             .await
+            ),
+        _ => unimplemented!(),
+    }
+}
+
+#[tauri::command]
+async fn get_history(
+    state: tauri::State<'_, Mutex<AppData>>,
+) -> Result<Vec<bool>, String> {
+    match &mut *state.lock().await {
+        AppData::Study(study_data) => Ok(study_data
+            .get_history()
             .iter()
             .map(|a| *a)
             .collect()),
@@ -364,6 +390,7 @@ pub fn run() {
             set_window,
             load_study,
             answer,
+            get_history,
         ])
         .run(tauri::generate_context!())
         .unwrap();
