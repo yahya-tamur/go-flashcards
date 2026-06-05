@@ -223,8 +223,9 @@ export default (props) => {
                 ? theme.palette.success.dark
                 : mov.variant === "Incorrect"
                   ? theme.palette.error.dark
-                  : mov.variant === "New" ?
-                  theme.palette.primary.light : "none",
+                  : mov.variant === "New"
+                    ? theme.palette.primary.light
+                    : "none",
           },
           treecontainer.current,
         );

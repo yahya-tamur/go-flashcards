@@ -27,8 +27,8 @@ pub struct MoveTree {
     pub table: Vec<Vec<Option<Move>>>,
 }
 
-impl MoveTree {
-    pub fn new() -> MoveTree {
+impl Default for MoveTree {
+    fn default() -> MoveTree {
         MoveTree {
             id: Uuid::new_v4(),
             initial: GameState::default(),
@@ -40,7 +40,9 @@ impl MoveTree {
             })]],
         }
     }
+}
 
+impl MoveTree {
     pub fn step(
         &mut self,
         r: usize,
@@ -91,9 +93,38 @@ impl MoveTree {
         }
     }
 
-    //pub fn delete(&mut self) -> bool {
-    //    true
-    //}
+    pub fn delete(&mut self, r: usize, c: usize) -> bool {
+        if (r == 0) && (c == 0) {
+            return false;
+        }
+        if r < self.table.len() - 1 && self.table[r + 1][c].is_none() {
+            let (rl, mut rr) = (r + 1, r + 2);
+            while rr < self.table.len() && self.table[rr][c].is_none() {
+                rr += 1;
+            }
+            self.table.drain(rl..rr);
+        }
+        if r > 1 && self.table[r - 1][c].is_none() {
+            self.table.remove(r);
+        } else {
+            self.table[r].truncate(c);
+            // move up other option for parent if it exists
+            let mut nr = r + 1;
+            while nr < self.table.len() {
+                if self.table[nr].len() > c
+                    && self.table[nr][c - 1].is_none()
+                    && self.table[nr][c].is_some()
+                {
+                    let extn = self.table[nr].split_off(c);
+                    self.table[r].extend(extn);
+                    self.table.remove(nr);
+                    break;
+                }
+                nr += 1;
+            }
+        }
+        true
+    }
 
     pub fn jump(&mut self, mut r: usize, mut c: usize) -> GameState {
         let mut moves: Vec<&Move> = Vec::new();

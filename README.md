@@ -1,3 +1,21 @@
+-- study mode (- editing) mvp goal:
+  - reset changes on next / jump_to_exercise
+  - edit mode 
+
+  - go over readme
+  - actually update flashcard list on config change
+  - actually check all sources exist. => disable study?
+  - go over rust src lib
+  - grep console log
+
+-- Study mode Finite State Automata:
+
+--(Start) ->  (Guess) <-> (Unknown Response)
+                L -> View (Can Jump To Exercise)
+                      L <-> Edit
+                    Both: -next-> Guess
+
+
 - find first six exercises and add them as a file.
 - implement study mode to study those six exercises.
 - clean up todo.
@@ -17,6 +35,11 @@ UI IMPROVEMENTS:
     - put exercise num, fwd, back, back to menu, from to sgf, in there
   - less tall tree view with smaller stones
   - disable 'new exercise' if exercise already exists.
+  - circle on last move
+  - check sources actually exist?
+  - maybe not auto save on every edit?
+  - editing config doesn't immediately add to study
+  - add histogram
 
 Finished backend of study mode.
   Next:

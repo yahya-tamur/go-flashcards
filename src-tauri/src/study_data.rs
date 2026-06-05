@@ -128,7 +128,7 @@ impl StudyData {
         }
 
         let mut coords: HashMap<Uuid, (usize, usize)> = HashMap::new();
-        let mut selection_pool: Vec<Vec<Uuid>> = vec![Vec::new(); 11];
+        let mut selection_pool: Vec<Vec<Uuid>> = vec![Vec::new(); 12];
         for (i, history_src) in history_srcs.iter().enumerate() {
             for (j, history) in history_src.iter().enumerate() {
                 selection_pool[history.bucket()].push(history.id);
@@ -165,6 +165,7 @@ impl StudyData {
         if self.current_exercise != self.past_exercises.len() - 1
             || self.selection_pool[sel_i][sel_j] != self.past_exercises[self.current_exercise]
         {
+            println!("{:?}", self);
             panic!("tried to answer a different question????");
         }
 
@@ -178,7 +179,6 @@ impl StudyData {
         fs::save_history(app_data, &self.history_srcs[i], &self.names[i])
             .await
             .unwrap();
-
     }
 
     pub fn get_history(&self) -> &VecDeque<bool> {
@@ -192,6 +192,7 @@ impl StudyData {
         let next_id = self.selection_pool[sel_i][sel_j];
         let (i, j) = self.coords[&next_id];
 
+        self.current_selection = (sel_i, sel_j);
         self.current_exercise = self.past_exercises.len();
         self.past_exercises.push(next_id);
 
@@ -266,7 +267,14 @@ impl StudyData {
             .unwrap();
     }
 
+    // does not update selection. DO NOT try answering etc. after this.
+    pub fn jump_to_exercise(&mut self, index: usize) {
+        self.current_exercise = index;
+        self.jump(0, 0);
+    }
+
     /*
+    // will probably never implement.
     // situation on deleting everything?
     delete_exercise -> yes, shift everything + remake coords.
      */

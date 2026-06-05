@@ -133,12 +133,37 @@ async fn play(
 }
 
 #[tauri::command]
-async fn jump(state: tauri::State<'_, Mutex<AppData>>, r: usize, c: usize) -> Result<(), String> {
-        match &mut *state.lock().await {
-        AppData::Editing(editing_data) => {editing_data.jump(r, c); Ok(())},
-        AppData::Study(study_data) => {study_data.jump(r, c); Ok(())},
+async fn next(state: tauri::State<'_, Mutex<AppData>>) -> Result<(), String> {
+    match &mut *state.lock().await {
+        AppData::Study(study_data) => {
+            study_data.next().await;
+            Ok(())
+        }
         _ => unimplemented!(),
-    }   
+    }
+}
+
+#[tauri::command]
+async fn jump(state: tauri::State<'_, Mutex<AppData>>, r: usize, c: usize) -> Result<(), String> {
+    match &mut *state.lock().await {
+        AppData::Editing(editing_data) => {
+            editing_data.jump(r, c);
+            Ok(())
+        }
+        AppData::Study(study_data) => {
+            study_data.jump(r, c);
+            Ok(())
+        }
+        _ => unimplemented!(),
+    }
+}
+
+#[tauri::command]
+async fn delete_branch(state: tauri::State<'_, Mutex<AppData>>) -> Result<bool, String> {
+    match &mut *state.lock().await {
+        AppData::Editing(editing_data) => Ok(editing_data.delete_branch()),
+        _ => unimplemented!(),
+    }
 }
 
 #[tauri::command]
@@ -221,10 +246,11 @@ async fn jump_to_exercise(
             editing_data.jump_to_exercise(index);
             Ok(())
         }
-        aaa => {
-            println!("Not in editing mode???! {:?}", aaa);
-            Err("aa".to_string())
+        AppData::Study(study_data) => {
+            study_data.jump_to_exercise(index);
+            Ok(())
         }
+        _ => unimplemented!(),
     }
 }
 
@@ -338,24 +364,20 @@ async fn answer(
     correct: bool,
 ) -> Result<(), String> {
     match &mut *state.lock().await {
-        AppData::Study(study_data) => Ok(study_data
-            .answer(&app.path().app_data_dir().unwrap(), correct)
-            .await
-            ),
+        AppData::Study(study_data) => {
+            study_data
+                .answer(&app.path().app_data_dir().unwrap(), correct)
+                .await;
+            Ok(())
+        }
         _ => unimplemented!(),
     }
 }
 
 #[tauri::command]
-async fn get_history(
-    state: tauri::State<'_, Mutex<AppData>>,
-) -> Result<Vec<bool>, String> {
+async fn get_history(state: tauri::State<'_, Mutex<AppData>>) -> Result<Vec<bool>, String> {
     match &mut *state.lock().await {
-        AppData::Study(study_data) => Ok(study_data
-            .get_history()
-            .iter()
-            .map(|a| *a)
-            .collect()),
+        AppData::Study(study_data) => Ok(study_data.get_history().iter().copied().collect()),
         _ => unimplemented!(),
     }
 }
@@ -373,6 +395,7 @@ pub fn run() {
             get_data,
             play,
             jump,
+            delete_branch,
             set_stone,
             start_setup,
             finish_setup,
@@ -391,6 +414,7 @@ pub fn run() {
             load_study,
             answer,
             get_history,
+            next,
         ])
         .run(tauri::generate_context!())
         .unwrap();

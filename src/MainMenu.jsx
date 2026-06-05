@@ -27,23 +27,12 @@ import SearchIcon from "@mui/icons-material/Search";
 import DirectionsIcon from "@mui/icons-material/Directions";
 
 export default (props) => {
-  // "main", "exercises", "study"
-
   const context = useContext(AppContext);
 
+  // "main", "exercises", "study"
   const [menu, setMenu] = useState("main");
-  const [exercises, setExercises] = useState([]);
-  const [studies, setStudies] = useState([]);
-  const [newExercise, setNewExercise] = useState("");
 
-  useEffect(() => {
-    invoke("list_exercises").then((a) => {
-      setExercises(a);
-    });
-    invoke("list_studies").then((a) => {
-      setStudies(a);
-    });
-  }, []);
+  const [newExercise, setNewExercise] = useState("");
 
   return (
     <Paper
@@ -68,7 +57,7 @@ export default (props) => {
               setMenu("exercises");
             }}
           >
-            Edit Exercises (test)
+            Edit
           </Button>
           <Button
             variant="contained"
@@ -83,13 +72,13 @@ export default (props) => {
       ) : menu === "exercises" ? (
         <>
           <List>
-            {exercises.map((e, i) => (
+            {props.exercises.map((e, i) => (
               <ListItem key={i} disablePadding>
                 <ListItemButton
                   onClick={() => {
                     invoke("load_exercises", { exercise: e }).then(() => {
-                  context.setPhase("Editing");
-                });
+                      context.setPhase("Editing");
+                    });
                   }}
                 >
                   <ListItemText primary={e} />
@@ -106,7 +95,11 @@ export default (props) => {
             >
               <ListItem
                 secondaryAction={
-                  <Button type="submit" variant="contained">
+                  <Button
+                    disabled={props.exercises.some((a) => a === newExercise)}
+                    type="submit"
+                    variant="contained"
+                  >
                     New
                   </Button>
                 }
@@ -135,13 +128,13 @@ export default (props) => {
       ) : (
         <>
           <List>
-            {studies.map((e, i) => (
+            {props.studies.map((e, i) => (
               <ListItem key={i} disablePadding>
                 <ListItemButton
                   onClick={() => {
                     console.log("AA");
                     invoke("load_study", { flashcardSet: e }).then(() => {
-                      console.log("setting phase!")
+                      console.log("setting phase!");
                       context.setPhase("Study");
                     });
                   }}

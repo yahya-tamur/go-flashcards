@@ -33,8 +33,6 @@ export default (props) => {
 
   // i think the array access interfered with state ?
 
-  const [savedMsgOpen, setSavedMsgOpen] = useState(false);
-
   useEffect(() => {
     setVariant(context.data?.variant ?? "None");
   }, [context.data]);
@@ -114,86 +112,25 @@ export default (props) => {
           flexDirection: "row",
         }}
       >
-        <NumberSpinner
-          label="Exercise"
-          size="small"
-          value={(context.data?.current_location ?? 0) + 1}
-          min={1}
-          max={context.data?.max_location ?? 1}
-          onValueChange={async (v, e) => {
-            if (context.data === null || context.data === undefined) {
-              return;
-            }
-            invoke("jump_to_exercise", { index: v - 1 })
-              .then(() => invoke("get_data"))
-              .then((data) => {
-                context.setData(data);
-                context.setColor(data.color === "Black" ? "White" : "Black");
-              });
-          }}
-        />{" "}
-      </Box>
-      <Box
-        sx={{
-          width: "100%",
-          maxWidth: "100%",
-          display: "flex",
-          flexDirection: "row",
-        }}
-      >
         <Box sx={{ marginTop: "auto", marginLeft: "20px", height: "40px" }}>
           <Button
             variant="contained"
             sx={{ height: "100%" }}
+            disabled={
+              (context.data?.row ?? 0) == 0 && (context.data?.col ?? 0) == 0
+            }
             onClick={async () => {
-              invoke("start_setup", { index: context.data?.max_location ?? 0 })
+              invoke("delete_branch")
                 .then(() => invoke("get_data"))
                 .then((data) => {
                   context.setData(data);
-                  context.setColorMode("Black");
-                  context.setColor("Black");
-                  console.log("AA");
-                  context.setEditingPhase("Initialize");
                 });
             }}
           >
-            New
-          </Button>
-
-          <Button
-            variant="contained"
-            sx={{ height: "100%" }}
-            onClick={async () => {
-              invoke("save_exercises").then(() => setSavedMsgOpen(true));
-            }}
-          >
-            Save
-          </Button>
-          <Button
-            variant="contained"
-            sx={{ height: "100%" }}
-            onClick={async () => {
-              // unsaved alert?
-              invoke("main_menu").then(() => context.setPhase("Main"));
-            }}
-          >
-            Back
+            Delete
           </Button>
         </Box>
       </Box>
-      <Dialog
-        open={savedMsgOpen}
-        fullWidth
-        maxWidth="xs"
-        onClose={() => setSavedMsgOpen(false)}
-      >
-        <DialogContent>
-          <DialogContentText>Saved.</DialogContentText>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setSavedMsgOpen(false)}>Ok</Button>
-        </DialogActions>
-      </Dialog>
     </Paper>
   );
 };

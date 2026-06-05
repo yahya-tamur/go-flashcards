@@ -32,7 +32,6 @@ export default (props) => {
       <Paper
         sx={{
           height: "100%",
-          maxHeight: "100%",
           minHeight: 0,
           width: "100%",
           maxWidth: "100%",
@@ -44,12 +43,20 @@ export default (props) => {
       >
         {
           <Editor
+            style={{
+              fontFamily: '"Roboto Mono", monospace',
+              fontSize: 12,
+              overflow: "scroll",
+            }}
             value={code}
             onValueChange={async (code) => {
               setCode(code);
               await invoke("set_config", { config: code })
                 .then(setError(undefined))
+                .then(() => invoke("list_studies"))
+                .then((a) => props.setStudies(a))
                 .catch((err) => {
+                  console.log;
                   if (err !== error) {
                     setError(err);
                   }
@@ -77,13 +84,11 @@ export default (props) => {
               }
             }}
             padding={10}
-            style={{
-              fontFamily: '"Roboto Mono", monospace',
-              fontSize: 12,
-            }}
           />
         }
-        <Box>{error !== undefined ? error[0] : "Saved!"}</Box>
+        <Box sx={{ height: "20pt" }}>
+          {error !== undefined ? error[0] : "Saved!"}
+        </Box>
       </Paper>
     </>
   );

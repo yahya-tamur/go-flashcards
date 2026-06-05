@@ -57,6 +57,7 @@ function App() {
   const [feedback, setFeedback] = useState("");
   const [data, setData] = useState(null);
   const [color, setColor] = useState("Black");
+  const [exerciseColor, setExerciseColor] = useState("");
 
   //still necessary?
   const swapColor = () => {
@@ -99,9 +100,17 @@ function App() {
           setColor,
           feedback,
           setFeedback,
+          exerciseColor,
+          setExerciseColor,
         }}
       >
-        {phase === "Main" ? <MainScreen /> : phase === "Editing" ? <EditingScreen /> : <StudyScreen />}
+        {phase === "Main" ? (
+          <MainScreen />
+        ) : phase === "Editing" ? (
+          <EditingScreen />
+        ) : (
+          <StudyScreen />
+        )}
       </AppContext>
     </ThemeProvider>
   );

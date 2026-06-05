@@ -42,6 +42,20 @@ impl EditingData {
         true
     }
 
+    pub fn delete_branch(&mut self) -> bool {
+        if self.tree_loc == (0, 0) {
+            return false;
+        }
+        let (r, c) = self.tree_loc;
+        let (mut pr, pc) = (r, c - 1);
+        while self.exercises[self.current_exercise].table[pr][pc].is_none() {
+            pr -= 1;
+        }
+        self.jump(pr, pc);
+        self.exercises[self.current_exercise].delete(r, c);
+        true
+    }
+
     pub fn jump(&mut self, r: usize, c: usize) {
         self.game = self.exercises[self.current_exercise].jump(r, c);
         self.tree_loc = (r, c);
@@ -52,7 +66,7 @@ impl EditingData {
         self.game = GameState::default();
         self.current_exercise = index;
         self.tree_loc = (0, 0);
-        self.exercises.insert(index, MoveTree::new());
+        self.exercises.insert(index, MoveTree::default());
     }
 
     pub fn finish_setup(&mut self, color: Color) {
@@ -121,7 +135,7 @@ impl EditingData {
             EditingData {
                 game: GameState::default(),
                 tree_loc: (0, 0),
-                exercises: vec![MoveTree::new()],
+                exercises: vec![MoveTree::default()],
                 current_exercise: 0,
                 file: exercise_file.to_string(),
             }

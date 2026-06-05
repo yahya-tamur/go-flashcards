@@ -7,6 +7,7 @@ import Tree from "./Tree.jsx";
 import InitializeMenu from "./InitializeMenu.jsx";
 import MakeTreeMenu from "./MakeTreeMenu.jsx";
 import EditCommentBox from "./EditCommentBox";
+import EditingTopBar from "./EditingTopBar";
 import "./App.css";
 import AppContext from "./AppContext";
 import Box from "@mui/material/Box";
@@ -34,8 +35,20 @@ export default () => {
 
   return (
     <main style={{ display: "flex", flexDirection: "row" }}>
-      <Box sx={{ height: "100vh", flexBasis: "60%", minWidth: 0 }}>
-        <Board />
+      <Box
+        sx={{
+          height: "100vh",
+          flexBasis: "60%",
+          minWidth: 0,
+          flexDirection: "col",
+        }}
+      >
+        <Box sx={{ height: "80px" }}>
+          <EditingTopBar />
+        </Box>
+        <Box sx={{ height: "calc(100vh - 80px)" }}>
+          <Board />
+        </Box>
       </Box>
       <Box
         sx={{

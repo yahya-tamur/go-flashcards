@@ -62,7 +62,7 @@ function NumberSpinner({
           />
         }
       >
-        <FormLabel
+        {/*<FormLabel
           htmlFor={id}
           sx={{
             display: "inline-block",
@@ -75,7 +75,7 @@ function NumberSpinner({
           }}
         >
           {label}
-        </FormLabel>
+        </FormLabel>*/}
         <BaseNumberField.ScrubAreaCursor>
           <OpenInFullIcon
             fontSize="small"

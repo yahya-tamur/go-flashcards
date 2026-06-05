@@ -7,10 +7,14 @@ import Tree from "./Tree.jsx";
 import InitializeMenu from "./InitializeMenu.jsx";
 import MakeTreeMenu from "./MakeTreeMenu.jsx";
 import EditCommentBox from "./EditCommentBox";
+import StudyTopBar from "./StudyTopBar";
+import StudyMenu from "./StudyMenu";
+import StudyCommentBox from "./StudyCommentBox";
 import "./App.css";
 import AppContext from "./AppContext";
 import Box from "@mui/material/Box";
-import Button from "@mui/material/Button"
+import Paper from "@mui/material/Paper";
+import Button from "@mui/material/Button";
 
 export default () => {
   let context = useContext(AppContext);
@@ -21,7 +25,8 @@ export default () => {
         context.setStudyPhase("Guess");
         context.setData(data);
         context.setColor(data.color === "Black" ? "White" : "Black");
-        context.setColorMode(data.color === "Black" ? "White" : "Black");
+        //context.setColorMode(data.color === "Black" ? "White" : "Black");
+        context.setExerciseColor(data.color === "Black" ? "White" : "Black");
       })
       .catch((e) => {
         console.log(e);
@@ -30,62 +35,50 @@ export default () => {
 
   return (
     <main style={{ display: "flex", flexDirection: "row" }}>
-      <Box sx={{ height: "100vh", flexBasis: "60%", minWidth: 0 }}>
-        <Board />
+      <Box
+        sx={{
+          height: "100vh",
+          flexBasis: "60%",
+          minWidth: 0,
+          flexDirection: "col",
+        }}
+      >
+        <Box sx={{ height: "80px" }}>
+          <StudyTopBar />
+        </Box>
+        <Box sx={{ height: "calc(100vh - 80px)" }}>
+          <Board />
+        </Box>
       </Box>
       <Box
         sx={{
           display: "flex",
           flexBasis: "40%",
-          flexDirection: "column",
+          flexDirection: "column  ",
           minWidth: 0,
           maxHeight: "100vh",
           overflow: "hidden",
         }}
       >
         <Box sx={{ flexBasis: "40%", minHeight: 0 }}>
-          <Tree />
+          {context.studyPhase === "Guess" ||
+          context.studyPhase === "UnknownGuess" ? (
+            <Paper
+              sx={{
+                maxHeight: "100%",
+                height: "100%",
+              }}
+              elevation={5}
+            />
+          ) : (
+            <Tree />
+          )}
         </Box>
-          {context.studyPhase === "Guess" ?
-            <>guess!</> : context.studyPhase === "UnknownGuess" ?
-            <>Unknown Opponent Response.
-            <Button onClick={() => {
-              let [row, col] = [context.data.row, context.data.col];
-              col -= 1;
-              while (context.data.table[row][col] === null) {
-                row -= 1;
-              }
-              invoke("jump", { r: row, c: col })
-                .then(() => invoke("get_data"))
-                .then((data) => {
-                  context.setData(data);
-                  context.setColor(data.color === "Black" ? "White" : "Black");
-                  context.setStudyPhase("Guess");
-                })
-                .catch((e) => {
-                  console.log(e);
-                });
-
-
-            }}>Back</Button>
-            <Button onClick={() => {
-              invoke("get_data")
-                .then((data) => {
-                  context.setData(data);
-                  context.setColor(data.color === "Black" ? "White" : "Black");
-                  context.setStudyPhase("View");
-                })
-                .catch((e) => {
-                  console.log(e);
-                });
-
-            }}>View Problem</Button>
-            
-            </> : context.studyPhase === "View" ?
-            <>view</> : <>unknown phase {context.studyPhase}</>
-          }
         <Box sx={{ flexBasis: "30%", minHeight: 0 }}>
-          comments here
+          <StudyMenu />
+        </Box>
+        <Box sx={{ flexBasis: "30%", minHeight: 0 }}>
+          <StudyCommentBox />
         </Box>
       </Box>
     </main>
