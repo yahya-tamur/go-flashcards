@@ -420,7 +420,7 @@ export default (props) => {
               context.data !== null &&
               mouseDown &&
               w !== null &&
-              context.phase === "Editing" &&
+              (context.phase === "Editing" || context.studyPhase === "Edit") &&
               context.editingPhase === "Initialize" &&
               context.data.game.stones[w[0] + 1][w[1] + 1] !== context.colorMode
             ) {
@@ -450,7 +450,7 @@ export default (props) => {
               return;
             }
             if (
-              context.phase === "Editing" &&
+              (context.phase === "Editing" || context.studyPhase === "Edit") &&
               context.editingPhase === "Initialize"
             ) {
               // yes, dragging is not enough.
@@ -486,7 +486,6 @@ export default (props) => {
                     context.phase === "Study" &&
                     context.studyPhase === "Guess"
                   ) {
-                    console.log(data, data.variant);
                     switch (data.variant) {
                       case "Correct":
                         invoke("answer", { correct: true })

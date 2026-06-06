@@ -1,6 +1,7 @@
 use serde::{Deserialize, Serialize};
+use std::hash::Hash;
 
-#[derive(Clone, Copy, PartialEq, Eq, Debug, Serialize, Deserialize)]
+#[derive(Clone, Copy, PartialEq, Eq, Debug, Serialize, Deserialize, Hash)]
 #[repr(u8)]
 pub enum Color {
     Black = 0,

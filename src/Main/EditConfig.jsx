@@ -1,11 +1,11 @@
 import { useEffect, useState, useRef } from "react";
-import board_image from "./assets/oak.jpg";
-import black_image from "./assets/black_night.png";
-import white_image from "./assets/white_anime.png";
+import board_image from "../assets/oak.jpg";
+import black_image from "../assets/black_night.png";
+import white_image from "../assets/white_anime.png";
 import { invoke } from "@tauri-apps/api/core";
-import { createSVGElement } from "./utils";
+import { createSVGElement } from "../utils";
 
-import "./App.css";
+import "../App.css";
 
 import Box from "@mui/material/Box";
 import Paper from "@mui/material/Paper";
@@ -56,11 +56,9 @@ export default (props) => {
                 .then(() => invoke("list_studies"))
                 .then((a) => props.setStudies(a))
                 .catch((err) => {
-                  console.log;
                   if (err !== error) {
                     setError(err);
                   }
-                  console.log(err);
                 });
             }}
             highlight={(code) => {

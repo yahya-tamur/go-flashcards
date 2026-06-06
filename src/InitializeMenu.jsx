@@ -21,7 +21,6 @@ import AppContext from "./AppContext";
 
 export default (props) => {
   let context = useContext(AppContext);
-  const button_size = 70;
 
   return (
     <Paper
@@ -65,7 +64,7 @@ export default (props) => {
                 context.setData(data);
               })
               .catch((e) => {
-                console.log("error");
+                console.log(e);
               });
           }}
           step={1}
@@ -93,7 +92,6 @@ export default (props) => {
               .catch((e) => {
                 console.log("error");
               });
-            // actually delete stones
           }}
           step={1}
           min={0}
@@ -126,33 +124,6 @@ export default (props) => {
           <ToggleButton value="White">
             <img src={white_image} style={{ height: "30px", width: "30px" }} />
           </ToggleButton>
-          {/* <ToggleButton value="BlackWhite">
-            <svg
-              viewBox="0 0 100 100"
-              style={{ height: "30px", width: "30px" }}
-            >
-              <defs>
-                <clipPath id="left-half">
-                  <rect x="0" y="0" width="50" height="100" />
-                </clipPath>
-                <clipPath id="right-half">
-                  <rect x="50" y="0" width="50" height="100" />
-                </clipPath>
-              </defs>
-              <image
-                href={black_image}
-                width="100"
-                height="100"
-                clipPath="url(#left-half)"
-              />
-              <image
-                href={white_image}
-                width="100"
-                height="100"
-                clipPath="url(#right-half)"
-              />
-            </svg>
-          </ToggleButton>*/}
           <ToggleButton value="Delete">
             <ClearIcon color="error" sx={{ height: "30px", width: "30px" }} />
           </ToggleButton>

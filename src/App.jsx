@@ -5,9 +5,9 @@ import { invoke } from "@tauri-apps/api/core";
 import "./App.css";
 
 import AppContext from "./AppContext";
-import MainScreen from "./MainScreen";
-import EditingScreen from "./EditingScreen";
-import StudyScreen from "./StudyScreen";
+import MainScreen from "./Main/Screen";
+import EditingScreen from "./Editing/Screen";
+import StudyScreen from "./Study/Screen";
 
 import Box from "@mui/material/Box";
 import { ThemeProvider, createTheme } from "@mui/material/styles";
@@ -49,9 +49,8 @@ function App() {
   // Main, Editing, Study.
   const [phase, setPhase] = useState("Main");
   // Initialize, MakeTree
-  // set to null or undefined??
   const [editingPhase, setEditingPhase] = useState("Initialize");
-  // Guess, View, Edit.
+  // Guess, GuessUnknown View, Edit.
   const [studyPhase, setStudyPhase] = useState("Guess");
   const [colorMode, setColorMode] = useState("Black");
   const [feedback, setFeedback] = useState("");
@@ -59,27 +58,6 @@ function App() {
   const [color, setColor] = useState("Black");
   const [exerciseColor, setExerciseColor] = useState("");
 
-  //still necessary?
-  const swapColor = () => {
-    if (color === "Black") {
-      setColor("White");
-    } else if (color === "White") {
-      setColor("Black");
-    } else {
-      console.log("Tried to swap invalid color!");
-    }
-  };
-
-  useEffect(() => {
-    const load_board = async () => {
-      invoke("edit_new")
-        .then(() => invoke("start_setup"))
-        .then(() => invoke("get_data"))
-        .then((data) => setData(data))
-        .catch((e) => {}); // sometimes tries to initialize multiple times
-    };
-    load_board();
-  }, []);
 
   return (
     <ThemeProvider theme={theme}>

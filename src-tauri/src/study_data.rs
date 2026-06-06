@@ -2,11 +2,10 @@ use std::collections::{HashMap, VecDeque};
 
 use crate::config::{self, Config};
 use crate::flashcard_algorithm::pick;
+use crate::navigator::Navigator;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
-use crate::go_rules::{place_stone, Color, GameState};
-use crate::move_tree;
 use crate::move_tree::MoveTree;
 
 use crate::fs;
@@ -44,8 +43,7 @@ impl History {
 
 #[derive(Debug)]
 pub struct StudyData {
-    pub game: GameState,
-    pub tree_loc: (usize, usize),
+    pub navigator: Navigator,
     config: Config,
 
     // think about current
@@ -140,13 +138,12 @@ impl StudyData {
         let past_exercises = vec![current];
         let current_exercise = 0;
         let (i, j) = coords[&current];
-        let game = exercise_srcs[i][j].initial;
-        let tree_loc = (0, 0);
+
+        let navigator = Navigator::load(exercise_srcs[i][j].clone());
 
         // load
         StudyData {
-            game,
-            tree_loc,
+            navigator,
             config,
             past_exercises,
             current_exercise,
@@ -196,19 +193,7 @@ impl StudyData {
         self.current_exercise = self.past_exercises.len();
         self.past_exercises.push(next_id);
 
-        self.tree_loc = (0, 0);
-        self.game = self.exercise_srcs[i][j].initial;
-    }
-
-    //pub?
-    fn get_move_tree_mut(&mut self) -> &mut MoveTree {
-        let (i, j) = self.coords[&self.past_exercises[self.current_exercise]];
-        &mut self.exercise_srcs[i][j]
-    }
-
-    pub fn get_move_tree(&self) -> &MoveTree {
-        let (i, j) = self.coords[&self.past_exercises[self.current_exercise]];
-        &self.exercise_srcs[i][j]
+        self.navigator = Navigator::load(self.exercise_srcs[i][j].clone());
     }
 
     pub fn location(&self) -> (usize, usize) {
@@ -217,60 +202,29 @@ impl StudyData {
 
     // makes blue nodes
 
-    pub fn try_play(&mut self, loc: Option<(usize, usize)>, color: Color) -> bool {
-        if let Some((i, j)) = loc {
-            if !place_stone(&mut self.game, i, j, color) {
-                return false;
-            }
+    pub async fn stop_editing(&mut self, app_data: &Path, save: bool) {
+        let (i, j) = self.coords[&self.past_exercises[self.current_exercise]];
+
+        if save {
+            // remove new variants
+            self.navigator.clear_edits();
+
+            self.exercise_srcs[i][j] = self.navigator.move_tree.clone();
+            fs::save_exercises(app_data, &self.exercise_srcs[i], &self.names[i])
+                .await
+                .unwrap();
+        } else {
+            self.navigator = Navigator::load(self.exercise_srcs[i][j].clone());
         }
-        let (row, column) = self.tree_loc;
-        self.tree_loc = self.get_move_tree_mut().step(row, column, loc, color, true);
-        true
     }
 
-    pub fn jump(&mut self, r: usize, c: usize) {
-        self.game = self.get_move_tree_mut().jump(r, c);
-        self.tree_loc = (r, c);
-    }
-
-    pub fn set_comment(&mut self, comment: &str) {
-        let (r, c) = self.tree_loc;
-        self.get_move_tree_mut().table[r][c]
-            .as_mut()
-            .unwrap()
-            .comment = comment.to_string();
-    }
-
-    //change name globally + make sure every node keeps blue vs. not blue.
-    //may add field to struct
-
-    // create go_rules -> get path
-    pub fn set_variant() {
-        unimplemented!()
-    }
-
-    pub async fn save_edits(&mut self, app_data: &Path) {
-        // remove new variants
-        let move_tree = self.get_move_tree_mut();
-        for r in 0..move_tree.table.len() {
-            for c in 0..move_tree.table[r].len() {
-                if let Some(mov) = move_tree.table[r][c].as_mut() {
-                    if mov.variant == move_tree::Variant::New {
-                        mov.variant = move_tree::Variant::None;
-                    }
-                }
-            }
-        }
-        let (i, _) = self.coords[&self.past_exercises[self.current_exercise]];
-        fs::save_exercises(app_data, &self.exercise_srcs[i], &self.names[i])
-            .await
-            .unwrap();
-    }
+    pub async fn discard_edits(&mut self) {}
 
     // does not update selection. DO NOT try answering etc. after this.
     pub fn jump_to_exercise(&mut self, index: usize) {
         self.current_exercise = index;
-        self.jump(0, 0);
+        let (i, j) = self.coords[&self.past_exercises[index]];
+        self.navigator = Navigator::load(self.exercise_srcs[i][j].clone());
     }
 
     /*

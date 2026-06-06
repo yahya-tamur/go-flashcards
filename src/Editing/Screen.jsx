@@ -2,31 +2,31 @@ import { useState, useEffect, useContext } from "react";
 
 import { invoke } from "@tauri-apps/api/core";
 
-import Board from "./Board.jsx";
-import Tree from "./Tree.jsx";
-import InitializeMenu from "./InitializeMenu.jsx";
-import MakeTreeMenu from "./MakeTreeMenu.jsx";
-import EditCommentBox from "./EditCommentBox";
-import StudyTopBar from "./StudyTopBar";
-import StudyMenu from "./StudyMenu";
-import StudyCommentBox from "./StudyCommentBox";
-import "./App.css";
-import AppContext from "./AppContext";
+import Board from "../Board";
+import Tree from "../Tree";
+import InitializeMenu from "../InitializeMenu";
+import MakeTreeMenu from "../MakeTreeMenu";
+import CommentBox from "./CommentBox";
+import TopBar from "./TopBar";
+import "../App.css";
+import AppContext from "../AppContext";
 import Box from "@mui/material/Box";
-import Paper from "@mui/material/Paper";
-import Button from "@mui/material/Button";
 
 export default () => {
   let context = useContext(AppContext);
+  // useEffect: load exercise.
 
   useEffect(() => {
     invoke("get_data")
       .then((data) => {
-        context.setStudyPhase("Guess");
+        if (data.table.length === 1 && data.table[0].length === 1) {
+          context.setEditingPhase("Initialize");
+        } else {
+          context.setEditingPhase("MakeTree");
+        }
         context.setData(data);
         context.setColor(data.color === "Black" ? "White" : "Black");
-        //context.setColorMode(data.color === "Black" ? "White" : "Black");
-        context.setExerciseColor(data.color === "Black" ? "White" : "Black");
+        context.setColorMode(data.color === "Black" ? "White" : "Black");
       })
       .catch((e) => {
         console.log(e);
@@ -44,7 +44,7 @@ export default () => {
         }}
       >
         <Box sx={{ height: "80px" }}>
-          <StudyTopBar />
+          <TopBar />
         </Box>
         <Box sx={{ height: "calc(100vh - 80px)" }}>
           <Board />
@@ -54,31 +54,24 @@ export default () => {
         sx={{
           display: "flex",
           flexBasis: "40%",
-          flexDirection: "column  ",
+          flexDirection: "column",
           minWidth: 0,
           maxHeight: "100vh",
           overflow: "hidden",
         }}
       >
         <Box sx={{ flexBasis: "40%", minHeight: 0 }}>
-          {context.studyPhase === "Guess" ||
-          context.studyPhase === "UnknownGuess" ? (
-            <Paper
-              sx={{
-                maxHeight: "100%",
-                height: "100%",
-              }}
-              elevation={5}
-            />
+          <Tree />
+        </Box>
+        <Box sx={{ flexBasis: "30%", minHeight: 0 }}>
+          {context.editingPhase === "Initialize" ? (
+            <InitializeMenu />
           ) : (
-            <Tree />
+            <MakeTreeMenu />
           )}
         </Box>
         <Box sx={{ flexBasis: "30%", minHeight: 0 }}>
-          <StudyMenu />
-        </Box>
-        <Box sx={{ flexBasis: "30%", minHeight: 0 }}>
-          <StudyCommentBox />
+          <CommentBox />
         </Box>
       </Box>
     </main>

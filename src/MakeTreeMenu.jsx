@@ -90,9 +90,6 @@ export default (props) => {
               .then(() => invoke("get_data"))
               .then((data) => {
                 context.setData(data);
-              })
-              .catch((e) => {
-                console.log(e, "error");
               });
           }}
         >
@@ -123,6 +120,7 @@ export default (props) => {
               invoke("delete_branch")
                 .then(() => invoke("get_data"))
                 .then((data) => {
+                  context.setColor(data.color === "Black" ? "White" : "Black");
                   context.setData(data);
                 });
             }}

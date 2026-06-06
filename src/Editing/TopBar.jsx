@@ -1,11 +1,11 @@
 import { useEffect, useState, useRef, useContext } from "react";
-import board_image from "./assets/oak.jpg";
-import black_image from "./assets/black_night.png";
-import white_image from "./assets/white_anime.png";
+import board_image from "../assets/oak.jpg";
+import black_image from "../assets/black_night.png";
+import white_image from "../assets/white_anime.png";
 import { invoke } from "@tauri-apps/api/core";
-import { createSVGElement } from "./utils";
+import { createSVGElement } from "../utils";
 
-import "./App.css";
+import "../App.css";
 
 import Button from "@mui/material/Button";
 import Paper from "@mui/material/Paper";
@@ -20,9 +20,9 @@ import DialogContent from "@mui/material/DialogContent";
 import DialogContentText from "@mui/material/DialogContentText";
 import DialogTitle from "@mui/material/DialogTitle";
 
-import NumberSpinner from "./components/NumberSpinner";
+import NumberSpinner from "../components/NumberSpinner";
 
-import AppContext from "./AppContext";
+import AppContext from "../AppContext";
 
 import { Avatar, Icon, IconButton, SvgIcon } from "@mui/material";
 import { createSvgIcon } from "@mui/material/utils";
@@ -72,9 +72,7 @@ export default (props) => {
         </Button>
         <NumberSpinner
           label="Exercise"
-          disabled={["Guess", "UnknownGuess"].some(
-            (a) => a === context.studyPhase,
-          )}
+          disabled={context.editingPhase === "Initialize"}
           size="small"
           value={(context.data?.current_location ?? 0) + 1}
           min={1}
@@ -87,36 +85,51 @@ export default (props) => {
               .then(() => invoke("get_data"))
               .then((data) => {
                 context.setData(data);
-                context.setFeedback("");
                 context.setColor(data.color === "Black" ? "White" : "Black");
               });
           }}
         />
         <Button
           variant="contained"
-          disabled={["Guess", "UnknownGuess"].some(
-            (a) => a === context.studyPhase,
-          )}
+          disabled={context.editingPhase === "Initialize"}
           sx={{ height: "40px" }}
           onClick={async () => {
-            invoke("next")
+            invoke("new_exercise")
               .then(() => invoke("get_data"))
               .then((data) => {
                 context.setData(data);
-                context.setColor(data.color === "Black" ? "White" : "Black");
-                context.setExerciseColor(
-                  data.color === "Black" ? "White" : "Black",
-                );
-                context.setStudyPhase("Guess");
-              })
-              .catch((e) => {
-                console.log(e);
+                context.setColorMode("Black");
+                context.setColor("Black");
+                context.setEditingPhase("Initialize");
               });
           }}
         >
-          Next
+          New
+        </Button>
+        <Button
+          disabled={context.editingPhase === "Initialize"}
+          variant="contained"
+          sx={{ height: "40px" }}
+          onClick={async () => {
+            invoke("save_exercises").then(() => setSavedMsgOpen(true));
+          }}
+        >
+          Save
         </Button>
       </Box>
+      <Dialog
+        open={savedMsgOpen}
+        fullWidth
+        maxWidth="xs"
+        onClose={() => setSavedMsgOpen(false)}
+      >
+        <DialogContent>
+          <DialogContentText>Saved.</DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setSavedMsgOpen(false)}>Ok</Button>
+        </DialogActions>
+      </Dialog>
     </Paper>
   );
 };

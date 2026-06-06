@@ -7,7 +7,10 @@ pub mod flashcard_algorithm;
 pub mod fs;
 pub mod go_rules;
 pub mod move_tree;
+pub mod navigator;
 pub mod study_data;
+
+use crate::navigator::Navigator;
 
 use tauri::{Builder, Manager};
 
@@ -22,6 +25,17 @@ use serde::{Deserialize, Serialize};
 // is std sync mutex better? is tauri multithreaded? probably doesn't matter, since
 // won't be getting too many requests / second. Probably didn't even need mutex.
 
+async fn navigate<'a, A>(
+    state: tauri::State<'a, Mutex<AppData>>,
+    f: impl FnOnce(&mut Navigator, bool) -> A,
+) -> A {
+    match &mut *(state.lock().await) {
+        AppData::Editing(editing_data) => f(&mut editing_data.navigator, false),
+        AppData::Study(study_data) => f(&mut study_data.navigator, true),
+        _ => unimplemented!(),
+    }
+}
+
 #[tauri::command]
 async fn set_stone(
     state: tauri::State<'_, Mutex<AppData>>,
@@ -29,13 +43,8 @@ async fn set_stone(
     j: usize,
     color: Option<Color>,
 ) -> Result<(), String> {
-    match &mut *(state.lock().await) {
-        AppData::Editing(editing_data) => {
-            editing_data.place_stone(i, j, color);
-            Ok(())
-        }
-        _ => unimplemented!(),
-    }
+    navigate(state, |nav, _| nav.place_stone(i, j, color)).await;
+    Ok(())
 }
 
 // struct that gets sent to frontend.
@@ -59,64 +68,37 @@ pub struct Snapshot {
 #[tauri::command]
 async fn get_data(state: tauri::State<'_, Mutex<AppData>>) -> Result<Snapshot, String> {
     println!("getting data.");
+    let get_data = |nav: &Navigator, loc: (usize, usize)| {
+        let (row, col) = nav.tree_loc;
+        let current_move = nav.current();
+        Snapshot {
+            game: nav.game,
+            table: nav.move_tree.table.clone(),
+            row,
+            col,
+            color: current_move.color,
+            comment: current_move.comment.clone(),
+            variant: current_move.variant,
+            current_location: loc.0,
+            max_location: loc.1,
+        }
+    };
     match &*state.lock().await {
         AppData::Editing(editing_data) => {
-            let (row, col) = editing_data.tree_loc;
-            let current_move = editing_data.get_current_move().unwrap();
-            let color = current_move.color;
-            let comment = current_move.comment.clone();
-            let variant = current_move.variant;
-            let (current_location, max_location) = editing_data.location();
-            Ok(Snapshot {
-                game: editing_data.game,
-
-                table: editing_data.get_table(),
-                row,
-                col,
-                color,
-                comment,
-                variant,
-
-                current_location,
-                max_location,
-            })
+            Ok(get_data(&editing_data.navigator, editing_data.location()))
         }
-        AppData::Study(study_data) => {
-            let move_tree = study_data.get_move_tree();
-            let (row, col) = study_data.tree_loc;
-            let current_move = move_tree.table[row][col].as_ref().unwrap();
-            let (current_location, max_location) = study_data.location();
-
-            Ok(Snapshot {
-                game: study_data.game,
-                table: move_tree.table.clone(),
-                row,
-                col,
-                color: current_move.color,
-                comment: current_move.comment.clone(),
-                variant: current_move.variant,
-                current_location,
-                max_location,
-            })
-        }
+        AppData::Study(study_data) => Ok(get_data(&study_data.navigator, study_data.location())),
         _ => unimplemented!(),
     }
 }
 
-//copies game and tree. If tauri serializes anyway, is that necessary?
 #[tauri::command]
 async fn set_window(
     state: tauri::State<'_, Mutex<AppData>>,
     window: (usize, usize, usize, usize),
 ) -> Result<(), String> {
-    match &mut *state.lock().await {
-        AppData::Editing(editing_data) => {
-            editing_data.game.window = window;
-            editing_data.clear_to(window);
-            Ok(())
-        }
-        _ => unimplemented!(),
-    }
+    navigate(state, |nav, _| nav.clear_to(window)).await;
+    Ok(())
 }
 
 #[tauri::command]
@@ -125,16 +107,27 @@ async fn play(
     loc: Option<(usize, usize)>,
     color: Color,
 ) -> Result<bool, String> {
-    match &mut *state.lock().await {
-        AppData::Editing(editing_data) => Ok(editing_data.play(loc, color)),
-        AppData::Study(study_data) => Ok(study_data.try_play(loc, color)),
-        _ => unimplemented!(),
-    }
+    Ok(navigate(state, |nav, study| nav.play(loc, color, study)).await)
 }
 
 #[tauri::command]
-async fn next(state: tauri::State<'_, Mutex<AppData>>) -> Result<(), String> {
+async fn jump(state: tauri::State<'_, Mutex<AppData>>, r: usize, c: usize) -> Result<(), String> {
+    navigate(state, |nav, _| nav.jump(r, c)).await;
+    Ok(())
+}
+
+#[tauri::command]
+async fn delete_branch(state: tauri::State<'_, Mutex<AppData>>) -> Result<bool, String> {
+    Ok(navigate(state, |nav, _| nav.delete_branch()).await)
+}
+
+#[tauri::command]
+async fn new_exercise(state: tauri::State<'_, Mutex<AppData>>) -> Result<(), String> {
     match &mut *state.lock().await {
+        AppData::Editing(editing_data) => {
+            editing_data.new_exercise();
+            Ok(())
+        }
         AppData::Study(study_data) => {
             study_data.next().await;
             Ok(())
@@ -144,75 +137,24 @@ async fn next(state: tauri::State<'_, Mutex<AppData>>) -> Result<(), String> {
 }
 
 #[tauri::command]
-async fn jump(state: tauri::State<'_, Mutex<AppData>>, r: usize, c: usize) -> Result<(), String> {
-    match &mut *state.lock().await {
-        AppData::Editing(editing_data) => {
-            editing_data.jump(r, c);
-            Ok(())
-        }
-        AppData::Study(study_data) => {
-            study_data.jump(r, c);
-            Ok(())
-        }
-        _ => unimplemented!(),
-    }
-}
-
-#[tauri::command]
-async fn delete_branch(state: tauri::State<'_, Mutex<AppData>>) -> Result<bool, String> {
-    match &mut *state.lock().await {
-        AppData::Editing(editing_data) => Ok(editing_data.delete_branch()),
-        _ => unimplemented!(),
-    }
-}
-
-#[tauri::command]
-async fn start_setup(state: tauri::State<'_, Mutex<AppData>>, index: usize) -> Result<(), String> {
-    if let AppData::Editing(editing_data) = &mut *state.lock().await {
-        editing_data.start_setup(index);
-        Ok(())
-    } else {
-        Err("aa".to_string())
-    }
-}
-
-#[tauri::command]
 async fn finish_setup(state: tauri::State<'_, Mutex<AppData>>, color: Color) -> Result<(), String> {
-    if let AppData::Editing(editing_data) = &mut *state.lock().await {
-        editing_data.finish_setup(color);
-        Ok(())
-    } else {
-        Err("aa".to_string())
-    }
+    navigate(state, |nav, _| nav.finish_setup(color)).await;
+    Ok(())
 }
 
 #[tauri::command]
 async fn collapse_tree(state: tauri::State<'_, Mutex<AppData>>) -> Result<(), String> {
-    if let AppData::Editing(editing_data) = &mut *state.lock().await {
-        editing_data.collapse_tree();
-        Ok(())
-    } else {
-        Err("aa".to_string())
-    }
+    navigate(state, |nav, _| nav.collapse_tree()).await;
+    Ok(())
 }
 
 #[tauri::command]
 async fn comment(state: tauri::State<'_, Mutex<AppData>>, comment: String) -> Result<(), String> {
-    // if let AppData::Editing(editing_data) = &mut *state.lock().await {
-    match &mut *state.lock().await {
-        AppData::Editing(editing_data) => {
-            if let Some(mov) = editing_data.get_current_move_mut() {
-                mov.comment = comment;
-            } else {
-                println!("Something happened? {:?}", editing_data);
-            }
-            Ok(())
-        }
-        aaa => {
-            println!("Not in editing mode???! {:?}", aaa);
-            Err("aa".to_string())
-        }
-    }
+    navigate(state, |nav, _| {
+        nav.current_mut().comment = comment;
+    })
+    .await;
+    Ok(())
 }
 
 #[tauri::command]
@@ -220,20 +162,8 @@ async fn set_variant(
     state: tauri::State<'_, Mutex<AppData>>,
     variant: Variant,
 ) -> Result<(), String> {
-    match &mut *state.lock().await {
-        AppData::Editing(editing_data) => {
-            if let Some(mov) = editing_data.get_current_move_mut() {
-                mov.variant = variant;
-            } else {
-                println!("Something happened? {:?}", editing_data);
-            }
-            Ok(())
-        }
-        aaa => {
-            println!("Not in editing mode???! {:?}", aaa);
-            Err("aa".to_string())
-        }
-    }
+    navigate(state, |nav, study| nav.set_variant(variant, study)).await;
+    Ok(())
 }
 
 #[tauri::command]
@@ -254,6 +184,7 @@ async fn jump_to_exercise(
     }
 }
 
+// TODO~~
 #[tauri::command]
 async fn save_exercises(
     state: tauri::State<'_, Mutex<AppData>>,
@@ -264,10 +195,7 @@ async fn save_exercises(
             editing_data.save(&app.path().app_data_dir().unwrap()).await;
             Ok(())
         }
-        aaa => {
-            println!("Not in editing mode???! {:?}", aaa);
-            Err("aa".to_string())
-        }
+        _ => unimplemented!(),
     }
 }
 
@@ -375,6 +303,23 @@ async fn answer(
 }
 
 #[tauri::command]
+async fn stop_editing(
+    state: tauri::State<'_, Mutex<AppData>>,
+    app: tauri::AppHandle,
+    save: bool,
+) -> Result<(), String> {
+    match &mut *state.lock().await {
+        AppData::Study(study_data) => {
+            study_data
+                .stop_editing(&app.path().app_data_dir().unwrap(), save)
+                .await;
+            Ok(())
+        }
+        _ => unimplemented!(),
+    }
+}
+
+#[tauri::command]
 async fn get_history(state: tauri::State<'_, Mutex<AppData>>) -> Result<Vec<bool>, String> {
     match &mut *state.lock().await {
         AppData::Study(study_data) => Ok(study_data.get_history().iter().copied().collect()),
@@ -397,7 +342,7 @@ pub fn run() {
             jump,
             delete_branch,
             set_stone,
-            start_setup,
+            new_exercise,
             finish_setup,
             collapse_tree,
             comment,
@@ -414,7 +359,7 @@ pub fn run() {
             load_study,
             answer,
             get_history,
-            next,
+            stop_editing,
         ])
         .run(tauri::generate_context!())
         .unwrap();

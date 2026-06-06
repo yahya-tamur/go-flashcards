@@ -1,8 +1,8 @@
 import { useEffect, useState, useRef, useContext } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import EditConfig from "./EditConfig.jsx";
-import MainMenu from "./MainMenu";
-import "./App.css";
+import Menu from "./Menu.jsx";
+import "../App.css";
 
 import Box from "@mui/material/Box";
 
@@ -34,7 +34,7 @@ export default () => {
           overflow: "hidden",
         }}
       >
-        <MainMenu exercises={exercises} studies={studies} />
+        <Menu exercises={exercises} studies={studies} />
       </Box>
     </main>
   );

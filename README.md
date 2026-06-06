@@ -1,117 +1,75 @@
--- study mode (- editing) mvp goal:
-  - reset changes on next / jump_to_exercise
-  - edit mode 
+MVP reached! yay!
 
-  - go over readme
-  - actually update flashcard list on config change
-  - actually check all sources exist. => disable study?
-  - go over rust src lib
-  - grep console log
+remaining goals (but, try to actually use a little bit and look out for improvements)
 
--- Study mode Finite State Automata:
+- config:
+  - check if sources exist in config.
+  - don't start study with wrong config?
+  - save button instead of checking on every key press
 
---(Start) ->  (Guess) <-> (Unknown Response)
-                L -> View (Can Jump To Exercise)
-                      L <-> Edit
-                    Both: -next-> Guess
+- code quality:
+  - especially frontend.
+  - console.log? 
+  - consistent error handling
 
 
-- find first six exercises and add them as a file.
-- implement study mode to study those six exercises.
-- clean up todo.
+- Marking mode
+  - Add markings to Move.
+  - Markings cleared when the stone they're pertaining to changes.
+  - Circle in most recent move?
+  - Markings automatically transferred on 'play'
 
--- 
-
-  - Marking mode
-    - Add markings to Move.
-    - Markings cleared when the stone they're pertaining to changes.
-    - Circle in most recent move.
-    - Markings automatically transferred on 'play'
-
-UI IMPROVEMENTS:
-  - make editconfig just slightly nicer
-  - problems: who to play?
-  - separate top menu.
-    - put exercise num, fwd, back, back to menu, from to sgf, in there
+- Make UI nicer
   - less tall tree view with smaller stones
-  - disable 'new exercise' if exercise already exists.
-  - circle on last move
-  - check sources actually exist?
-  - maybe not auto save on every edit?
-  - editing config doesn't immediately add to study
-  - add histogram
+  - captures?
 
-Finished backend of study mode.
-  Next:
-    - make frontend (copy editing mode a lot) (isolate components?)
-    - fix anything that comes up
-    - do some stuff in 'Yes, right away' below to try to reach 'very usable'
-      goal right away.
-    - once that goal is actually met (!):
-      - read this whole document and make good list of extra things
-        to do.
+- Histogram
 
-    - timeline:
-      - will shift focus soon.
-      - but should get into phase where I can start slowly using it and
-      - making small fixes.
---
+- make corresponding flashcard file on new exercise
+- pass button
+  - will issues arise?
 
-Small things:
-  - Yes, right away:
-    - make corresponding flashcard file on new exercise
-    - pass button
-    - Markings on board during setup
-    - Sliders during tree phase (but limited)
-    - set variant in study mode
-    - Automatically number moves, or at least have the option to.
-      - Maybe with comments on or with 
+- Sliders during tree phase (but limited)
 
+- Automatically number moves, or at least have the option to.
+  - Maybe with comments on (?)
 
-    ~~ here: very usable.
+- delete:
+  - whole exercise
+  - exercise file
+  - insert exercise in middle?
 
-    - delete file?
-    - delete branch?
-    - refactor config? where is it? how do I get it?
-    - delete exercise? insert? in editing mode
-  
-  - Nice project. Do eventually. 
-    - go over all past readmes. Refactor all into better action items.
-    - play moves automatically
-    - transform exercises. In comments, moves marked like {S1} also get transformed.
-    - captures? nicer menus at least
-    - to / from sgf
+- play moves automatically
+- transform exercises. In comments, moves marked like {S1} also get transformed.
 
-    - code quality
-    - consistent error handling
-    - better algorithm (config etc)
-    - phone app
-      - phone ui
-      - android file situation
+- to / from sgf
 
-  - consider
-    - timer?
-    - sounds? custom visuals?
-    - initialize with app data
-    - even better algorithm
-  
-  
-   - advanced config.
-    - custom art per flashcard set.
-    - custom letters, numbers.
-    - randomize color?
-    - randomize orientation?
-    - history length
-    - what problems to see
-    - board color. Theme.
-    - sources: multiple, shared.
+- better algorithm (config etc)
+- phone app
+  - phone ui
+  - android file situation
 
+- timer?
+- sounds?
+- custom visuals?
 
-Big Things:
+- initialize app data?
 
-  - finish study mode as is. connect everything.
-  
+- advanced config.
+- custom art per flashcard set.
+- custom letters, numbers.
+- randomize color?
+- randomize orientation?
+- history length
+- what problems to see
+- board color. Theme.
+- sources: multiple, shared.
+
+- add licence to all the files + make repo public
+
+----------------------------------------------------
 -------------------------------------
+Only kept to see history. Refactor readme later.
 
 Partial Board implementation complete!!
 

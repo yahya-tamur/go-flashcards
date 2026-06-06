@@ -1,12 +1,12 @@
 import { useEffect, useState, useRef, useContext } from "react";
-import board_image from "./assets/oak.jpg";
-import black_image from "./assets/black_night.png";
-import white_image from "./assets/white_anime.png";
+import board_image from "../assets/oak.jpg";
+import black_image from "../assets/black_night.png";
+import white_image from "../assets/white_anime.png";
 import { invoke } from "@tauri-apps/api/core";
-import { createSVGElement } from "./utils";
+import { createSVGElement } from "../utils";
 
-import AppContext from "./AppContext";
-import "./App.css";
+import AppContext from "../AppContext";
+import "../App.css";
 
 import Button from "@mui/material/Button";
 import Paper from "@mui/material/Paper";
@@ -132,9 +132,7 @@ export default (props) => {
               <ListItem key={i} disablePadding>
                 <ListItemButton
                   onClick={() => {
-                    console.log("AA");
                     invoke("load_study", { flashcardSet: e }).then(() => {
-                      console.log("setting phase!");
                       context.setPhase("Study");
                     });
                   }}
