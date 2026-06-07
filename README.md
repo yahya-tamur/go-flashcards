@@ -1,213 +1,89 @@
-MVP reached! yay!
+Remaining Goals
+---------------
 
-remaining goals (but, try to actually use a little bit and look out for improvements)
+- Small Action Items
+  - go over Config UI.
+    - make it a little nicer to look at
+    - check if sources exist.
+    - Have a button to try save instead of auto-trying on every edit.
 
-- config:
-  - check if sources exist in config.
-  - don't start study with wrong config?
-  - save button instead of checking on every key press
+  - Actually make a good flashcard set and use this to study.
 
-- code quality:
-  - especially frontend.
-  - console.log? 
-  - consistent error handling
+  - make corresponding flashcard file on new exercise
+  - pass button
+    - will issues arise?
 
+  - Sliders during tree phase (but limited)
 
-- Marking mode
-  - Add markings to Move.
-  - Markings cleared when the stone they're pertaining to changes.
-  - Circle in most recent move?
-  - Markings automatically transferred on 'play'
-
-- Make UI nicer
-  - less tall tree view with smaller stones
-  - captures?
-
-- Histogram
-
-- make corresponding flashcard file on new exercise
-- pass button
-  - will issues arise?
-
-- Sliders during tree phase (but limited)
-
-- Automatically number moves, or at least have the option to.
-  - Maybe with comments on (?)
-
-- delete:
-  - whole exercise
-  - exercise file
-  - insert exercise in middle?
-
-- play moves automatically
-- transform exercises. In comments, moves marked like {S1} also get transformed.
-
-- to / from sgf
-
-- better algorithm (config etc)
-- phone app
-  - phone ui
-  - android file situation
-
-- timer?
-- sounds?
-- custom visuals?
-
-- initialize app data?
-
-- advanced config.
-- custom art per flashcard set.
-- custom letters, numbers.
-- randomize color?
-- randomize orientation?
-- history length
-- what problems to see
-- board color. Theme.
-- sources: multiple, shared.
-
-- add licence to all the files + make repo public
-
-----------------------------------------------------
--------------------------------------
-Only kept to see history. Refactor readme later.
-
-Partial Board implementation complete!!
-
-Try not to work on this until week end! => try to finish as soon as possible to move on
-
-
-To Do next:
-
-  - Setup / Tree phases
-    - Set up phase:
-      - sliders only visible during setup + actually clear board.
-      - calls to place_stone, not play
-      - B, W, B/W buttons 
-      - Initialize Tree button
-    - Tree phase:
-      - comment box
-      - show captures
-      - Collapse Tree button
-      - Delete Node
-      - Mark nodes as correct / incorrect
-
-      - Initial "None" node should be able to have a comment??
+  - delete:
+    - whole exercise
+    - exercise file
+    - insert exercise in middle?
 
 
 
-  - Create home folder.
-    - Save (and load) exercise.
-    - later, it can include translations and assets
-    - figure out android?
+
+- Action Items
+  - Histogram
+    - custom svg like board, table.
+    - not sure where to put this in the ui, what would look nice.
+
+  - Marking mode
+    - Move's have markings.
+      - numbers, (circle on recent?), shapes. markings on empty spaces?
+    - Game State has markings. play clears these.
+    - Circle in most recent move:
+      - maybe frontend does this automatically? how does it know recent move?
+    - config:
+      - recency markings:
+        - circle, number, none
+        - can put circle when putting exercise.
+          - ALL markings always shown on first screen
+        - play to start?
+  - transform exercises. In comments, moves marked like {S1} also get transformed.
+
+  - to / from sgf
+
+  - better algorithm (config etc)
+  - phone app
+    - phone ui
+    - android file situation
+
+  - Advanced Configuration
+
+    - custom art per flashcard set.
+    - randomize color?
+    - randomize orientation?
+    - history length
+    - customize algorithm behavior
+    - sources: multiple, shared.
 
 
- (?) Make Exercises Mode:
-    - back, forward buttons, append option
 
- (?) Flashcard Mode
-  - configs:
-    - show comments before answer?
-    - percentage to show
-    - play both sides?
-    - randomize coordinates?
+- Ongoing
+  - go over code quality.
+    - front end may be especially messy
+    - Look over console.log's. Use it maybe but consistent, only for useful things
+    - consistent error handling, esp. in the backend. Result vs. panic
 
-  - one config file:
-    - global and 'modes'
-      - modes:
-        - source files
-        - can overwrite any config
-  - one history file / exercise file
+  - Make UI nicer
+    - less tall tree view with smaller stones
+    - captures?
+    - a lot of screens are ok but not great
+    - tactility:
+      - popups on save?
+      - popups on correct / incorrect?
+      - next button? 
 
-  - new back, forward buttons
+- Consider.
 
-  - stars? 
-  - customizable assets, theme?
-    - sounds ??? can i not??
-  - make default assets
-  - license file
+  - play moves automatically
 
----
 
-Implemented board. It works!
+  - timer?
+  - sounds?
 
-- happy with journal entry style README
-  - probably README is wrong place for this but nice to
-    have a write up
+- Finalizing
 
-- Tauri sometimes got stuck on white screen on load.
-  I have no idea what fixed it. It probably didn't, but
-  also this might be an issue only for dev server
-
-- happy with ui potential. Nice way to shared state +
-  good looking widgets available.
-  - however, might take some work to implement.
-
-To Do:
-
-- add licence text to files?
-- figure out what you want from MoveTree and implement it
-  - Huge chunk of work:
-    - move tree component
-    - backend implementation of everything
-
-- user story idea:
-  - 'setup mode': Place stones B / W / BW.
-  - Click 'Init Tree'. Now only B/W
-  - make exercise, add comments, etc.
-
-- Then, what's needed?
-  - saving / loading from file. sgf? ...
-
-  -> Can now save and load exercises one by one.
-  - Make batch of exercises
-  - study batch of exercises
-  - flashcard backend, frontend
-
-- final product, folder structure ?:
-  - exercise file(s) / folders
-  - history file (one for all exercises?)
-  - config file:
-    - shared config
-    - exercise set: source file/folders, specific config
-      - shared history file between different exercise sets?
-
-    - can split off into multiple files?
-
-  - can edit exercise files when practicing (?!)
-
-- look back and see if I had any other ideas etc.
-
----
-
-looking good and easy enough to use!
-
-to do
-
-- reduce autocomplete in vscode!
-- use svg to draw move tree
-- implement go board and rules
-
-- new movetree structure.
-
-- actual tree: (data oriented)
-- data: id => Node // (Vec<Node>)
-- parent: id => id // (Vec<usize>)
-- buildTree: generates // (Vec<Vec< usize > >)
-- play: (can shift built tree)
-- delete: needs to actually make new data array or something
-
----
-
-trying out new architecture for previous project (tauri, hopefully material ui)
-
-cons:
-
-- seems complicated.
-  - this might be the simplest solution for rust backend + material ui
-  - I'm not 100% sure I need rust backend, but shouldn't be worse than electron
-
-pros:
-
-- can eventually compile to mobile
-- will hopefully look good using material ui
-- hopefully won't have to implement horizontal scrolling etc. myself
+  - initialize app data with example usage?
+  - add licence to all the files + make repo public
