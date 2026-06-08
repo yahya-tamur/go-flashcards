@@ -2,11 +2,11 @@ use std::collections::{HashMap, VecDeque};
 
 use crate::config::{self, Config};
 use crate::flashcard_algorithm::pick;
-use crate::navigator::Navigator;
+use crate::move_tree::MoveTree;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
-use crate::move_tree::MoveTree;
+use crate::problem::Problem;
 
 use crate::fs;
 use std::path::Path;
@@ -43,7 +43,7 @@ impl History {
 
 #[derive(Debug)]
 pub struct StudyData {
-    pub navigator: Navigator,
+    pub move_tree: MoveTree,
     config: Config,
 
     // think about current
@@ -54,7 +54,7 @@ pub struct StudyData {
 
     coords: HashMap<Uuid, (usize, usize)>,
 
-    exercise_srcs: Vec<Vec<MoveTree>>,
+    exercise_srcs: Vec<Vec<Problem>>,
     history_srcs: Vec<Vec<History>>,
 
     names: Vec<String>,
@@ -77,7 +77,7 @@ impl StudyData {
             .sources
             .clone();
 
-        let mut exercise_srcs: Vec<Vec<MoveTree>> = Vec::new();
+        let mut exercise_srcs: Vec<Vec<Problem>> = Vec::new();
         let mut history_srcs: Vec<Vec<History>> = Vec::new();
 
         for name in &names {
@@ -139,11 +139,11 @@ impl StudyData {
         let current_exercise = 0;
         let (i, j) = coords[&current];
 
-        let navigator = Navigator::load(exercise_srcs[i][j].clone());
+        let move_tree = MoveTree::load(exercise_srcs[i][j].clone());
 
         // load
         StudyData {
-            navigator,
+            move_tree,
             config,
             past_exercises,
             current_exercise,
@@ -193,7 +193,7 @@ impl StudyData {
         self.current_exercise = self.past_exercises.len();
         self.past_exercises.push(next_id);
 
-        self.navigator = Navigator::load(self.exercise_srcs[i][j].clone());
+        self.move_tree = MoveTree::load(self.exercise_srcs[i][j].clone());
     }
 
     pub fn location(&self) -> (usize, usize) {
@@ -207,14 +207,14 @@ impl StudyData {
 
         if save {
             // remove new variants
-            self.navigator.clear_edits();
+            self.move_tree.clear_edits();
 
-            self.exercise_srcs[i][j] = self.navigator.move_tree.clone();
+            self.exercise_srcs[i][j] = self.move_tree.problem.clone();
             fs::save_exercises(app_data, &self.exercise_srcs[i], &self.names[i])
                 .await
                 .unwrap();
         } else {
-            self.navigator = Navigator::load(self.exercise_srcs[i][j].clone());
+            self.move_tree = MoveTree::load(self.exercise_srcs[i][j].clone());
         }
     }
 
@@ -224,7 +224,7 @@ impl StudyData {
     pub fn jump_to_exercise(&mut self, index: usize) {
         self.current_exercise = index;
         let (i, j) = self.coords[&self.past_exercises[index]];
-        self.navigator = Navigator::load(self.exercise_srcs[i][j].clone());
+        self.move_tree = MoveTree::load(self.exercise_srcs[i][j].clone());
     }
 
     /*

@@ -7,10 +7,10 @@ pub mod flashcard_algorithm;
 pub mod fs;
 pub mod go_rules;
 pub mod move_tree;
-pub mod navigator;
+pub mod problem;
 pub mod study_data;
 
-use crate::navigator::Navigator;
+use crate::move_tree::MoveTree;
 
 use tauri::{Builder, Manager};
 
@@ -18,20 +18,20 @@ use tokio::sync::Mutex;
 
 use app_data::AppData;
 use go_rules::{Color, GameState};
-use move_tree::*;
+use problem::*;
 
 use serde::{Deserialize, Serialize};
 
 // is std sync mutex better? is tauri multithreaded? probably doesn't matter, since
 // won't be getting too many requests / second. Probably didn't even need mutex.
 
-async fn navigate<'a, A>(
+async fn apply_to_move_tree<'a, A>(
     state: tauri::State<'a, Mutex<AppData>>,
-    f: impl FnOnce(&mut Navigator, bool) -> A,
+    f: impl FnOnce(&mut MoveTree, bool) -> A,
 ) -> A {
     match &mut *(state.lock().await) {
-        AppData::Editing(editing_data) => f(&mut editing_data.navigator, false),
-        AppData::Study(study_data) => f(&mut study_data.navigator, true),
+        AppData::Editing(editing_data) => f(&mut editing_data.move_tree, false),
+        AppData::Study(study_data) => f(&mut study_data.move_tree, true),
         _ => unimplemented!(),
     }
 }
@@ -43,7 +43,7 @@ async fn place_stone(
     j: usize,
     color: Option<Color>,
 ) -> Result<(), String> {
-    navigate(state, |nav, _| nav.place_stone(i, j, color)).await;
+    apply_to_move_tree(state, |move_tree, _| move_tree.place_stone(i, j, color)).await;
     Ok(())
 }
 
@@ -68,12 +68,12 @@ pub struct Snapshot {
 #[tauri::command]
 async fn get_data(state: tauri::State<'_, Mutex<AppData>>) -> Result<Snapshot, String> {
     println!("getting data.");
-    let get_data = |nav: &Navigator, loc: (usize, usize)| {
-        let (row, col) = nav.tree_loc;
-        let current_move = nav.current();
+    let get_data = |move_tree: &MoveTree, loc: (usize, usize)| {
+        let (row, col) = move_tree.tree_loc;
+        let current_move = move_tree.current();
         Snapshot {
-            game: nav.game,
-            table: nav.move_tree.table.clone(),
+            game: move_tree.game,
+            table: move_tree.problem.table.clone(),
             row,
             col,
             color: current_move.color,
@@ -85,9 +85,9 @@ async fn get_data(state: tauri::State<'_, Mutex<AppData>>) -> Result<Snapshot, S
     };
     match &*state.lock().await {
         AppData::Editing(editing_data) => {
-            Ok(get_data(&editing_data.navigator, editing_data.location()))
+            Ok(get_data(&editing_data.move_tree, editing_data.location()))
         }
-        AppData::Study(study_data) => Ok(get_data(&study_data.navigator, study_data.location())),
+        AppData::Study(study_data) => Ok(get_data(&study_data.move_tree, study_data.location())),
         _ => unimplemented!(),
     }
 }
@@ -96,10 +96,9 @@ async fn get_data(state: tauri::State<'_, Mutex<AppData>>) -> Result<Snapshot, S
 async fn set_window(
     state: tauri::State<'_, Mutex<AppData>>,
     window: (usize, usize, usize, usize),
-) -> Result<bool, String> {
-    let a = Ok(navigate(state, |nav, _| nav.clear_to(window)).await);
-    println!("{:?} {:?}", a, window);
-    a
+) -> Result<(), String> {
+    apply_to_move_tree(state, |move_tree, _| move_tree.set_window(window)).await;
+    Ok(())
 }
 
 #[tauri::command]
@@ -108,18 +107,18 @@ async fn play(
     loc: Option<(usize, usize)>,
     color: Color,
 ) -> Result<bool, String> {
-    Ok(navigate(state, |nav, study| nav.play(loc, color, study)).await)
+    Ok(apply_to_move_tree(state, |move_tree, study| move_tree.play(loc, color, study)).await)
 }
 
 #[tauri::command]
 async fn jump(state: tauri::State<'_, Mutex<AppData>>, r: usize, c: usize) -> Result<(), String> {
-    navigate(state, |nav, _| nav.jump(r, c)).await;
+    apply_to_move_tree(state, |move_tree, _| move_tree.jump(r, c)).await;
     Ok(())
 }
 
 #[tauri::command]
 async fn delete_branch(state: tauri::State<'_, Mutex<AppData>>) -> Result<bool, String> {
-    Ok(navigate(state, |nav, _| nav.delete_branch()).await)
+    Ok(apply_to_move_tree(state, |move_tree, _| move_tree.delete_branch()).await)
 }
 
 #[tauri::command]
@@ -139,20 +138,20 @@ async fn new_exercise(state: tauri::State<'_, Mutex<AppData>>) -> Result<(), Str
 
 #[tauri::command]
 async fn finish_setup(state: tauri::State<'_, Mutex<AppData>>, color: Color) -> Result<(), String> {
-    navigate(state, |nav, _| nav.finish_setup(color)).await;
+    apply_to_move_tree(state, |move_tree, _| move_tree.finish_setup(color)).await;
     Ok(())
 }
 
 #[tauri::command]
 async fn collapse_tree(state: tauri::State<'_, Mutex<AppData>>) -> Result<(), String> {
-    navigate(state, |nav, _| nav.collapse_tree()).await;
+    apply_to_move_tree(state, |move_tree, _| move_tree.collapse_tree()).await;
     Ok(())
 }
 
 #[tauri::command]
 async fn comment(state: tauri::State<'_, Mutex<AppData>>, comment: String) -> Result<(), String> {
-    navigate(state, |nav, _| {
-        nav.current_mut().comment = comment;
+    apply_to_move_tree(state, |move_tree, _| {
+        move_tree.current_mut().comment = comment;
     })
     .await;
     Ok(())
@@ -163,7 +162,10 @@ async fn set_variant(
     state: tauri::State<'_, Mutex<AppData>>,
     variant: Variant,
 ) -> Result<(), String> {
-    navigate(state, |nav, study| nav.set_variant(variant, study)).await;
+    apply_to_move_tree(state, |move_tree, study| {
+        move_tree.set_variant(variant, study)
+    })
+    .await;
     Ok(())
 }
 

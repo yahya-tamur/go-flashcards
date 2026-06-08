@@ -57,19 +57,16 @@ export default (props) => {
             let [row_start, row_end] = newValue;
             let [col_start, col_end] = context.data.game.window.slice(2, 4);
 
-            if (
-              await invoke("set_window", {
-                window: [row_start, row_end, col_start, col_end],
+            await invoke("set_window", {
+              window: [row_start, row_end, col_start, col_end],
+            })
+              .then(() => invoke("get_data"))
+              .then((data) => {
+                context.setData(data);
               })
-            ) {
-              invoke("get_data")
-                .then((data) => {
-                  context.setData(data);
-                })
-                .catch((e) => {
-                  console.log("error");
-                });
-            }
+              .catch((e) => {
+                console.log("error");
+              });
           }}
           step={1}
           min={0}
@@ -87,19 +84,16 @@ export default (props) => {
             let [row_start, row_end] = context.data.game.window.slice(0, 2);
             let [col_start, col_end] = newValue;
 
-            if (
-              await invoke("set_window", {
-                window: [row_start, row_end, col_start, col_end],
+            await invoke("set_window", {
+              window: [row_start, row_end, col_start, col_end],
+            })
+              .then(() => invoke("get_data"))
+              .then((data) => {
+                context.setData(data);
               })
-            ) {
-              invoke("get_data")
-                .then((data) => {
-                  context.setData(data);
-                })
-                .catch((e) => {
-                  console.log("error");
-                });
-            }
+              .catch((e) => {
+                console.log("error");
+              });
           }}
           step={1}
           min={0}
