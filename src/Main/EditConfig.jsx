@@ -25,19 +25,17 @@ export default (props) => {
   const [error, setError] = useState(undefined);
 
   useEffect(() => {
-    invoke("get_config")
-      .then((s) => {
-        setCode(s);
-        setError(undefined);
-        return s;
-      })
-      .then((s) => invoke("set_config", { config: s }))
-      .then(() => setActualConfig(code))
-      .catch((err) => {
-        if (err !== error) {
-          setError(err);
-        }
-      });
+    invoke("get_config").then((s) => {
+      console.log(s);
+      setCode(s);
+      invoke("set_config", { config: s })
+        .then(() => setActualConfig(s))
+        .catch((err) => {
+          if (err !== error) {
+            setError(err);
+          }
+        });
+    });
   }, []);
 
   return (
@@ -65,10 +63,10 @@ export default (props) => {
             value={code}
             onValueChange={async (code) => {
               setCode(code);
-              console.log(error);
             }}
             highlight={(code) => {
               if (error !== undefined) {
+                console.log(error);
                 let [_, left, right] = error;
                 let code_ =
                   code.slice(0, left) +

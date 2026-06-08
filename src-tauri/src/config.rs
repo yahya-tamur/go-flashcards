@@ -50,7 +50,7 @@ pub async fn check_config(app_data: &Path, input: &str) -> Result<(), (String, u
     {
         if !exercises.iter().any(|e| e == source.as_ref()) {
             return Err((
-                format!("Source {} not found.", source.as_ref()),
+                format!(r#"Source "{}" not found."#, source.as_ref()),
                 source.span().start,
                 source.span().end,
             ));
