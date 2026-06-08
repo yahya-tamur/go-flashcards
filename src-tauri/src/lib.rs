@@ -37,7 +37,7 @@ async fn navigate<'a, A>(
 }
 
 #[tauri::command]
-async fn set_stone(
+async fn place_stone(
     state: tauri::State<'_, Mutex<AppData>>,
     i: usize,
     j: usize,
@@ -96,9 +96,10 @@ async fn get_data(state: tauri::State<'_, Mutex<AppData>>) -> Result<Snapshot, S
 async fn set_window(
     state: tauri::State<'_, Mutex<AppData>>,
     window: (usize, usize, usize, usize),
-) -> Result<(), String> {
-    navigate(state, |nav, _| nav.clear_to(window)).await;
-    Ok(())
+) -> Result<bool, String> {
+    let a = Ok(navigate(state, |nav, _| nav.clear_to(window)).await);
+    println!("{:?} {:?}", a, window);
+    a
 }
 
 #[tauri::command]
@@ -229,12 +230,9 @@ use crate::config::read_toml;
 
 #[tauri::command]
 async fn get_config(app: tauri::AppHandle) -> Result<String, String> {
-    fs::load_config(&app.path().app_data_dir().unwrap())
+    Ok(fs::load_config(&app.path().app_data_dir().unwrap())
         .await
-        .map_err(|err| {
-            println!("{:?}", err);
-            "aa".to_string()
-        })
+        .unwrap())
 }
 
 #[tauri::command]
@@ -252,13 +250,9 @@ async fn set_config(app: tauri::AppHandle, config: String) -> Result<(), (String
 
 #[tauri::command]
 async fn list_exercises(app: tauri::AppHandle) -> Result<Vec<String>, String> {
-    match fs::list_exercises(&app.path().app_data_dir().unwrap()).await {
-        Ok(v) => Ok(v),
-        Err(e) => {
-            println!("{:?}", e);
-            Err("aa".to_string())
-        }
-    }
+    Ok(fs::list_exercises(&app.path().app_data_dir().unwrap())
+        .await
+        .unwrap())
 }
 
 #[tauri::command]
@@ -350,7 +344,7 @@ pub fn run() {
             play,
             jump,
             delete_branch,
-            set_stone,
+            place_stone,
             new_exercise,
             finish_setup,
             collapse_tree,

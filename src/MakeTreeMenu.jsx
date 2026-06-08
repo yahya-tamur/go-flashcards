@@ -61,6 +61,76 @@ export default (props) => {
           justifyContent: "space-around",
         }}
       >
+        <Slider
+          value={context.data?.game.window.slice(0, 2) ?? [0, 18]}
+          marks
+          onChange={async (event, newValue) => {
+            if (context.data === null || context.data === undefined) {
+              return;
+            }
+
+            let [row_start, row_end] = newValue;
+            let [col_start, col_end] = context.data.game.window.slice(2, 4);
+
+            if (
+              await invoke("set_window", {
+                window: [row_start, row_end, col_start, col_end],
+              })
+            ) {
+              invoke("get_data")
+                .then((data) => {
+                  context.setData(data);
+                })
+                .catch((e) => {
+                  console.log("error");
+                });
+            }
+          }}
+          step={1}
+          min={0}
+          max={18}
+          sx={{ margin: "5px 30px", width: "calc(100% - 60px)" }}
+        />
+        <Slider
+          value={context.data?.game.window.slice(2, 4) ?? [0, 18]}
+          marks
+          onChange={async (event, newValue) => {
+            if (context.data === null || context.data === undefined) {
+              return;
+            }
+
+            let [row_start, row_end] = context.data.game.window.slice(0, 2);
+            let [col_start, col_end] = newValue;
+
+            if (
+              await invoke("set_window", {
+                window: [row_start, row_end, col_start, col_end],
+              })
+            ) {
+              invoke("get_data")
+                .then((data) => {
+                  context.setData(data);
+                })
+                .catch((e) => {
+                  console.log("error");
+                });
+            }
+          }}
+          step={1}
+          min={0}
+          max={18}
+          sx={{ margin: "5px 30px 0px 30px", width: "calc(100% - 60px)" }}
+        />
+      </Box>
+      <Box
+        sx={{
+          width: "100%",
+          maxWidth: "100%",
+          display: "flex",
+          flexDirection: "row",
+          justifyContent: "space-around",
+        }}
+      >
         <Button
           onClick={async () => {
             invoke("collapse_tree")

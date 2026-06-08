@@ -12,15 +12,10 @@ Remaining Goals
   - pass button
     - will issues arise?
 
-  - Sliders during tree phase (but limited)
-
   - delete:
     - whole exercise
     - exercise file
     - insert exercise in middle?
-
-
-
 
 - Action Items
   - Histogram
@@ -39,6 +34,15 @@ Remaining Goals
         - can put circle when putting exercise.
           - ALL markings always shown on first screen
         - play to start?
+
+    - Square, Triangle, numbers.
+    - if you mark a spot, it goes into initial or relevant move.
+    - recency always exists. (front-end only even? maybe not) separate numbers, circle.
+    - auto numbers NOT in editing mode?
+
+    - how to do circle that clears on first move?
+
+
   - transform exercises. In comments, moves marked like {S1} also get transformed.
 
   - to / from sgf
@@ -70,6 +74,7 @@ Remaining Goals
     - captures?
     - a lot of screens are ok but not great
     - tactility:
+      - exit without saving? popup on edit
       - popups on save?
       - popups on correct / incorrect?
       - next button? 

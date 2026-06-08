@@ -164,21 +164,41 @@ impl Navigator {
     }
 
     // caller will NOT account for border themselves. values inclusive
-    pub fn clear_to(&mut self, window: (usize, usize, usize, usize)) {
-        // this is checked twice then!:
-        self.game.window = window;
+    pub fn clear_to(&mut self, window: (usize, usize, usize, usize)) -> bool {
         let (row_start, row_end, col_start, col_end) = window;
+        let out_of_bounds = |r, c| {
+            r > (row_end + 1) || r < (row_start + 1) || c < (col_start + 1) || c > (col_end + 1)
+        };
+
         for i in 0..21 {
             for j in 0..21 {
-                if i > (row_end + 1)
-                    || i < (row_start + 1)
-                    || j < (col_start + 1)
-                    || j > (col_end + 1)
-                {
+                if out_of_bounds(i, j) && self.move_tree.initial.stones[i][j].is_some() {
+                    return false;
+                }
+            }
+        }
+
+        for line in self.move_tree.table.iter() {
+            for mov in line.iter().flatten() {
+                if let Some((i, j)) = mov.loc {
+                    if out_of_bounds(i, j) {
+                        return false;
+                    }
+                }
+            }
+        }
+
+        self.game.window = window;
+        self.move_tree.initial.window = window;
+
+        for i in 0..21 {
+            for j in 0..21 {
+                if out_of_bounds(i, j) {
                     self.game.stones[i][j] = None;
                 }
             }
         }
+        true
     }
 
     fn signature(&self) -> u64 {

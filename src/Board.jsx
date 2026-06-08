@@ -424,7 +424,7 @@ export default (props) => {
               context.editingPhase === "Initialize" &&
               context.data.game.stones[w[0] + 1][w[1] + 1] !== context.colorMode
             ) {
-              invoke("set_stone", {
+              invoke("place_stone", {
                 i: w[0] + 1,
                 j: w[1] + 1,
                 color:
@@ -454,7 +454,7 @@ export default (props) => {
               context.editingPhase === "Initialize"
             ) {
               // yes, dragging is not enough.
-              invoke("set_stone", {
+              invoke("place_stone", {
                 i: w[0] + 1,
                 j: w[1] + 1,
                 color:
