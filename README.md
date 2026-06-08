@@ -2,10 +2,6 @@ Remaining Goals
 ---------------
 
 - Small Action Items
-  - go over Config UI.
-    - make it a little nicer to look at
-    - check if sources exist.
-    - Have a button to try save instead of auto-trying on every edit.
 
   - Actually make a good flashcard set and use this to study.
 

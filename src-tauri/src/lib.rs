@@ -10,7 +10,7 @@ pub mod move_tree;
 pub mod problem;
 pub mod study_data;
 
-use crate::move_tree::MoveTree;
+use crate::{config::check_config, move_tree::MoveTree};
 
 use tauri::{Builder, Manager};
 
@@ -227,9 +227,6 @@ async fn load_exercises(
     }
     Ok(())
 }
-
-use crate::config::read_toml;
-
 #[tauri::command]
 async fn get_config(app: tauri::AppHandle) -> Result<String, String> {
     Ok(fs::load_config(&app.path().app_data_dir().unwrap())
@@ -239,8 +236,8 @@ async fn get_config(app: tauri::AppHandle) -> Result<String, String> {
 
 #[tauri::command]
 async fn set_config(app: tauri::AppHandle, config: String) -> Result<(), (String, usize, usize)> {
-    match read_toml(&config) {
-        Ok(_config_obj) => {
+    match check_config(&app.path().app_data_dir().unwrap(), &config).await {
+        Ok(()) => {
             crate::fs::save_config(&app.path().app_data_dir().unwrap(), &config)
                 .await
                 .unwrap();
@@ -278,15 +275,11 @@ async fn load_study(
     Ok(())
 }
 
-use crate::fs::load_config;
 #[tauri::command]
 async fn list_studies(app: tauri::AppHandle) -> Result<Vec<String>, String> {
-    let config_str = load_config(&app.path().app_data_dir().unwrap())
-        .await
-        .unwrap();
-    match crate::config::read_toml(&config_str) {
-        Ok(config) => Ok(config.flashcard_set.into_iter().map(|f| f.name).collect()),
-        Err(_) => Err("invalid config".to_string()),
+    match crate::config::load_config(&app.path().app_data_dir().unwrap()).await {
+        Some(config) => Ok(config.flashcard_set.into_iter().map(|f| f.name).collect()),
+        None => Ok(Vec::new()),
     }
 }
 

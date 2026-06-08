@@ -67,7 +67,8 @@ pub struct StudyData {
 impl StudyData {
     pub async fn load(path: &Path, flashcard_set: &str) -> StudyData {
         // load everything...
-        let config = config::read_toml(&fs::load_config(path).await.unwrap()).unwrap();
+        // is unwrap ok here?
+        let config = config::load_config(path).await.unwrap();
 
         let names: Vec<String> = config
             .flashcard_set

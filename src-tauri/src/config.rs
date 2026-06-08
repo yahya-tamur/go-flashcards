@@ -1,3 +1,6 @@
+use std::path::Path;
+use toml::Spanned;
+
 use serde::Deserialize;
 
 #[derive(Deserialize, Debug)]
@@ -8,30 +11,59 @@ pub enum GlobalItem {
 
 #[derive(Deserialize, Debug)]
 #[serde(deny_unknown_fields)]
-pub struct FlashcardSet {
+pub struct GenericFlashcardSet<T> {
     pub name: String,
-    pub sources: Vec<String>,
+    pub sources: Vec<T>,
     pub item2: Option<bool>,
     pub item3: Option<usize>,
 }
 
 #[derive(Deserialize, Debug)]
 #[serde(deny_unknown_fields)]
-pub struct Config {
+pub struct GenericConfig<T> {
     pub item1: GlobalItem,
     pub item2: Option<bool>,
     pub item3: Option<usize>,
-    pub flashcard_set: Vec<FlashcardSet>,
+    pub flashcard_set: Vec<GenericFlashcardSet<T>>,
 }
 
-pub fn read_toml(s: &str) -> Result<Config, (String, usize, usize)> {
-    toml::from_str(s).map_err(|err| {
+pub type Config = GenericConfig<String>;
+type UncheckedConfig = GenericConfig<Spanned<String>>;
+
+use crate::fs;
+
+pub async fn check_config(app_data: &Path, input: &str) -> Result<(), (String, usize, usize)> {
+    let unchecked_config: UncheckedConfig = toml::from_str(input).map_err(|err| {
         if let Some(range) = err.span() {
             (err.message().to_string(), range.start, range.end)
         } else {
             (err.message().to_string(), 0, 0)
         }
-    })
+    })?;
+
+    let exercises = fs::list_exercises(app_data).await.unwrap();
+
+    for source in unchecked_config
+        .flashcard_set
+        .iter()
+        .flat_map(|set| set.sources.iter())
+    {
+        if !exercises.iter().any(|e| e == source.as_ref()) {
+            return Err((
+                format!("Source {} not found.", source.as_ref()),
+                source.span().start,
+                source.span().end,
+            ));
+        }
+    }
+
+    Ok(())
+}
+
+pub async fn load_config(app_data: &Path) -> Option<Config> {
+    let input = fs::load_config(app_data).await.ok()?;
+    check_config(app_data, &input).await.ok()?;
+    toml::from_str(&input).ok()
 }
 
 use regex::Regex;
