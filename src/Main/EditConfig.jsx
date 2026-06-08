@@ -41,12 +41,12 @@ export default (props) => {
         }}
         elevation={2}
       >
-        {
+        <Box sx={{ overflow: "scroll " }}>
           <Editor
             style={{
               fontFamily: '"Roboto Mono", monospace',
               fontSize: 12,
-              overflow: "scroll",
+              overflow: "visible",
             }}
             value={code}
             onValueChange={async (code) => {
@@ -83,7 +83,8 @@ export default (props) => {
             }}
             padding={10}
           />
-        }
+        </Box>
+
         <Box sx={{ height: "20pt" }}>
           {error !== undefined ? error[0] : "Saved!"}
         </Box>

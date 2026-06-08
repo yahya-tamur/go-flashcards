@@ -12,8 +12,10 @@ pub enum AppData {
 }
 
 impl AppData {
-    pub async fn edit_new(&mut self, path: &Path, exercise_file: &str) {
-        *self = AppData::Editing(EditingData::load(path, exercise_file).await);
+    pub async fn edit_new(&mut self, path: &Path, exercise_file: &str) -> bool {
+        let (created, data) = EditingData::load(path, exercise_file).await;
+        *self = AppData::Editing(data);
+        created
     }
 
     pub fn main(&mut self) {

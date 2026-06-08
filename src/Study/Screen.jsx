@@ -4,8 +4,6 @@ import { invoke } from "@tauri-apps/api/core";
 
 import Board from "../Board";
 import Tree from "../Tree";
-import InitializeMenu from "../InitializeMenu";
-import MakeTreeMenu from "../MakeTreeMenu";
 import CommentBox from "./CommentBox";
 import TopBar from "./TopBar";
 import Menu from "./Menu";

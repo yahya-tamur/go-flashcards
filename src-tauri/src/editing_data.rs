@@ -28,6 +28,7 @@ impl EditingData {
     }
 
     pub fn new_exercise(&mut self) {
+        self.exercises[self.current_exercise] = self.navigator.move_tree.clone();
         self.navigator = Navigator::default();
         self.exercises.push(MoveTree::default());
         self.current_exercise = self.exercises.len() - 1;
@@ -37,25 +38,28 @@ impl EditingData {
         (self.current_exercise, self.exercises.len())
     }
 
-    pub async fn load(path: &Path, exercise_file: &str) -> EditingData {
-        let exercises = fs::load_exercises(path, exercise_file).await.unwrap();
-        if exercises.is_empty() {
-            EditingData {
-                exercises: Vec::new(),
-                navigator: Navigator::default(),
-                current_exercise: 0,
-                file: exercise_file.to_string(),
-            }
-        } else {
-            let i = exercises.len() - 1;
-            let navigator = Navigator::load(exercises[i].clone());
-            EditingData {
-                exercises,
-                current_exercise: i,
-                navigator,
-                file: exercise_file.to_string(),
-            }
-        }
+    pub async fn load(path: &Path, exercise_file: &str) -> (bool, EditingData) {
+        let (created, exercises) = fs::load_exercises(path, exercise_file).await.unwrap();
+        (
+            created,
+            if exercises.is_empty() {
+                EditingData {
+                    exercises: vec![MoveTree::default()],
+                    navigator: Navigator::default(),
+                    current_exercise: 0,
+                    file: exercise_file.to_string(),
+                }
+            } else {
+                let i = exercises.len() - 1;
+                let navigator = Navigator::load(exercises[i].clone());
+                EditingData {
+                    exercises,
+                    current_exercise: i,
+                    navigator,
+                    file: exercise_file.to_string(),
+                }
+            },
+        )
     }
 
     pub async fn save(&mut self, path: &Path) {

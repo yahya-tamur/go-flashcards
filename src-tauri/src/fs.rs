@@ -41,7 +41,7 @@ pub async fn save_exercises(
     Ok(())
 }
 
-pub async fn load_exercises(app_data: &Path, exercise_file: &str) -> Result<Vec<MoveTree>> {
+pub async fn load_exercises(app_data: &Path, exercise_file: &str) -> Result<(bool, Vec<MoveTree>)> {
     let file = app_data
         .join("app_data")
         .join("exercises")
@@ -52,9 +52,9 @@ pub async fn load_exercises(app_data: &Path, exercise_file: &str) -> Result<Vec<
 
         let gz = GzDecoder::new(&compressed[..]);
         let ans = serde_json::from_reader(gz)?;
-        Ok(ans)
+        Ok((false, ans))
     } else {
-        Ok(Vec::new())
+        Ok((true, Vec::new()))
     }
 }
 

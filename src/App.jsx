@@ -58,7 +58,6 @@ function App() {
   const [color, setColor] = useState("Black");
   const [exerciseColor, setExerciseColor] = useState("");
 
-
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />

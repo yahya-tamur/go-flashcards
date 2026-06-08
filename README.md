@@ -9,7 +9,6 @@ Remaining Goals
 
   - Actually make a good flashcard set and use this to study.
 
-  - make corresponding flashcard file on new exercise
   - pass button
     - will issues arise?
 

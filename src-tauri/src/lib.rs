@@ -208,11 +208,20 @@ async fn load_exercises(
     app: tauri::AppHandle,
     exercise: String,
 ) -> Result<(), String> {
-    state
+    let created = state
         .lock()
         .await
         .edit_new(&app.path().app_data_dir().unwrap(), &exercise)
         .await;
+    if created {
+        let old_config = fs::load_config(&app.path().app_data_dir().unwrap())
+            .await
+            .unwrap();
+        let modified = config::add_exercise(&old_config, &exercise);
+        fs::save_config(&app.path().app_data_dir().unwrap(), &modified)
+            .await
+            .unwrap();
+    }
     Ok(())
 }
 

@@ -81,7 +81,7 @@ impl StudyData {
         let mut history_srcs: Vec<Vec<History>> = Vec::new();
 
         for name in &names {
-            let exercise_src = fs::load_exercises(path, name).await.unwrap();
+            let exercise_src = fs::load_exercises(path, name).await.unwrap().1;
             // later use config
             let mut history_src = fs::load_history(path, name).await.unwrap();
 

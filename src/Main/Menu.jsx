@@ -71,7 +71,7 @@ export default (props) => {
         </>
       ) : menu === "exercises" ? (
         <>
-          <List>
+          <List sx={{ overflow: "scroll" }}>
             {props.exercises.map((e, i) => (
               <ListItem key={i} disablePadding>
                 <ListItemButton
@@ -127,7 +127,7 @@ export default (props) => {
         </>
       ) : (
         <>
-          <List>
+          <List sx={{ overflow: "scroll" }}>
             {props.studies.map((e, i) => (
               <ListItem key={i} disablePadding>
                 <ListItemButton
