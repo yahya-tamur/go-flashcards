@@ -36,7 +36,7 @@ export default (props) => {
       elevation={15}
     >
       {context.studyPhase !== "Edit" ? (
-        <Box sx={{ height: "100%", margin: "10px" }}>
+        <Box sx={{ height: "100%", margin: "10px", whiteSpace: "pre-wrap" }}>
           {context.data?.comment ?? ""}
         </Box>
       ) : (

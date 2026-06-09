@@ -45,6 +45,7 @@ export default (props) => {
         multiline
         value={context.data?.comment ?? ""}
         onChange={(e) => {
+          console.log(e.target.value);
           invoke("comment", {
             comment: e.target.value,
           })

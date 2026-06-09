@@ -5,9 +5,6 @@ Remaining Goals
 
   - Actually make a good flashcard set and use this to study.
 
-  - pass button
-    - will issues arise?
-
   - delete:
     - whole exercise
     - exercise file

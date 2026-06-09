@@ -65,11 +65,75 @@ export default (props) => {
             margin: "20px",
             height: "100%",
             display: "flex",
+            flexDirection: "column",
             alignItems: "flex-start",
             justifyContent: "start",
           }}
         >
-          {context.exerciseColor} to play.
+          <Box sx={{ marginBottom: "20px" }}>
+            {context.exerciseColor} to play.
+          </Box>
+          <Box>
+            <Button
+              onClick={async () => {
+                invoke("play", {
+                  /* loc: [w[0] + 1, w[1] + 1],*/
+                  color: context.color,
+                })
+                  .then(() => invoke("get_data"))
+                  .then((data) => {
+                    context.setData(data);
+                    context.setColor(
+                      data.color === "Black" ? "White" : "Black",
+                    );
+                    if (
+                      context.phase === "Study" &&
+                      context.studyPhase === "Guess"
+                    ) {
+                      switch (data.variant) {
+                        case "Correct":
+                          invoke("answer", { correct: true })
+                            .then(() => invoke("get_data"))
+                            .then((data) => {
+                              context.setData(data);
+                              context.setFeedback("Correct");
+                              context.setStudyPhase("View");
+                            });
+                          break;
+                        case "Incorrect":
+                          invoke("answer", { correct: false })
+                            .then(() => invoke("get_data"))
+                            .then((data) => {
+                              context.setData(data);
+                              context.setFeedback("Incorrect");
+                              context.setStudyPhase("View");
+                            });
+                          break;
+                        case "New":
+                          if (context.color === context.exerciseColor) {
+                            invoke("answer", { correct: false })
+                              .then(() => invoke("get_data"))
+                              .then((data) => {
+                                context.setData(data);
+                                context.setFeedback("Incorrect");
+                                context.setStudyPhase("View");
+                              });
+                          } else {
+                            context.setStudyPhase("UnknownGuess");
+                          }
+
+                          break;
+                        default:
+                          break;
+                      }
+                    }
+                  });
+              }}
+              variant="contained"
+            >
+              Pass
+            </Button>
+          </Box>
         </Box>
       ) : context.studyPhase === "UnknownGuess" ? (
         <>
@@ -127,6 +191,7 @@ export default (props) => {
                       data.color === "Black" ? "White" : "Black",
                     );
                     context.setStudyPhase("View");
+                    context.setFeedback("");
                   })
                   .catch((e) => {
                     console.log(e);

@@ -281,8 +281,12 @@ export default (props) => {
 
         text.style.webkitUserSelect = "none";
         text.style.font = "bold 14px sans-serif";
-        let [i, j] = mov.loc;
-        text.textContent = `${"@ABCDEFGHJKLMNOPQRST"[i]}${20 - j}`;
+        if (mov.loc !== null) {
+          let [i, j] = mov.loc;
+          text.textContent = `${"@ABCDEFGHJKLMNOPQRST"[i]}${20 - j}`;
+        } else {
+          text.textContent = ".";
+        }
       });
     });
 

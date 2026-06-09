@@ -14,26 +14,22 @@ use std::path::Path;
 #[derive(Debug, Deserialize, Serialize)]
 pub struct History {
     pub id: Uuid,
-    hist: Option<VecDeque<bool>>, // something better later
+    hist: VecDeque<bool>, // something better later
 }
 
 impl History {
     pub fn update(&mut self, correct: bool) {
-        if let Some(v) = self.hist.as_mut() {
-            v.push_back(correct);
-            while v.len() > 10 {
-                v.pop_front();
-            }
-        } else {
-            self.hist = Some(VecDeque::from([correct]));
+        self.hist.push_back(correct);
+        while self.hist.len() > 10 {
+            self.hist.pop_front();
         }
     }
 
     pub fn bucket(&self) -> usize {
-        if let Some(v) = self.hist.as_ref() {
-            v.iter().filter(|x| **x).count() + 1
-        } else {
+        if self.hist.is_empty() {
             0
+        } else {
+            self.hist.iter().filter(|x| **x).count() + 1
         }
     }
 }
@@ -101,13 +97,13 @@ impl StudyData {
                     for exercise in exercise_src.iter().skip(i) {
                         history_src.push(History {
                             id: exercise.id,
-                            hist: None,
+                            hist: VecDeque::new(),
                         })
                     }
                     fs::save_history(path, &history_src, name).await.unwrap();
                 }
                 _ => {
-                    let mut hist_map: HashMap<Uuid, Option<VecDeque<bool>>> = history_src
+                    let mut hist_map: HashMap<Uuid, VecDeque<bool>> = history_src
                         .split_off(i)
                         .into_iter()
                         .map(|h| (h.id, h.hist))
@@ -116,7 +112,7 @@ impl StudyData {
                         let id = exercise.id;
                         history_src.push(History {
                             id,
-                            hist: hist_map.remove(&id).unwrap_or(None),
+                            hist: hist_map.remove(&id).unwrap_or_default(),
                         })
                     }
                     fs::save_history(path, &history_src, name).await.unwrap();
@@ -182,7 +178,7 @@ impl StudyData {
     pub fn get_history(&self) -> &VecDeque<bool> {
         let current_id = self.past_exercises[self.current_exercise];
         let (i, j) = self.coords[&current_id];
-        self.history_srcs[i][j].hist.as_ref().unwrap()
+        &self.history_srcs[i][j].hist
     }
 
     pub async fn next(&mut self) {
