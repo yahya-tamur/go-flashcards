@@ -20,21 +20,16 @@ import "prismjs/themes/prism.css";
 
 export default (props) => {
   let context = useContext(AppContext);
-  const [code, setCode] = useState("");
-  const [actualConfig, setActualConfig] = useState("");
+  const [code, setCode] = useState(props.initialConfig);
+  const [lastSaved, setLastSaved] = useState(props.initialConfig);
   const [error, setError] = useState(undefined);
 
   useEffect(() => {
-    invoke("get_config").then((s) => {
-      console.log(s);
-      setCode(s);
-      invoke("set_config", { config: s })
-        .then(() => setActualConfig(s))
-        .catch((err) => {
-          if (err !== error) {
-            setError(err);
-          }
-        });
+    invoke("set_config_str", { config: props.initialConfig }).catch((err) => {
+      if (err !== error) {
+        setCode(code);
+        setError(err);
+      }
     });
   }, []);
 
@@ -65,8 +60,7 @@ export default (props) => {
               setCode(code);
             }}
             highlight={(code) => {
-              if (error !== undefined) {
-                console.log(error);
+              if (error !== undefined && code === lastSaved) {
                 let [_, left, right] = error;
                 let code_ =
                   code.slice(0, left) +
@@ -112,18 +106,19 @@ export default (props) => {
             {error !== undefined ? error[0] : ""}
           </Box>
           <Button
-            disabled={code === actualConfig && error === undefined}
+            disabled={code === lastSaved}
             variant="contained"
             sx={{ height: "40px", margin: "10px" }}
             onClick={async () => {
-              await invoke("set_config", { config: code })
+              await invoke("set_config_str", { config: code })
                 .then(() => {
                   setError(undefined);
-                  setActualConfig(code);
+                  setLastSaved(code);
                 })
                 .then(() => invoke("list_studies"))
                 .then((a) => props.setStudies(a))
                 .catch((err) => {
+                  setLastSaved(code);
                   if (err !== error) {
                     setError(err);
                     props.setStudies([]);
@@ -131,7 +126,7 @@ export default (props) => {
                 });
             }}
           >
-            {code === actualConfig && error === undefined ? "Saved." : "Save"}
+            {code === lastSaved && error === undefined ? "Saved." : "Save"}
           </Button>
         </Box>
       </Paper>

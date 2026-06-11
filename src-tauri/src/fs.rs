@@ -100,8 +100,6 @@ pub async fn load_config(app_data: &Path) -> Result<String> {
     fs::read_to_string(app_data.join("app_data").join("config.toml")).await
 }
 
-use std::cmp::Reverse;
-
 // returns list of exercises in order of most recently modified
 pub async fn list_exercises(app_data: &Path) -> Result<Vec<String>> {
     let mut v: Vec<(String, SystemTime)> = Vec::new();
@@ -117,10 +115,10 @@ pub async fn list_exercises(app_data: &Path) -> Result<Vec<String>> {
                 .to_str()
                 .unwrap()
                 .to_string(),
-            entry.metadata().await?.modified()?,
+            entry.metadata().await?.created()?,
         ))
     }
-    v.sort_by_key(|(_a, b)| Reverse(*b));
+    v.sort_by_key(|(_a, b)| *b);
 
     Ok(v.into_iter().map(|(a, _b)| a).collect())
 }

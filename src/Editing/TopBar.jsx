@@ -65,7 +65,10 @@ export default (props) => {
           variant="contained"
           sx={{ height: "40px" }}
           onClick={async () => {
-            invoke("main_menu").then(() => context.setPhase("Main"));
+            invoke("main_menu").then(() => {
+              context.setPhase("Main");
+              context.setConfig(none);
+            });
           }}
         >
           Exit

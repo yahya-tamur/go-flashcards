@@ -57,6 +57,7 @@ function App() {
   const [data, setData] = useState(null);
   const [color, setColor] = useState("Black");
   const [exerciseColor, setExerciseColor] = useState("");
+  const [config, setConfig] = useState(null);
 
   return (
     <ThemeProvider theme={theme}>
@@ -79,6 +80,8 @@ function App() {
           setFeedback,
           exerciseColor,
           setExerciseColor,
+          config,
+          setConfig,
         }}
       >
         {phase === "Main" ? (

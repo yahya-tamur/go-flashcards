@@ -3,6 +3,8 @@ Remaining Goals
 
 - Small Action Items
 
+  - config screen undo situation
+
   - Actually make a good flashcard set and use this to study.
 
   - delete:
@@ -10,31 +12,27 @@ Remaining Goals
     - exercise file
     - insert exercise in middle?
 
+  - Config => editing (visuals, numbers)
+    - how does config get distributed inside?
+    - frontend needs it too.
+
 - Action Items
+  - New Config:
+    - HashMap<String, Options>
+    - Options: every option, all optional
+    - must have 'default' and ?'editing'
+
+  - Marking:
+    - numbers, SEPARATE FROM:
+    - markings: letters, numbers, circle, triangle.
+    - it stays. you can delete it if you want (how?)
+    - Problem: <initial moves, initial markings, movetree>
+    - Move: <Move, Vec<markings>>
+    - MoveTree: <GameState: also has ko, captures, markings in coordinates>
+
   - Histogram
     - custom svg like board, table.
     - not sure where to put this in the ui, what would look nice.
-
-  - Marking mode
-    - Move's have markings.
-      - numbers, (circle on recent?), shapes. markings on empty spaces?
-    - Game State has markings. play clears these.
-    - Circle in most recent move:
-      - maybe frontend does this automatically? how does it know recent move?
-    - config:
-      - recency markings:
-        - circle, number, none
-        - can put circle when putting exercise.
-          - ALL markings always shown on first screen
-        - play to start?
-
-    - Square, Triangle, numbers.
-    - if you mark a spot, it goes into initial or relevant move.
-    - recency always exists. (front-end only even? maybe not) separate numbers, circle.
-    - auto numbers NOT in editing mode?
-
-    - how to do circle that clears on first move?
-
 
   - transform exercises. In comments, moves marked like {S1} also get transformed.
 
@@ -47,12 +45,15 @@ Remaining Goals
 
   - Advanced Configuration
 
+    - recent-marking: none, number, circle
     - custom art per flashcard set.
     - randomize color?
     - randomize orientation?
     - history length
     - customize algorithm behavior
     - sources: multiple, shared.
+
+    - fuck it, editing can have multiple sources too.
 
 
 

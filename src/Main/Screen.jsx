@@ -19,10 +19,20 @@ export default () => {
     });
   }, []);
 
+  const [initialConfig, setInitialConfig] = useState(null);
+
+  useEffect(() => {
+    invoke("get_config_str").then((config) => setInitialConfig(config));
+  });
+
   return (
     <main style={{ display: "flex", flexDirection: "row" }}>
       <Box sx={{ height: "100vh", flexBasis: "60%", minWidth: 0 }}>
-        <EditConfig setStudies={setStudies} />
+        {initialConfig === null ? (
+          <Box />
+        ) : (
+          <EditConfig initialConfig={initialConfig} setStudies={setStudies} />
+        )}
       </Box>
       <Box
         sx={{

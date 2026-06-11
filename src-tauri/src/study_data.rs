@@ -1,6 +1,6 @@
 use std::collections::{HashMap, VecDeque};
 
-use crate::config::{self, Config};
+use crate::config::{self, ActiveConfig};
 use crate::flashcard_algorithm::pick;
 use crate::move_tree::MoveTree;
 use serde::{Deserialize, Serialize};
@@ -40,7 +40,7 @@ impl History {
 #[derive(Debug)]
 pub struct StudyData {
     pub move_tree: MoveTree,
-    config: Config,
+    pub config: ActiveConfig,
 
     // think about current
 
@@ -64,15 +64,12 @@ impl StudyData {
     pub async fn load(path: &Path, flashcard_set: &str) -> StudyData {
         // load everything...
         // is unwrap ok here?
-        let config = config::load_config(path).await.unwrap();
+        let config = config::load_config(path, Some(flashcard_set), false).await;
 
-        let names: Vec<String> = config
-            .flashcard_set
-            .iter()
-            .find(|fs| fs.name == flashcard_set)
-            .unwrap()
-            .sources
-            .clone();
+        let names: Vec<String> = match &config.sources {
+            Some(v) => v.clone(),
+            None => vec![flashcard_set.to_string()],
+        };
 
         let mut exercise_srcs: Vec<Vec<Problem>> = Vec::new();
         let mut history_srcs: Vec<Vec<History>> = Vec::new();

@@ -10,7 +10,7 @@ pub mod move_tree;
 pub mod problem;
 pub mod study_data;
 
-use crate::{config::check_config, move_tree::MoveTree};
+use crate::{config::ActiveConfig, move_tree::MoveTree};
 
 use tauri::{Builder, Manager};
 
@@ -211,32 +211,50 @@ async fn load_exercises(
     app: tauri::AppHandle,
     exercise: String,
 ) -> Result<(), String> {
-    let created = state
+    if state
         .lock()
         .await
         .edit_new(&app.path().app_data_dir().unwrap(), &exercise)
-        .await;
-    if created {
-        let old_config = fs::load_config(&app.path().app_data_dir().unwrap())
-            .await
-            .unwrap();
-        let modified = config::add_exercise(&old_config, &exercise);
-        fs::save_config(&app.path().app_data_dir().unwrap(), &modified)
-            .await
-            .unwrap();
+        .await
+    {
+        config::add_exercise(&app.path().app_data_dir().unwrap(), &exercise).await;
     }
     Ok(())
 }
+
 #[tauri::command]
-async fn get_config(app: tauri::AppHandle) -> Result<String, String> {
+async fn get_config(
+    state: tauri::State<'_, Mutex<AppData>>,
+    app: tauri::AppHandle,
+) -> Result<ActiveConfig, String> {
+    match &mut *state.lock().await {
+        AppData::Editing(editing_data) => {
+            // maybe later embed whole config into editing data if it becomes necessary.
+            Ok(config::load_config(
+                &app.path().app_data_dir().unwrap(),
+                Some(&editing_data.file),
+                true,
+            )
+            .await)
+        }
+        AppData::Study(study_data) => Ok(study_data.config.clone()),
+        _ => unimplemented!(),
+    }
+}
+
+#[tauri::command]
+async fn get_config_str(app: tauri::AppHandle) -> Result<String, String> {
     Ok(fs::load_config(&app.path().app_data_dir().unwrap())
         .await
         .unwrap())
 }
 
 #[tauri::command]
-async fn set_config(app: tauri::AppHandle, config: String) -> Result<(), (String, usize, usize)> {
-    match check_config(&app.path().app_data_dir().unwrap(), &config).await {
+async fn set_config_str(
+    app: tauri::AppHandle,
+    config: String,
+) -> Result<(), (String, usize, usize)> {
+    match config::validate(&app.path().app_data_dir().unwrap(), Some(&config)).await {
         Ok(()) => {
             crate::fs::save_config(&app.path().app_data_dir().unwrap(), &config)
                 .await
@@ -277,10 +295,7 @@ async fn load_study(
 
 #[tauri::command]
 async fn list_studies(app: tauri::AppHandle) -> Result<Vec<String>, String> {
-    match crate::config::load_config(&app.path().app_data_dir().unwrap()).await {
-        Some(config) => Ok(config.flashcard_set.into_iter().map(|f| f.name).collect()),
-        None => Ok(Vec::new()),
-    }
+    Ok(crate::config::flashcard_sets(&app.path().app_data_dir().unwrap()).await)
 }
 
 #[tauri::command]
@@ -348,8 +363,9 @@ pub fn run() {
             jump_to_exercise,
             save_exercises,
             load_exercises,
+            get_config_str,
+            set_config_str,
             get_config,
-            set_config,
             list_exercises,
             list_studies,
             main_menu,

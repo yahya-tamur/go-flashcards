@@ -1,6 +1,6 @@
 use uuid::Uuid;
 
-use crate::config::Config;
+use crate::config::ActiveConfig;
 
 use rand::random_range;
 
@@ -11,7 +11,7 @@ use rand::random_range;
 
 // returns index in selection_pool.
 
-pub fn pick(_config: &Config, selection_pool: &[Vec<Uuid>]) -> (usize, usize) {
+pub fn pick(_config: &ActiveConfig, selection_pool: &[Vec<Uuid>]) -> (usize, usize) {
     println!("{:?}", selection_pool);
     // better algorithm later.
 

@@ -76,9 +76,12 @@ export default (props) => {
               <ListItem key={i} disablePadding>
                 <ListItemButton
                   onClick={() => {
-                    invoke("load_exercises", { exercise: e }).then(() => {
-                      context.setPhase("Editing");
-                    });
+                    invoke("load_exercises", { exercise: e })
+                      .then(() => invoke("get_config"))
+                      .then((config) => {
+                        context.setConfig(config);
+                        context.setPhase("Editing");
+                      });
                   }}
                 >
                   <ListItemText primary={e} />
@@ -88,9 +91,12 @@ export default (props) => {
             <form
               onSubmit={(e) => {
                 e.preventDefault();
-                invoke("load_exercises", { exercise: newExercise }).then(() => {
-                  context.setPhase("Editing");
-                });
+                invoke("load_exercises", { exercise: newExercise })
+                  .then(() => invoke("get_config"))
+                  .then((config) => {
+                    context.setConfig(config);
+                    context.setPhase("Editing");
+                  });
               }}
             >
               <ListItem
@@ -132,9 +138,12 @@ export default (props) => {
               <ListItem key={i} disablePadding>
                 <ListItemButton
                   onClick={() => {
-                    invoke("load_study", { flashcardSet: e }).then(() => {
-                      context.setPhase("Study");
-                    });
+                    invoke("load_study", { flashcardSet: e })
+                      .then(() => invoke("get_config"))
+                      .then((config) => {
+                        context.setConfig(config);
+                        context.setPhase("Study");
+                      });
                   }}
                 >
                   <ListItemText primary={e} />
