@@ -6,17 +6,21 @@ import mui_clear from "./assets/mui_clear.svg";
 import { invoke } from "@tauri-apps/api/core";
 import { createSVGElement } from "./utils";
 
+import triangle_icon from "./assets/triangle.svg";
+
 import AppContext from "./AppContext";
 
 import Paper from "@mui/material/Paper";
 import { PasswordOutlined } from "@mui/icons-material";
 
 export default (props) => {
+  const mark_icons = { Triangle: triangle_icon };
   const context = useContext(AppContext);
   const board_svg = useRef(null);
   const ghostcontainer = useRef(null);
   const gridcontainer = useRef(null);
   const stonecontainer = useRef(null);
+  const labelmask = useRef(null);
   const paper = useRef(null);
 
   const [ghost, setGhost] = useState(null);
@@ -59,7 +63,7 @@ export default (props) => {
       sj >= top &&
       sj <= bottom &&
       ((context.phase === "Editing" && context.editingPhase === "Initialize") ||
-        context.data.game.stones[si + 1][sj + 1] === null) &&
+        context.data.game.stones[si][sj] === null) &&
       (i - si) * (i - si) + (j - sj) * (j - sj) < 0.25
     ) {
       return [si, sj];
@@ -72,6 +76,12 @@ export default (props) => {
   const [viewBoxWidth, setViewBoxWidth] = useState(2100);
   const [viewBoxLeft, setViewBoxLeft] = useState(0);
   const [viewBoxTop, setViewBoxTop] = useState(0);
+  const [previousWindow, setPreviousWindow] = useState([
+    null,
+    null,
+    null,
+    null,
+  ]);
 
   const square_size = 100;
   const margin = 150;
@@ -82,6 +92,18 @@ export default (props) => {
     let [left, right, top, bottom] = context.data?.game.window ?? [
       0, 18, 0, 18,
     ];
+    if (
+      left == previousWindow[0] &&
+      right == previousWindow[1] &&
+      top == previousWindow[2] &&
+      bottom == previousWindow[3]
+    ) {
+      return;
+    }
+    if (gridcontainer.current) {
+      gridcontainer.current.replaceChildren();
+    }
+    setPreviousWindow([left, right, top, bottom]);
 
     // Offset viewBox.
 
@@ -99,19 +121,6 @@ export default (props) => {
         (bottom - top) * square_size +
         (top > 0 ? partial : 0) +
         (bottom < 18 ? partial : 0),
-    );
-
-    createSVGElement(
-      "image",
-      {
-        x: 0,
-        y: 0,
-        width: 2 * margin + 18 * square_size,
-        height: 2 * margin + 18 * square_size,
-        href: board_image,
-        "clip-path": "url(#viewBoxClip)",
-      },
-      gridcontainer.current,
     );
 
     let stroke_width = 5;
@@ -257,15 +266,14 @@ export default (props) => {
       }
     }
 
-    return () => {
-      if (gridcontainer.current) {
-        gridcontainer.current.replaceChildren();
-      }
-    };
+    /*return () => {
+      
+    };*/
   }, [gridcontainer, context.data]);
 
   // draws circles
   useEffect(() => {
+    console.log("A", context.data);
     if (
       stonecontainer.current === null ||
       context.data === null ||
@@ -277,30 +285,94 @@ export default (props) => {
 
     for (let i = left; i <= right; i++) {
       for (let j = top; j <= bottom; j++) {
-        const w = context.data.game.stones[i + 1][j + 1];
+        const w = context.data.game.stones[i][j];
 
-        if (w === null) {
-          continue;
+        if (w !== null) {
+          createSVGElement(
+            "image",
+            {
+              x: square_size * i + margin - 0.5 * square_size,
+              y: square_size * j + margin - 0.5 * square_size,
+              width: square_size,
+              height: square_size,
+              href: w === "Black" ? black_image : white_image,
+            },
+            stonecontainer.current,
+          );
         }
-        createSVGElement(
-          "image",
-          {
-            x: square_size * i + margin - 0.5 * square_size,
-            y: square_size * j + margin - 0.5 * square_size,
-            width: square_size,
-            height: square_size,
-            href: w === "Black" ? black_image : white_image,
-          },
-          stonecontainer.current,
-        );
+        let label_color = w === "Black" ? "white" : "black";
+        console.log(label_color);
+        if (
+          (context.data.game.marks[i][j] ??
+            context.data.game.numbers[i][j] ??
+            null) !== null &&
+          context.data.game.stones[i][j] === null
+        ) {
+          createSVGElement(
+            "rect",
+            {
+              x: margin + square_size * (i - 0.4),
+              y: margin + square_size * (j - 0.4),
+              width: 0.8 * square_size,
+              height: 0.8 * square_size,
+              fill: "#888888",
+            },
+            labelmask.current,
+          );
+        }
+
+        if (
+          mark_icons[context.data.game.marks[i][j]] !== undefined &&
+          context.data.game.numbers[i][j] === null
+        ) {
+          let image = createSVGElement(
+            "image",
+            {
+              x: square_size * i + margin - 0.5 * square_size,
+              y: square_size * j + margin - 0.5 * square_size,
+              width: square_size,
+              height: square_size,
+              href: mark_icons[context.data.game.marks[i][j]],
+              filter: label_color === "black" ? "" : "url(#invert-color)",
+            },
+            stonecontainer.current,
+          );
+        }
+
+        const label =
+          context.data.game.numbers[i][j] ??
+          context.data.game.marks[i][j]?.Label ??
+          null;
+        if (label !== null) {
+          let text = createSVGElement(
+            "text",
+            {
+              x: margin + square_size * i,
+              y: margin + square_size * j,
+              width: square_size,
+              height: square_size,
+              "text-anchor": "middle",
+              "dominant-baseline": "central",
+            },
+            stonecontainer.current,
+          );
+          text.style.fill = label_color;
+          text.style.webkitUserSelect = "none";
+          text.style.font = "bold 40pt sans-serif";
+          text.textContent = label;
+        }
       }
     }
+
     return () => {
       if (stonecontainer.current) {
         stonecontainer.current.replaceChildren();
       }
+      if (labelmask.current) {
+        labelmask.current.replaceChildren();
+      }
     };
-  }, [context.data, stonecontainer]);
+  }, [context.data, stonecontainer, labelmask]);
 
   // creates ghost
 
@@ -326,7 +398,7 @@ export default (props) => {
       ghostcontainer.current,
     );
     return () => {
-      if (ghostcontainer) {
+      if (ghostcontainer?.current) {
         ghostcontainer.current.replaceChildren();
       }
     };
@@ -422,22 +494,17 @@ export default (props) => {
               w !== null &&
               (context.phase === "Editing" || context.studyPhase === "Edit") &&
               context.editingPhase === "Initialize" &&
-              context.data.game.stones[w[0] + 1][w[1] + 1] !== context.colorMode
+              context.data.game.stones[w[0]][w[1]] !== context.colorMode
             ) {
               invoke("place_stone", {
-                i: w[0] + 1,
-                j: w[1] + 1,
+                i: w[0],
+                j: w[1],
                 color:
                   context.colorMode === "Delete" ? undefined : context.color,
               })
                 .then(() => invoke("get_data"))
                 .then((data) => {
                   context.setData(data);
-                  if (context.colorMode === "BlackWhite") {
-                    context.setColor(
-                      context.color === "Black" ? "White" : "Black",
-                    );
-                  }
                 })
                 .catch((e) => {
                   console.log(e);
@@ -455,19 +522,14 @@ export default (props) => {
             ) {
               // yes, dragging is not enough.
               invoke("place_stone", {
-                i: w[0] + 1,
-                j: w[1] + 1,
+                i: w[0],
+                j: w[1],
                 color:
                   context.colorMode === "Delete" ? undefined : context.color,
               })
                 .then(() => invoke("get_data"))
                 .then((data) => {
                   context.setData(data);
-                  if (context.colorMode === "BlackWhite") {
-                    context.setColor(
-                      context.color === "Black" ? "White" : "Black",
-                    );
-                  }
                 })
                 .catch((e) => {
                   console.log(e);
@@ -475,7 +537,7 @@ export default (props) => {
             } else {
               // assume initialized for now
               invoke("play", {
-                loc: [w[0] + 1, w[1] + 1],
+                loc: [w[0], w[1]],
                 color: context.color,
               })
                 .then(() => invoke("get_data"))
@@ -542,11 +604,47 @@ export default (props) => {
                 height={viewBoxHeight}
                 x={viewBoxLeft}
                 y={viewBoxTop}
-              ></rect>
+              />
             </clipPath>
+            <mask id="labelMask" maskUnits="userSpaceOnUse">
+              <rect
+                width={viewBoxWidth}
+                height={viewBoxHeight}
+                x={viewBoxLeft}
+                y={viewBoxTop}
+                fill="white"
+              />
+              <g fill="black" ref={labelmask} />
+            </mask>
+            <filter id="flatten-alpha">
+              <feComponentTransfer>
+                <feFuncA type="linear" slope="999" />
+              </feComponentTransfer>
+            </filter>
+            <filter id="invert-color">
+              <feColorMatrix
+                in="SourceGraphic"
+                type="matrix"
+                values="-1 0 0 0 1 
+                                                              0 -1 0 0 1 
+                                                              0 0 -1 0 1
+                                                              0 0 0 1 0"
+              />
+            </filter>
           </defs>
 
-          <g ref={gridcontainer} />
+          <image
+            x="0"
+            y="0"
+            width={2 * margin + 18 * square_size}
+            height={2 * margin + 18 * square_size}
+            href={board_image}
+          />
+          <g
+            ref={gridcontainer}
+            mask="url(#labelMask)"
+            filter="url(#flatten-alpha)"
+          />
           <g ref={stonecontainer} />
           <g ref={ghostcontainer} />
         </svg>

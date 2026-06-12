@@ -6,8 +6,6 @@ use crate::move_tree::MoveTree;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
-use crate::problem::Problem;
-
 use crate::fs;
 use std::path::Path;
 
@@ -50,7 +48,7 @@ pub struct StudyData {
 
     coords: HashMap<Uuid, (usize, usize)>,
 
-    exercise_srcs: Vec<Vec<Problem>>,
+    exercise_srcs: Vec<Vec<MoveTree>>,
     history_srcs: Vec<Vec<History>>,
 
     names: Vec<String>,
@@ -71,7 +69,7 @@ impl StudyData {
             None => vec![flashcard_set.to_string()],
         };
 
-        let mut exercise_srcs: Vec<Vec<Problem>> = Vec::new();
+        let mut exercise_srcs: Vec<Vec<MoveTree>> = Vec::new();
         let mut history_srcs: Vec<Vec<History>> = Vec::new();
 
         for name in &names {
@@ -133,7 +131,7 @@ impl StudyData {
         let current_exercise = 0;
         let (i, j) = coords[&current];
 
-        let move_tree = MoveTree::load(exercise_srcs[i][j].clone());
+        let move_tree = MoveTree::load(&exercise_srcs[i][j]);
 
         // load
         StudyData {
@@ -187,7 +185,7 @@ impl StudyData {
         self.current_exercise = self.past_exercises.len();
         self.past_exercises.push(next_id);
 
-        self.move_tree = MoveTree::load(self.exercise_srcs[i][j].clone());
+        self.move_tree = MoveTree::load(&self.exercise_srcs[i][j]);
     }
 
     pub fn location(&self) -> (usize, usize) {
@@ -201,15 +199,14 @@ impl StudyData {
 
         if save {
             // remove new variants
-            self.move_tree.clear_edits();
+            self.move_tree.prep();
 
-            self.exercise_srcs[i][j] = self.move_tree.problem.clone();
+            self.exercise_srcs[i][j] = self.move_tree.clone();
             fs::save_exercises(app_data, &self.exercise_srcs[i], &self.names[i])
                 .await
                 .unwrap();
-        } else {
-            self.move_tree = MoveTree::load(self.exercise_srcs[i][j].clone());
         }
+        self.move_tree = MoveTree::load(&self.exercise_srcs[i][j]);
     }
 
     pub async fn discard_edits(&mut self) {}
@@ -218,7 +215,7 @@ impl StudyData {
     pub fn jump_to_exercise(&mut self, index: usize) {
         self.current_exercise = index;
         let (i, j) = self.coords[&self.past_exercises[index]];
-        self.move_tree = MoveTree::load(self.exercise_srcs[i][j].clone());
+        self.move_tree = MoveTree::load(&self.exercise_srcs[i][j]);
     }
 
     /*

@@ -5,20 +5,20 @@ pub mod config;
 pub mod editing_data;
 pub mod flashcard_algorithm;
 pub mod fs;
-pub mod go_rules;
+pub mod game_state;
 pub mod move_tree;
-pub mod problem;
 pub mod study_data;
 
-use crate::{config::ActiveConfig, move_tree::MoveTree};
+use config::ActiveConfig;
+use move_tree::{Variant, Move, MoveTree};
 
 use tauri::{Builder, Manager};
 
 use tokio::sync::Mutex;
 
 use app_data::AppData;
-use go_rules::{Color, GameState};
-use problem::*;
+use game_state::{Color, GameState};
+
 
 use serde::{Deserialize, Serialize};
 
@@ -53,6 +53,7 @@ async fn place_stone(
 // (and make edit_location be one of its enums)
 #[derive(Serialize, Deserialize)]
 pub struct Snapshot {
+    #[serde(serialize_with = "GameState::internal_serialize")]
     pub game: GameState,
     pub table: Vec<Vec<Option<Move>>>,
     pub row: usize,
@@ -72,8 +73,8 @@ async fn get_data(state: tauri::State<'_, Mutex<AppData>>) -> Result<Snapshot, S
         let (row, col) = move_tree.tree_loc;
         let current_move = move_tree.current();
         Snapshot {
-            game: move_tree.game,
-            table: move_tree.problem.table.clone(),
+            game: move_tree.game.clone(),
+            table: move_tree.table.clone(),
             row,
             col,
             color: current_move.color,
@@ -85,6 +86,8 @@ async fn get_data(state: tauri::State<'_, Mutex<AppData>>) -> Result<Snapshot, S
     };
     match &*state.lock().await {
         AppData::Editing(editing_data) => {
+            let snapshot = get_data(&editing_data.move_tree, editing_data.location());
+            println!("QQ {}", serde_json::to_string(&snapshot).unwrap());
             Ok(get_data(&editing_data.move_tree, editing_data.location()))
         }
         AppData::Study(study_data) => Ok(get_data(&study_data.move_tree, study_data.location())),

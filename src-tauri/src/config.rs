@@ -72,7 +72,6 @@ pub async fn validate(app_data: &Path, input: Option<&str>) -> Result<(), (Strin
     };
 
     let table: HashMap<Spanned<String>, Config> = toml::from_str(input).map_err(|err| {
-        println!("{:?}", err);
         if let Some(range) = err.span() {
             (err.message().to_string(), range.start, range.end)
         } else {
@@ -83,8 +82,6 @@ pub async fn validate(app_data: &Path, input: Option<&str>) -> Result<(), (Strin
     // possible, since there are no top level items, which is checked earlier.
     let level2table: HashMap<String, HashMap<Spanned<String>, Value>> =
         toml::from_str(input).unwrap();
-
-    println!("{:?}", level2table);
 
     // check default has all necessary options (and no sources option)
     let Some((default_span, _default_options)) = table.get_key_value("default") else {
@@ -144,7 +141,17 @@ pub async fn validate(app_data: &Path, input: Option<&str>) -> Result<(), (Strin
     Ok(())
 }
 
-pub async fn add_exercise(app_data: &Path, name: &str) {
+use regex::Regex;
+
+pub async fn add_exercise(app_data: &Path, name: &str) -> bool {
+    let bare_key_re = Regex::new(r#"^[A-Za-z0-9_\-]*$"#).unwrap();
+
+    let name =  if bare_key_re.is_match(name) {name
+        } else {
+
+        &format!(r#""{}""#, name.to_string().replace("\\", "\\\\").replace("\"", "\\\""))
+    };
+    
     let old_config = fs::load_config(app_data).await.unwrap();
     let mut i = 0;
     if !old_config.is_empty() && old_config[old_config.len() - 1..old_config.len()] == *"\n" {
@@ -160,4 +167,5 @@ pub async fn add_exercise(app_data: &Path, name: &str) {
     )
     .await
     .unwrap();
+    true
 }

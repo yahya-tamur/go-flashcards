@@ -3,7 +3,7 @@ Remaining Goals
 
 - Small Action Items
 
-  - config screen undo situation
+  - clear_to and marks/numbers
 
   - Actually make a good flashcard set and use this to study.
 
@@ -11,32 +11,23 @@ Remaining Goals
     - whole exercise
     - exercise file
     - insert exercise in middle?
-
-  - Config => editing (visuals, numbers)
-    - how does config get distributed inside?
-    - frontend needs it too.
-
-- Action Items
-  - New Config:
-    - HashMap<String, Options>
-    - Options: every option, all optional
-    - must have 'default' and ?'editing'
-
-  - Marking:
-    - numbers, SEPARATE FROM:
-    - markings: letters, numbers, circle, triangle.
-    - it stays. you can delete it if you want (how?)
-    - Problem: <initial moves, initial markings, movetree>
-    - Move: <Move, Vec<markings>>
-    - MoveTree: <GameState: also has ko, captures, markings in coordinates>
-
+  
   - Histogram
     - custom svg like board, table.
     - not sure where to put this in the ui, what would look nice.
 
+- Action Items:
+
+  - Marking:
+    - actually add option to add labels in front end. (color mode)
+    - make config work
+  
+  - to / from sgf
+
+
+
   - transform exercises. In comments, moves marked like {S1} also get transformed.
 
-  - to / from sgf
 
   - better algorithm (config etc)
   - phone app
@@ -52,8 +43,6 @@ Remaining Goals
     - history length
     - customize algorithm behavior
     - sources: multiple, shared.
-
-    - fuck it, editing can have multiple sources too.
 
 
 

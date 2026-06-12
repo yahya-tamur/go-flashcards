@@ -34,6 +34,9 @@ export default (props) => {
 
   const [newExercise, setNewExercise] = useState("");
 
+  const exercise_name_invalid = (s) =>
+    /[\u{0000}-\u{0008}]|[\u{000A}-\u{001F}]|\u{007F}/u.test(s);
+
   return (
     <Paper
       sx={{
@@ -52,6 +55,7 @@ export default (props) => {
         <>
           <Button
             variant="contained"
+            disableRipple
             sx={{ margin: "20px" }}
             onClick={() => {
               setMenu("exercises");
@@ -60,6 +64,7 @@ export default (props) => {
             Edit
           </Button>
           <Button
+            disableRipple
             variant="contained"
             sx={{ margin: "20px" }}
             onClick={() => {
@@ -102,7 +107,10 @@ export default (props) => {
               <ListItem
                 secondaryAction={
                   <Button
-                    disabled={props.exercises.some((a) => a === newExercise)}
+                    disabled={
+                      props.exercises.some((a) => a === newExercise) ||
+                      exercise_name_invalid(newExercise)
+                    }
                     type="submit"
                     variant="contained"
                   >
@@ -114,6 +122,10 @@ export default (props) => {
                   value={newExercise}
                   onChange={(e) => {
                     setNewExercise(e.target.value);
+                    console.log(
+                      exercise_name_invalid,
+                      exercise_name_invalid(newExercise),
+                    );
                   }}
                   variant="outlined"
                   size="small"
@@ -123,6 +135,7 @@ export default (props) => {
           </List>
           <Button
             variant="contained"
+            disableRipple
             sx={{ margin: "20px" }}
             onClick={() => {
               setMenu("main");
@@ -153,6 +166,7 @@ export default (props) => {
           </List>
           <Button
             variant="contained"
+            disableRipple
             sx={{ margin: "20px" }}
             onClick={() => {
               setMenu("main");

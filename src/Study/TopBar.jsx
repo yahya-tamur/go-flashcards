@@ -67,7 +67,7 @@ export default (props) => {
           onClick={async () => {
             invoke("main_menu").then(() => {
               context.setPhase("Main");
-              context.setConfig(none);
+              context.setConfig(null);
             });
           }}
         >

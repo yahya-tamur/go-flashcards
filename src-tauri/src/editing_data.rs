@@ -1,6 +1,5 @@
 use crate::fs;
 use crate::move_tree::MoveTree;
-use crate::problem::Problem;
 
 use std::path::Path;
 
@@ -15,22 +14,22 @@ pub struct EditingData {
 
     pub move_tree: MoveTree,
 
-    exercises: Vec<Problem>,
+    exercises: Vec<MoveTree>,
     pub current_exercise: usize,
 }
 
 impl EditingData {
     pub fn jump_to_exercise(&mut self, index: usize) {
-        self.exercises[self.current_exercise] = self.move_tree.problem.clone();
+        self.exercises[self.current_exercise] = self.move_tree.clone();
 
-        self.move_tree = MoveTree::load(self.exercises[index].clone());
+        self.move_tree = MoveTree::load(&self.exercises[index]);
         self.current_exercise = index;
     }
 
     pub fn new_exercise(&mut self) {
-        self.exercises[self.current_exercise] = self.move_tree.problem.clone();
+        self.exercises[self.current_exercise] = self.move_tree.clone();
         self.move_tree = MoveTree::default();
-        self.exercises.push(Problem::default());
+        self.exercises.push(MoveTree::default());
         self.current_exercise = self.exercises.len() - 1;
     }
 
@@ -44,14 +43,14 @@ impl EditingData {
             created,
             if exercises.is_empty() {
                 EditingData {
-                    exercises: vec![Problem::default()],
+                    exercises: vec![MoveTree::default()],
                     move_tree: MoveTree::default(),
                     current_exercise: 0,
                     file: exercise_file.to_string(),
                 }
             } else {
                 let i = exercises.len() - 1;
-                let move_tree = MoveTree::load(exercises[i].clone());
+                let move_tree = MoveTree::load(&exercises[i]);
                 EditingData {
                     exercises,
                     current_exercise: i,
@@ -63,7 +62,7 @@ impl EditingData {
     }
 
     pub async fn save(&mut self, path: &Path) {
-        self.exercises[self.current_exercise] = self.move_tree.problem.clone();
+        self.exercises[self.current_exercise] = self.move_tree.clone();
         fs::save_exercises(path, &self.exercises, &self.file)
             .await
             .unwrap()

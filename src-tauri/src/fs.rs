@@ -4,7 +4,7 @@ use tokio::fs;
 
 use serde_json;
 
-use crate::problem::Problem;
+use crate::move_tree::MoveTree;
 
 //later copy starting directory from bundle to app data?
 
@@ -24,7 +24,7 @@ pub async fn create_directory_structure(app_data: &Path) -> Result<()> {
 
 pub async fn save_exercises(
     app_data: &Path,
-    vec: &Vec<Problem>,
+    vec: &Vec<MoveTree>,
     exercise_file: &str,
 ) -> Result<()> {
     create_directory_structure(app_data).await?;
@@ -41,7 +41,7 @@ pub async fn save_exercises(
     Ok(())
 }
 
-pub async fn load_exercises(app_data: &Path, exercise_file: &str) -> Result<(bool, Vec<Problem>)> {
+pub async fn load_exercises(app_data: &Path, exercise_file: &str) -> Result<(bool, Vec<MoveTree>)> {
     let file = app_data
         .join("app_data")
         .join("exercises")
