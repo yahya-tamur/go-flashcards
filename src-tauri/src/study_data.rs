@@ -3,6 +3,7 @@ use std::collections::{HashMap, VecDeque};
 use crate::config::{self, ActiveConfig};
 use crate::flashcard_algorithm::pick;
 use crate::move_tree::MoveTree;
+use crate::problem::Problem;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
@@ -48,7 +49,7 @@ pub struct StudyData {
 
     coords: HashMap<Uuid, (usize, usize)>,
 
-    exercise_srcs: Vec<Vec<MoveTree>>,
+    exercise_srcs: Vec<Vec<Problem>>,
     history_srcs: Vec<Vec<History>>,
 
     names: Vec<String>,
@@ -69,7 +70,7 @@ impl StudyData {
             None => vec![flashcard_set.to_string()],
         };
 
-        let mut exercise_srcs: Vec<Vec<MoveTree>> = Vec::new();
+        let mut exercise_srcs: Vec<Vec<Problem>> = Vec::new();
         let mut history_srcs: Vec<Vec<History>> = Vec::new();
 
         for name in &names {
@@ -198,10 +199,7 @@ impl StudyData {
         let (i, j) = self.coords[&self.past_exercises[self.current_exercise]];
 
         if save {
-            // remove new variants
-            self.move_tree.prep();
-
-            self.exercise_srcs[i][j] = self.move_tree.clone();
+            self.exercise_srcs[i][j] = self.move_tree.clone().save();
             fs::save_exercises(app_data, &self.exercise_srcs[i], &self.names[i])
                 .await
                 .unwrap();

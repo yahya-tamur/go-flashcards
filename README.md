@@ -4,6 +4,9 @@ Remaining Goals
 - Small Action Items
 
   - clear_to and marks/numbers
+  - fix markings, move location offset.
+  - add marking buttons
+  - add marking label logic
 
   - Actually make a good flashcard set and use this to study.
 

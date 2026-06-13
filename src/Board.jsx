@@ -11,10 +11,14 @@ import triangle_icon from "./assets/triangle.svg";
 import AppContext from "./AppContext";
 
 import Paper from "@mui/material/Paper";
-import { PasswordOutlined } from "@mui/icons-material";
 
 export default (props) => {
   const mark_icons = { Triangle: triangle_icon };
+  const cursor_icons = {
+    Delete: mui_clear,
+    Black: black_image,
+    White: white_image,
+  };
   const context = useContext(AppContext);
   const board_svg = useRef(null);
   const ghostcontainer = useRef(null);
@@ -22,6 +26,7 @@ export default (props) => {
   const stonecontainer = useRef(null);
   const labelmask = useRef(null);
   const paper = useRef(null);
+  const [nextMark, setNextMark] = useState("A"); // useEffect on this!!
 
   const [ghost, setGhost] = useState(null);
 
@@ -48,7 +53,7 @@ export default (props) => {
     i = (i - margin) / square_size;
     j = (j - margin) / square_size;
 
-    let [left, right, top, bottom] = context.data.game.window;
+    let [left, right, top, bottom] = context.data.window;
 
     // correction for partial boards
     i += left + (left > 0 ? -partial / square_size : 0);
@@ -57,19 +62,40 @@ export default (props) => {
     const si = Math.round(i);
     const sj = Math.round(j);
 
-    if (
+    if (!(
       si >= left &&
       si <= right &&
       sj >= top &&
       sj <= bottom &&
-      ((context.phase === "Editing" && context.editingPhase === "Initialize") ||
-        context.data.game.stones[si][sj] === null) &&
       (i - si) * (i - si) + (j - sj) * (j - sj) < 0.25
+    )) {
+      return null;
+    }
+    if (
+      context.cursor === "Black" ||
+      context.cursor === "White" ||
+      context.cursor === "Delete"
     ) {
-      return [si, sj];
+      if ((context.phase === "Editing" || context.studyPhase === "Edit") &&
+        context.editingPhase === "Initialize") {
+          if (context.data.game.stones[si][sj] === context.cursor) {
+            return null;
+          }
+        } else {
+          if (context.data.game.stones[si][sj] !== null) {
+            return null;
+          }
+        }
+    } else {
+      if (
+        context.data.game.marks[si][sj] === context.cursor || 
+        (context.cursor.Label !== null && context.data.game.marks[si][sj].Label === context.cursor.Label)) {
+          return null;
+        }
     }
 
-    return null;
+    return [si, sj];
+    
   };
 
   const [viewBoxHeight, setViewBoxHeight] = useState(2100);
@@ -83,13 +109,106 @@ export default (props) => {
     null,
   ]);
 
+  const click = (w) => {
+    if (
+      context.cursor === "Black" ||
+      context.cursor === "White" ||
+      context.cursor === "Delete"
+    ) {
+      if (
+        (context.phase === "Editing" || context.studyPhase === "Edit") &&
+        context.editingPhase === "Initialize"
+      ) {
+        invoke("place_stone", {
+          i: w[0],
+          j: w[1],
+          color: { Black: "Black", White: "White" }[context.cursor],
+        })
+          .then(() => invoke("get_data"))
+          .then((data) => {
+            context.setData(data);
+          })
+          .catch((e) => {
+            console.log(e);
+          });
+      } else {
+        invoke("play", {
+          loc: [w[0], w[1]],
+          color: context.cursor,
+        })
+          .then(() => invoke("get_data"))
+          .then((data) => {
+            context.setData(data);
+            context.setCursor(data.color === "Black" ? "White" : "Black");
+            if (context.phase === "Study" && context.studyPhase === "Guess") {
+              switch (data.variant) {
+                case "Correct":
+                  invoke("answer", { correct: true })
+                    .then(() => invoke("get_data"))
+                    .then((data) => {
+                      context.setData(data);
+                      context.setFeedback("Correct");
+                      context.setStudyPhase("View");
+                    });
+                  break;
+                case "Incorrect":
+                  invoke("answer", { correct: false })
+                    .then(() => invoke("get_data"))
+                    .then((data) => {
+                      context.setData(data);
+                      context.setFeedback("Incorrect");
+                      context.setStudyPhase("View");
+                    });
+                  break;
+                case "New":
+                  if (context.cursor === context.exerciseColor) {
+                    invoke("answer", { correct: false })
+                      .then(() => invoke("get_data"))
+                      .then((data) => {
+                        context.setData(data);
+                        context.setFeedback("Incorrect");
+                        context.setStudyPhase("View");
+                      });
+                  } else {
+                    context.setStudyPhase("UnknownGuess");
+                  }
+
+                  break;
+                default:
+                  break;
+              }
+            }
+            setGhost(null);
+          })
+          .catch((e) => {
+            console.log(e);
+            setGhost(null);
+          });
+      }
+    } else {
+      invoke("set_mark", {
+          i: w[0],
+          j: w[1],
+          mark: current.cursor === "DeleteMark" ? undefined : current.cursor
+        })
+          .then(() => invoke("get_data"))
+          .then((data) => {
+            context.setData(data);
+          })
+          .catch((e) => {
+            console.log(e);
+          });
+
+    }
+  };
+
   const square_size = 100;
   const margin = 150;
   const partial = 70; // dots for partial board.
 
   // draws grid, background image, letters
   useEffect(() => {
-    let [left, right, top, bottom] = context.data?.game.window ?? [
+    let [left, right, top, bottom] = context.data?.window ?? [
       0, 18, 0, 18,
     ];
     if (
@@ -281,10 +400,10 @@ export default (props) => {
     ) {
       return;
     }
-    let [left, right, top, bottom] = context.data.game.window;
+    let [left, right, top, bottom] = context.data.window;
 
-    for (let i = left; i <= right; i++) {
-      for (let j = top; j <= bottom; j++) {
+    for (let i = left; i < right; i++) {
+      for (let j = top; j < bottom; j++) {
         const w = context.data.game.stones[i][j];
 
         if (w !== null) {
@@ -301,11 +420,8 @@ export default (props) => {
           );
         }
         let label_color = w === "Black" ? "white" : "black";
-        console.log(label_color);
         if (
-          (context.data.game.marks[i][j] ??
-            context.data.game.numbers[i][j] ??
-            null) !== null &&
+          context.data.game.marks[i][j] !== null &&
           context.data.game.stones[i][j] === null
         ) {
           createSVGElement(
@@ -322,10 +438,31 @@ export default (props) => {
         }
 
         if (
-          mark_icons[context.data.game.marks[i][j]] !== undefined &&
-          context.data.game.numbers[i][j] === null
+          context.data.game.marks[i][j] !== null
         ) {
-          let image = createSVGElement(
+
+          if (context.data.game.marks[i][j].Label !== undefined ) {
+              let text = createSVGElement(
+              "text",
+              {
+                x: margin + square_size * i,
+                y: margin + square_size * j,
+                width: square_size,
+                height: square_size,
+                "text-anchor": "middle",
+                "dominant-baseline": "central",
+                filter: label_color === "black" ? "" : "url(#invert-color)",
+              },
+              stonecontainer.current,
+            );
+            text.style.fill = label_color;
+            text.style.webkitUserSelect = "none";
+            text.style.font = "bold 40pt sans-serif";
+            text.textContent = context.data.game.marks[i][j].Label;
+
+          } else {
+
+            let image = createSVGElement(
             "image",
             {
               x: square_size * i + margin - 0.5 * square_size,
@@ -337,30 +474,11 @@ export default (props) => {
             },
             stonecontainer.current,
           );
+
+          }
+          
         }
 
-        const label =
-          context.data.game.numbers[i][j] ??
-          context.data.game.marks[i][j]?.Label ??
-          null;
-        if (label !== null) {
-          let text = createSVGElement(
-            "text",
-            {
-              x: margin + square_size * i,
-              y: margin + square_size * j,
-              width: square_size,
-              height: square_size,
-              "text-anchor": "middle",
-              "dominant-baseline": "central",
-            },
-            stonecontainer.current,
-          );
-          text.style.fill = label_color;
-          text.style.webkitUserSelect = "none";
-          text.style.font = "bold 40pt sans-serif";
-          text.textContent = label;
-        }
       }
     }
 
@@ -380,29 +498,46 @@ export default (props) => {
     if (ghost === null || ghostcontainer.current === null) {
       return;
     }
-    createSVGElement(
-      "image",
-      {
-        x: square_size * ghost[0] + margin - 0.5 * square_size,
-        y: square_size * ghost[1] + margin - 0.5 * square_size,
-        width: square_size,
-        height: square_size,
-        href:
-          context.colorMode === "Delete"
-            ? mui_clear
-            : context.color === "Black"
-              ? black_image
-              : white_image,
-        opacity: 0.6,
-      },
-      ghostcontainer.current,
-    );
+    if (context.cursor["Label"] === undefined) {
+      createSVGElement(
+        "image",
+        {
+          x: square_size * ghost[0] + margin - 0.5 * square_size,
+          y: square_size * ghost[1] + margin - 0.5 * square_size,
+          width: square_size,
+          height: square_size,
+          href: cursor_icons[context.cursor],
+          
+        },
+        ghostcontainer.current,
+      );
+    } else {
+        let label_color = context.data.game.stones[i][j] === "Black" ? "white" : "black";
+        let text = createSVGElement(
+            "text",
+            {
+              x: margin + square_size * ghost[0],
+              y: margin + square_size * ghost[1],
+              width: square_size,
+              height: square_size,
+              "text-anchor": "middle",
+              "dominant-baseline": "central",
+            },
+            stonecontainer.current,
+          );
+          text.style.fill = label_color;
+          text.style.webkitUserSelect = "none";
+          text.style.font = "bold 40pt sans-serif";
+          text.textContent = context.cursor["Label"];
+
+    }
+    
     return () => {
       if (ghostcontainer?.current) {
         ghostcontainer.current.replaceChildren();
       }
     };
-  }, [ghostcontainer, ghost, context.color]);
+  }, [ghostcontainer, ghost, context.cursor]);
 
   let size_ref = useRef([null, null]); // there's a relevant stackexchange for this
 
@@ -487,28 +622,19 @@ export default (props) => {
             ) {
               setGhost(w);
             }
+
             if (
               context.data !== undefined &&
               context.data !== null &&
               mouseDown &&
               w !== null &&
-              (context.phase === "Editing" || context.studyPhase === "Edit") &&
-              context.editingPhase === "Initialize" &&
-              context.data.game.stones[w[0]][w[1]] !== context.colorMode
+              (
+                ((context.phase === "Editing" || context.studyPhase === "Edit") &&
+              context.editingPhase === "Initialize") ||
+                !(context.cursor === "Black" || context.cursor === "White" || context.cursor === "Delete")
+              )
             ) {
-              invoke("place_stone", {
-                i: w[0],
-                j: w[1],
-                color:
-                  context.colorMode === "Delete" ? undefined : context.color,
-              })
-                .then(() => invoke("get_data"))
-                .then((data) => {
-                  context.setData(data);
-                })
-                .catch((e) => {
-                  console.log(e);
-                });
+              click(w);
             }
           }}
           onClick={async (e) => {
@@ -516,81 +642,7 @@ export default (props) => {
             if (w === null) {
               return;
             }
-            if (
-              (context.phase === "Editing" || context.studyPhase === "Edit") &&
-              context.editingPhase === "Initialize"
-            ) {
-              // yes, dragging is not enough.
-              invoke("place_stone", {
-                i: w[0],
-                j: w[1],
-                color:
-                  context.colorMode === "Delete" ? undefined : context.color,
-              })
-                .then(() => invoke("get_data"))
-                .then((data) => {
-                  context.setData(data);
-                })
-                .catch((e) => {
-                  console.log(e);
-                });
-            } else {
-              // assume initialized for now
-              invoke("play", {
-                loc: [w[0], w[1]],
-                color: context.color,
-              })
-                .then(() => invoke("get_data"))
-                .then((data) => {
-                  context.setData(data);
-                  context.setColor(data.color === "Black" ? "White" : "Black");
-                  if (
-                    context.phase === "Study" &&
-                    context.studyPhase === "Guess"
-                  ) {
-                    switch (data.variant) {
-                      case "Correct":
-                        invoke("answer", { correct: true })
-                          .then(() => invoke("get_data"))
-                          .then((data) => {
-                            context.setData(data);
-                            context.setFeedback("Correct");
-                            context.setStudyPhase("View");
-                          });
-                        break;
-                      case "Incorrect":
-                        invoke("answer", { correct: false })
-                          .then(() => invoke("get_data"))
-                          .then((data) => {
-                            context.setData(data);
-                            context.setFeedback("Incorrect");
-                            context.setStudyPhase("View");
-                          });
-                        break;
-                      case "New":
-                        if (context.color === context.exerciseColor) {
-                          invoke("answer", { correct: false })
-                            .then(() => invoke("get_data"))
-                            .then((data) => {
-                              context.setData(data);
-                              context.setFeedback("Incorrect");
-                              context.setStudyPhase("View");
-                            });
-                        } else {
-                          context.setStudyPhase("UnknownGuess");
-                        }
-
-                        break;
-                      default:
-                        break;
-                    }
-                  }
-                  setGhost(null);
-                })
-                .catch((e) => {
-                  setGhost(null);
-                });
-            }
+            click(w);
           }}
           onMouseLeave={() => {
             setGhost(null);
@@ -625,10 +677,10 @@ export default (props) => {
               <feColorMatrix
                 in="SourceGraphic"
                 type="matrix"
-                values="-1 0 0 0 1 
-                                                              0 -1 0 0 1 
-                                                              0 0 -1 0 1
-                                                              0 0 0 1 0"
+                values="-1  0  0  0  1 
+                         0 -1  0  0  1 
+                         0  0 -1  0  1
+                         0  0  0  1  0"
               />
             </filter>
           </defs>
@@ -646,7 +698,7 @@ export default (props) => {
             filter="url(#flatten-alpha)"
           />
           <g ref={stonecontainer} />
-          <g ref={ghostcontainer} />
+          <g ref={ghostcontainer} opacity="0.6"/>
         </svg>
       }
     </Paper>

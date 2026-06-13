@@ -1,6 +1,9 @@
+use crate::config::{self, ActiveConfig};
 use crate::fs;
 use crate::move_tree::MoveTree;
+use crate::problem::Problem;
 
+use std::mem::swap;
 use std::path::Path;
 
 // setup phase:
@@ -10,26 +13,31 @@ use std::path::Path;
 // call play to play move.
 #[derive(Debug)]
 pub struct EditingData {
+    pub config: ActiveConfig,
     pub file: String,
 
     pub move_tree: MoveTree,
 
-    exercises: Vec<MoveTree>,
+    exercises: Vec<Problem>,
     pub current_exercise: usize,
 }
 
 impl EditingData {
-    pub fn jump_to_exercise(&mut self, index: usize) {
-        self.exercises[self.current_exercise] = self.move_tree.clone();
+    fn save_current_and_load(&mut self, mut move_tree: MoveTree) {
+        swap(&mut move_tree, &mut self.move_tree);
+        self.exercises[self.current_exercise] = move_tree.save();
+    }
 
-        self.move_tree = MoveTree::load(&self.exercises[index]);
+    pub fn jump_to_exercise(&mut self, index: usize) {
+        self.save_current_and_load(MoveTree::load(&self.exercises[index]));
+
         self.current_exercise = index;
     }
 
     pub fn new_exercise(&mut self) {
-        self.exercises[self.current_exercise] = self.move_tree.clone();
-        self.move_tree = MoveTree::default();
-        self.exercises.push(MoveTree::default());
+        self.save_current_and_load(MoveTree::default());
+
+        self.exercises.push(Problem::default());
         self.current_exercise = self.exercises.len() - 1;
     }
 
@@ -38,12 +46,14 @@ impl EditingData {
     }
 
     pub async fn load(path: &Path, exercise_file: &str) -> (bool, EditingData) {
+        let config = config::load_config(path, Some(exercise_file), true).await;
         let (created, exercises) = fs::load_exercises(path, exercise_file).await.unwrap();
         (
             created,
             if exercises.is_empty() {
                 EditingData {
-                    exercises: vec![MoveTree::default()],
+                    config,
+                    exercises: vec![Problem::default()],
                     move_tree: MoveTree::default(),
                     current_exercise: 0,
                     file: exercise_file.to_string(),
@@ -52,6 +62,7 @@ impl EditingData {
                 let i = exercises.len() - 1;
                 let move_tree = MoveTree::load(&exercises[i]);
                 EditingData {
+                    config,
                     exercises,
                     current_exercise: i,
                     move_tree,
@@ -62,7 +73,8 @@ impl EditingData {
     }
 
     pub async fn save(&mut self, path: &Path) {
-        self.exercises[self.current_exercise] = self.move_tree.clone();
+        let saved_copy = self.move_tree.clone();
+        self.exercises[self.current_exercise] = saved_copy.save();
         fs::save_exercises(path, &self.exercises, &self.file)
             .await
             .unwrap()

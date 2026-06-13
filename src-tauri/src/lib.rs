@@ -7,20 +7,22 @@ pub mod flashcard_algorithm;
 pub mod fs;
 pub mod game_state;
 pub mod move_tree;
+pub mod problem;
+pub mod snapshot;
 pub mod study_data;
 
 use config::ActiveConfig;
-use move_tree::{Variant, Move, MoveTree};
+use game_state::Mark;
+use move_tree::MoveTree;
+use problem::Variant;
+use snapshot::{snapshot, Snapshot};
 
 use tauri::{Builder, Manager};
 
 use tokio::sync::Mutex;
 
 use app_data::AppData;
-use game_state::{Color, GameState};
-
-
-use serde::{Deserialize, Serialize};
+use game_state::Color;
 
 // is std sync mutex better? is tauri multithreaded? probably doesn't matter, since
 // won't be getting too many requests / second. Probably didn't even need mutex.
@@ -47,50 +49,19 @@ async fn place_stone(
     Ok(())
 }
 
-// struct that gets sent to frontend.
-
-// maybe later put a struct inside this that's an enum based on state
-// (and make edit_location be one of its enums)
-#[derive(Serialize, Deserialize)]
-pub struct Snapshot {
-    #[serde(serialize_with = "GameState::internal_serialize")]
-    pub game: GameState,
-    pub table: Vec<Vec<Option<Move>>>,
-    pub row: usize,
-    pub col: usize,
-    pub color: Color,
-    pub comment: String,
-    pub variant: Variant,
-    pub current_location: usize,
-    pub max_location: usize,
-}
-
-//copies game and tree. If tauri serializes anyway, is that necessary?
 #[tauri::command]
 async fn get_data(state: tauri::State<'_, Mutex<AppData>>) -> Result<Snapshot, String> {
-    println!("getting data.");
-    let get_data = |move_tree: &MoveTree, loc: (usize, usize)| {
-        let (row, col) = move_tree.tree_loc;
-        let current_move = move_tree.current();
-        Snapshot {
-            game: move_tree.game.clone(),
-            table: move_tree.table.clone(),
-            row,
-            col,
-            color: current_move.color,
-            comment: current_move.comment.clone(),
-            variant: current_move.variant,
-            current_location: loc.0,
-            max_location: loc.1,
-        }
-    };
     match &*state.lock().await {
-        AppData::Editing(editing_data) => {
-            let snapshot = get_data(&editing_data.move_tree, editing_data.location());
-            println!("QQ {}", serde_json::to_string(&snapshot).unwrap());
-            Ok(get_data(&editing_data.move_tree, editing_data.location()))
-        }
-        AppData::Study(study_data) => Ok(get_data(&study_data.move_tree, study_data.location())),
+        AppData::Editing(editing_data) => Ok(snapshot(
+            &editing_data.move_tree,
+            editing_data.location(),
+            &editing_data.config,
+        )),
+        AppData::Study(study_data) => Ok(snapshot(
+            &study_data.move_tree,
+            study_data.location(),
+            &study_data.config,
+        )),
         _ => unimplemented!(),
     }
 }
@@ -161,6 +132,12 @@ async fn comment(state: tauri::State<'_, Mutex<AppData>>, comment: String) -> Re
 }
 
 #[tauri::command]
+async fn set_mark(state: tauri::State<'_, Mutex<AppData>>, mark: Option<Mark>, i: usize, j: usize) -> Result<(), String> {
+    apply_to_move_tree(state, |move_tree, _| move_tree.set_mark(mark, i, j)).await;
+    Ok(())
+}
+
+#[tauri::command]
 async fn set_variant(
     state: tauri::State<'_, Mutex<AppData>>,
     variant: Variant,
@@ -190,7 +167,6 @@ async fn jump_to_exercise(
     }
 }
 
-// TODO~~
 #[tauri::command]
 async fn save_exercises(
     state: tauri::State<'_, Mutex<AppData>>,
@@ -198,6 +174,10 @@ async fn save_exercises(
 ) -> Result<(), String> {
     match &mut *state.lock().await {
         AppData::Editing(editing_data) => {
+            let exercises = fs::list_exercises(&app.path().app_data_dir().unwrap()).await.unwrap();
+            if exercises.into_iter().all(|e| e != editing_data.file) {
+                config::add_exercise(&app.path().app_data_dir().unwrap(), &editing_data.file).await;
+            }
             editing_data.save(&app.path().app_data_dir().unwrap()).await;
             Ok(())
         }
@@ -214,14 +194,11 @@ async fn load_exercises(
     app: tauri::AppHandle,
     exercise: String,
 ) -> Result<(), String> {
-    if state
+    state
         .lock()
         .await
         .edit_new(&app.path().app_data_dir().unwrap(), &exercise)
-        .await
-    {
-        config::add_exercise(&app.path().app_data_dir().unwrap(), &exercise).await;
-    }
+        .await;
     Ok(())
 }
 
@@ -231,15 +208,7 @@ async fn get_config(
     app: tauri::AppHandle,
 ) -> Result<ActiveConfig, String> {
     match &mut *state.lock().await {
-        AppData::Editing(editing_data) => {
-            // maybe later embed whole config into editing data if it becomes necessary.
-            Ok(config::load_config(
-                &app.path().app_data_dir().unwrap(),
-                Some(&editing_data.file),
-                true,
-            )
-            .await)
-        }
+        AppData::Editing(editing_data) => Ok(editing_data.config.clone()),
         AppData::Study(study_data) => Ok(study_data.config.clone()),
         _ => unimplemented!(),
     }
@@ -377,6 +346,7 @@ pub fn run() {
             answer,
             get_history,
             stop_editing,
+            set_mark
         ])
         .run(tauri::generate_context!())
         .unwrap();

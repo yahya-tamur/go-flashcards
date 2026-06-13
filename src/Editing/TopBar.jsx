@@ -88,7 +88,7 @@ export default (props) => {
               .then(() => invoke("get_data"))
               .then((data) => {
                 context.setData(data);
-                context.setColor(data.color === "Black" ? "White" : "Black");
+                context.setCursor(data.color === "Black" ? "White" : "Black");
               });
           }}
         />
@@ -101,8 +101,7 @@ export default (props) => {
               .then(() => invoke("get_data"))
               .then((data) => {
                 context.setData(data);
-                context.setColorMode("Black");
-                context.setColor("Black");
+                context.setCursor("Black");
                 context.setEditingPhase("Initialize");
               });
           }}

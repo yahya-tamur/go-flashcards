@@ -146,12 +146,15 @@ use regex::Regex;
 pub async fn add_exercise(app_data: &Path, name: &str) -> bool {
     let bare_key_re = Regex::new(r#"^[A-Za-z0-9_\-]*$"#).unwrap();
 
-    let name =  if bare_key_re.is_match(name) {name
-        } else {
-
-        &format!(r#""{}""#, name.to_string().replace("\\", "\\\\").replace("\"", "\\\""))
+    let name = if bare_key_re.is_match(name) {
+        name
+    } else {
+        &format!(
+            r#""{}""#,
+            name.to_string().replace("\\", "\\\\").replace("\"", "\\\"")
+        )
     };
-    
+
     let old_config = fs::load_config(app_data).await.unwrap();
     let mut i = 0;
     if !old_config.is_empty() && old_config[old_config.len() - 1..old_config.len()] == *"\n" {

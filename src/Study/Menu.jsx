@@ -77,12 +77,12 @@ export default (props) => {
             <Button
               onClick={async () => {
                 invoke("play", {
-                  color: context.color,
+                  color: context.cursor,
                 })
                   .then(() => invoke("get_data"))
                   .then((data) => {
                     context.setData(data);
-                    context.setColor(
+                    context.setCursor(
                       data.color === "Black" ? "White" : "Black",
                     );
                     switch (data.variant) {
@@ -105,7 +105,7 @@ export default (props) => {
                           });
                         break;
                       case "New":
-                        if (context.color === context.exerciseColor) {
+                        if (context.cursor === context.exerciseColor) {
                           invoke("answer", { correct: false })
                             .then(() => invoke("get_data"))
                             .then((data) => {
@@ -152,6 +152,7 @@ export default (props) => {
               variant="contained"
               onClick={() => {
                 let [row, col] = [context.data.row, context.data.col];
+                // todo: why is this in the frontend??
                 do {
                   col -= 1;
                   while (context.data.table[row][col] === null) {
@@ -163,7 +164,7 @@ export default (props) => {
                   .then(() => invoke("get_data"))
                   .then((data) => {
                     context.setData(data);
-                    context.setColor(
+                    context.setCursor(
                       data.color === "Black" ? "White" : "Black",
                     );
                     context.setStudyPhase("Guess");
@@ -181,7 +182,7 @@ export default (props) => {
                 invoke("get_data")
                   .then((data) => {
                     context.setData(data);
-                    context.setColor(
+                    context.setCursor(
                       data.color === "Black" ? "White" : "Black",
                     );
                     context.setStudyPhase("View");

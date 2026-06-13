@@ -91,7 +91,7 @@ export default (props) => {
               .then((data) => {
                 context.setData(data);
                 context.setFeedback("");
-                context.setColor(data.color === "Black" ? "White" : "Black");
+                context.setCursor(data.color === "Black" ? "White" : "Black");
               });
           }}
         />
@@ -104,7 +104,7 @@ export default (props) => {
                 .then(() => invoke("get_data"))
                 .then((data) => {
                   context.setData(data);
-                  context.setColor(data.color === "Black" ? "White" : "Black");
+                  context.setCursor(data.color === "Black" ? "White" : "Black");
                   context.setExerciseColor(
                     data.color === "Black" ? "White" : "Black",
                   );
@@ -140,7 +140,7 @@ export default (props) => {
                 .then(() => invoke("get_data"))
                 .then((data) => {
                   context.setData(data);
-                  context.setColor(data.color === "Black" ? "White" : "Black");
+                  context.setCursor(data.color === "Black" ? "White" : "Black");
                   context.setExerciseColor(
                     data.color === "Black" ? "White" : "Black",
                   );
@@ -165,7 +165,7 @@ export default (props) => {
                 .then(() => invoke("get_data"))
                 .then((data) => {
                   context.setData(data);
-                  context.setColor(data.color === "Black" ? "White" : "Black");
+                  context.setCursor(data.color === "Black" ? "White" : "Black");
                   context.setExerciseColor(
                     data.color === "Black" ? "White" : "Black",
                   );

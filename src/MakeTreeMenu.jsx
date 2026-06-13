@@ -62,7 +62,7 @@ export default (props) => {
         }}
       >
         <Slider
-          value={context.data?.game.window.slice(0, 2) ?? [0, 18]}
+          value={context.data?.window.slice(0, 2) ?? [0, 18]}
           marks
           onChange={async (event, newValue) => {
             if (context.data === null || context.data === undefined) {
@@ -70,7 +70,7 @@ export default (props) => {
             }
 
             let [row_start, row_end] = newValue;
-            let [col_start, col_end] = context.data.game.window.slice(2, 4);
+            let [col_start, col_end] = context.data.window.slice(2, 4);
 
             await invoke("set_window", {
               window: [row_start, row_end, col_start, col_end],
@@ -89,14 +89,14 @@ export default (props) => {
           sx={{ margin: "5px 30px", width: "calc(100% - 60px)" }}
         />
         <Slider
-          value={context.data?.game.window.slice(2, 4) ?? [0, 18]}
+          value={context.data?.window.slice(2, 4) ?? [0, 18]}
           marks
           onChange={async (event, newValue) => {
             if (context.data === null || context.data === undefined) {
               return;
             }
 
-            let [row_start, row_end] = context.data.game.window.slice(0, 2);
+            let [row_start, row_end] = context.data.window.slice(0, 2);
             let [col_start, col_end] = newValue;
 
             await invoke("set_window", {
@@ -132,8 +132,7 @@ export default (props) => {
               .then((data) => {
                 context.setData(data);
                 context.setEditingPhase("Initialize");
-                context.setColorMode("Black");
-                context.setColor("Black");
+                context.setCursor("Black");
               });
           }}
           variant="contained"
@@ -143,12 +142,12 @@ export default (props) => {
         <Button
           onClick={async () => {
             invoke("play", {
-              color: context.color,
+              color: context.cursor,
             })
               .then(() => invoke("get_data"))
               .then((data) => {
                 context.setData(data);
-                context.setColor(data.color === "Black" ? "White" : "Black");
+                context.setCursor(data.color === "Black" ? "White" : "Black");
               });
           }}
           variant="contained"
@@ -199,7 +198,7 @@ export default (props) => {
               invoke("delete_branch")
                 .then(() => invoke("get_data"))
                 .then((data) => {
-                  context.setColor(data.color === "Black" ? "White" : "Black");
+                  context.setCursor(data.color === "Black" ? "White" : "Black");
                   context.setData(data);
                 });
             }}

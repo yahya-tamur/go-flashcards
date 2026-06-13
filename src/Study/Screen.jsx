@@ -21,8 +21,7 @@ export default () => {
       .then((data) => {
         context.setStudyPhase("Guess");
         context.setData(data);
-        context.setColor(data.color === "Black" ? "White" : "Black");
-        //context.setColorMode(data.color === "Black" ? "White" : "Black");
+        context.setCursor(data.color === "Black" ? "White" : "Black");
         context.setExerciseColor(data.color === "Black" ? "White" : "Black");
       })
       .catch((e) => {

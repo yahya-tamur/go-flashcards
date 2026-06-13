@@ -25,8 +25,7 @@ export default () => {
           context.setEditingPhase("MakeTree");
         }
         context.setData(data);
-        context.setColor(data.color === "Black" ? "White" : "Black");
-        context.setColorMode(data.color === "Black" ? "White" : "Black");
+        context.setCursor(data.color === "Black" ? "White" : "Black");
       })
       .catch((e) => {
         console.log(e);

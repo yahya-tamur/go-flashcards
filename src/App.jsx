@@ -52,12 +52,12 @@ function App() {
   const [editingPhase, setEditingPhase] = useState("Initialize");
   // Guess, GuessUnknown View, Edit.
   const [studyPhase, setStudyPhase] = useState("Guess");
-  const [colorMode, setColorMode] = useState("Black");
   const [feedback, setFeedback] = useState("");
   const [data, setData] = useState(null);
-  const [color, setColor] = useState("Black");
   const [exerciseColor, setExerciseColor] = useState("");
   const [config, setConfig] = useState(null);
+
+  const [cursor, setCursor] = useState("Black");
 
   return (
     <ThemeProvider theme={theme}>
@@ -70,18 +70,16 @@ function App() {
           setEditingPhase,
           studyPhase,
           setStudyPhase,
-          colorMode,
-          setColorMode,
           data,
           setData,
-          color,
-          setColor,
           feedback,
           setFeedback,
           exerciseColor,
           setExerciseColor,
           config,
           setConfig,
+          cursor,
+          setCursor,
         }}
       >
         {phase === "Main" ? (
