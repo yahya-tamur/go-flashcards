@@ -1,53 +1,53 @@
 Remaining Goals
 ---------------
 
-- Small Action Items
-
-  - clear_to and marks/numbers
-  - fix markings, move location offset.
-  - add marking buttons
-  - add marking label logic
+  GOAL FOR NOW ===>> 
+        - transform exercises. 
+        - to / from sgf
+  <====
 
   - Actually make a good flashcard set and use this to study.
+
+  Small Items:
+
+  - In comments, moves marked like {S1} also get transformed.
+
+  - buttons to type marks in comments?
 
   - delete:
     - whole exercise
     - exercise file
     - insert exercise in middle?
   
-  - Histogram
-    - custom svg like board, table.
-    - not sure where to put this in the ui, what would look nice.
-
-- Action Items:
-
-  - Marking:
-    - actually add option to add labels in front end. (color mode)
-    - make config work
-  
-  - to / from sgf
-
-
-
-  - transform exercises. In comments, moves marked like {S1} also get transformed.
-
-
-  - better algorithm (config etc)
-  - phone app
-    - phone ui
-    - android file situation
-
-  - Advanced Configuration
-
-    - recent-marking: none, number, circle
+  - Add to config:
     - custom art per flashcard set.
+        - expose config to frontend =>
+          - put number in stone button in maketree?
     - randomize color?
     - randomize orientation?
     - history length
     - customize algorithm behavior
     - sources: multiple, shared.
 
-
+  - UI
+    - less tall tree view with smaller stones
+    - captures?
+    
+    - Histogram
+    - custom svg like board, table.
+    - not sure where to put this in the ui, what would look nice.
+    
+    - a lot of screens are ok but not great
+    - tactility:
+      - exit without saving? popup on edit
+        - same on config
+      - popups on save?
+      - popups on correct / incorrect?
+      - next button? 
+ 
+  - phone app
+    - phone ui
+    - android file situation
 
 - Ongoing
   - go over code quality.
@@ -55,23 +55,14 @@ Remaining Goals
     - Look over console.log's. Use it maybe but consistent, only for useful things
     - consistent error handling, esp. in the backend. Result vs. panic
 
-  - Make UI nicer
-    - less tall tree view with smaller stones
-    - captures?
-    - a lot of screens are ok but not great
-    - tactility:
-      - exit without saving? popup on edit
-      - popups on save?
-      - popups on correct / incorrect?
-      - next button? 
-
 - Consider.
 
   - play moves automatically
-
+    - frontend only? noop mode (cursor?).
 
   - timer?
   - sounds?
+    - better (higher res, copyright ok) art too.
 
 - Finalizing
 

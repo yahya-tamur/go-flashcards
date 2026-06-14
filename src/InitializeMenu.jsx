@@ -5,6 +5,13 @@ import white_image from "./assets/white_anime.png";
 import { invoke } from "@tauri-apps/api/core";
 import { createSVGElement } from "./utils";
 
+import mui_clear from "./assets/mui_clear.svg";
+import triangle_icon from "./assets/triangle.svg";
+import square_icon from "./assets/square.svg";
+import circle_icon from "./assets/circle.svg";
+import cross_icon from "./assets/cross.svg";
+import delete_mark_icon from "./assets/delete_mark.svg";
+
 import "./App.css";
 
 import Button from "@mui/material/Button";
@@ -14,6 +21,7 @@ import Slider from "@mui/material/Slider";
 import ClearIcon from "@mui/icons-material/Clear";
 import ToggleButton from "@mui/material/ToggleButton";
 import ToggleButtonGroup from "@mui/material/ToggleButtonGroup";
+import TextField from "@mui/material/TextField";
 
 import { createSvgIcon } from "@mui/material/utils";
 
@@ -127,7 +135,58 @@ export default (props) => {
             <ClearIcon color="error" sx={{ height: "30px", width: "30px" }} />
           </ToggleButton>
         </ToggleButtonGroup>
+
+        <ToggleButtonGroup
+          value={context.cursor}
+          exclusive
+          size="small"
+          onChange={(e, newValue) => {
+            if (newValue === null) {
+              context.setCursor("Black");
+            } else {
+              context.setCursor(newValue);
+            }
+            console.log(newValue);
+          }}
+        >
+          <ToggleButton value="Triangle">
+            <img
+              src={triangle_icon}
+              style={{ height: "30px", width: "30px" }}
+            />
+          </ToggleButton>
+          <ToggleButton value="Square">
+            <img src={square_icon} style={{ height: "30px", width: "30px" }} />
+          </ToggleButton>
+          <ToggleButton value="Circle">
+            <img src={circle_icon} style={{ height: "30px", width: "30px" }} />
+          </ToggleButton>
+          <ToggleButton value="Cross">
+            <img src={cross_icon} style={{ height: "30px", width: "30px" }} />
+          </ToggleButton>
+          <ToggleButton value="DeleteMark">
+            <img
+              src={delete_mark_icon}
+              style={{ height: "30px", width: "30px" }}
+            />
+          </ToggleButton>
+          <ToggleButton value={"Label"}>
+            <TextField
+              sx={{ width: "60px" }}
+              size="small"
+              variant="standard"
+              value={context.nextLabel}
+              onChange={(e) => {
+                e.stopPropagation();
+                context.setNextLabel(e.target.value);
+                context.setCursor("Label");
+                console.log(context.cursor);
+              }}
+            ></TextField>
+          </ToggleButton>
+        </ToggleButtonGroup>
       </Box>
+
       <Box
         sx={{
           width: "100%",
@@ -138,7 +197,7 @@ export default (props) => {
       >
         <Button
           variant="contained"
-          disabled={context.cursor === "Delete"}
+          disabled={context.cursor !== "Black" && context.cursor !== "White"}
           onClick={async () => {
             invoke("finish_setup", {
               color: context.cursor === "Black" ? "White" : "Black",

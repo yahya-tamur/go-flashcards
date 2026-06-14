@@ -109,6 +109,7 @@ export default (props) => {
                     data.color === "Black" ? "White" : "Black",
                   );
                   context.setStudyPhase("View");
+                  context.setNextLabel("A");
                 })
                 .catch((e) => {
                   console.log(e);
@@ -145,6 +146,7 @@ export default (props) => {
                     data.color === "Black" ? "White" : "Black",
                   );
                   context.setStudyPhase("View");
+                  context.setNextLabel("A");
                 })
                 .catch((e) => {
                   console.log(e);

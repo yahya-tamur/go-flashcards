@@ -27,6 +27,12 @@ import AppContext from "./AppContext";
 import CheckIcon from "@mui/icons-material/Check";
 import ClearIcon from "@mui/icons-material/Clear";
 
+import triangle_icon from "./assets/triangle.svg";
+import square_icon from "./assets/square.svg";
+import circle_icon from "./assets/circle.svg";
+import cross_icon from "./assets/cross.svg";
+import delete_mark_icon from "./assets/delete_mark.svg";
+
 export default (props) => {
   let context = useContext(AppContext);
   const [variant, setVariant] = useState("None");
@@ -72,7 +78,7 @@ export default (props) => {
             let [row_start, row_end] = newValue;
             let [col_start, col_end] = context.data.window.slice(2, 4);
 
-            await invoke("set_window", {
+            await invoke("try_set_window", {
               window: [row_start, row_end, col_start, col_end],
             })
               .then(() => invoke("get_data"))
@@ -99,7 +105,7 @@ export default (props) => {
             let [row_start, row_end] = context.data.window.slice(0, 2);
             let [col_start, col_end] = newValue;
 
-            await invoke("set_window", {
+            await invoke("try_set_window", {
               window: [row_start, row_end, col_start, col_end],
             })
               .then(() => invoke("get_data"))
@@ -187,7 +193,16 @@ export default (props) => {
           flexDirection: "row",
         }}
       >
-        <Box sx={{ marginTop: "auto", marginLeft: "20px", height: "40px" }}>
+        <Box
+          sx={{
+            width: "100%",
+            maxWidth: "100%",
+            height: "40px",
+            display: "flex",
+            flexDirection: "row",
+            justifyContent: "space-around",
+          }}
+        >
           <Button
             variant="contained"
             sx={{ height: "100%" }}
@@ -205,6 +220,87 @@ export default (props) => {
           >
             Delete
           </Button>
+
+          <ToggleButtonGroup
+            value={context.cursor}
+            exclusive
+            size="small"
+            onChange={(e, newValue) => {
+              if (newValue === null) {
+                context.setCursor(
+                  context.data.color === "Black" ? "White" : "Black",
+                );
+              } else {
+                context.setCursor(newValue);
+              }
+            }}
+          >
+            <ToggleButton value="Triangle">
+              <img
+                src={triangle_icon}
+                style={{ height: "30px", width: "30px" }}
+              />
+            </ToggleButton>
+            <ToggleButton value="Square">
+              <img
+                src={square_icon}
+                style={{ height: "30px", width: "30px" }}
+              />
+            </ToggleButton>
+            <ToggleButton value="Circle">
+              <img
+                src={circle_icon}
+                style={{ height: "30px", width: "30px" }}
+              />
+            </ToggleButton>
+            <ToggleButton value="Cross">
+              <img src={cross_icon} style={{ height: "30px", width: "30px" }} />
+            </ToggleButton>
+            <ToggleButton value="DeleteMark">
+              <img
+                src={delete_mark_icon}
+                style={{ height: "30px", width: "30px" }}
+              />
+            </ToggleButton>
+            <ToggleButton value={"Label"}>
+              <TextField
+                sx={{ width: "60px" }}
+                size="small"
+                variant="standard"
+                value={context.nextLabel}
+                onChange={(e) => {
+                  e.stopPropagation();
+                  context.setNextLabel(e.target.value);
+                  context.setCursor("Label");
+                  console.log(context.cursor);
+                }}
+              ></TextField>
+            </ToggleButton>
+          </ToggleButtonGroup>
+
+          <ToggleButtonGroup
+            value={context.cursor}
+            exclusive
+            size="small"
+            onChange={(e, newValue) => {
+              if (newValue === null) {
+                context.setCursor(
+                  context.data.color === "Black" ? "White" : "Black",
+                );
+              } else {
+                context.setCursor(newValue);
+              }
+            }}
+          >
+            <ToggleButton
+              value={context.data.color === "Black" ? "White" : "Black"}
+            >
+              <img
+                src={context.data.color === "Black" ? white_image : black_image}
+                style={{ height: "30px", width: "30px" }}
+              />
+            </ToggleButton>
+          </ToggleButtonGroup>
         </Box>
       </Box>
     </Paper>

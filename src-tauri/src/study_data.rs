@@ -1,4 +1,5 @@
 use std::collections::{HashMap, VecDeque};
+use std::sync::Arc;
 
 use crate::config::{self, ActiveConfig};
 use crate::flashcard_algorithm::pick;
@@ -39,7 +40,7 @@ impl History {
 #[derive(Debug)]
 pub struct StudyData {
     pub move_tree: MoveTree,
-    pub config: ActiveConfig,
+    pub config: Arc<ActiveConfig>,
 
     // think about current
 
@@ -126,13 +127,14 @@ impl StudyData {
                 coords.insert(history.id, (i, j));
             }
         }
+        let config = Arc::new(config);
         let (sel_i, sel_j) = pick(&config, &selection_pool);
         let current = selection_pool[sel_i][sel_j];
         let past_exercises = vec![current];
         let current_exercise = 0;
         let (i, j) = coords[&current];
 
-        let move_tree = MoveTree::load(&exercise_srcs[i][j]);
+        let move_tree = MoveTree::new(config.clone(), &exercise_srcs[i][j]);
 
         // load
         StudyData {
@@ -186,7 +188,7 @@ impl StudyData {
         self.current_exercise = self.past_exercises.len();
         self.past_exercises.push(next_id);
 
-        self.move_tree = MoveTree::load(&self.exercise_srcs[i][j]);
+        self.move_tree.load(&self.exercise_srcs[i][j]);
     }
 
     pub fn location(&self) -> (usize, usize) {
@@ -199,12 +201,12 @@ impl StudyData {
         let (i, j) = self.coords[&self.past_exercises[self.current_exercise]];
 
         if save {
-            self.exercise_srcs[i][j] = self.move_tree.clone().save();
+            self.exercise_srcs[i][j] = self.move_tree.save();
             fs::save_exercises(app_data, &self.exercise_srcs[i], &self.names[i])
                 .await
                 .unwrap();
         }
-        self.move_tree = MoveTree::load(&self.exercise_srcs[i][j]);
+        self.move_tree.load(&self.exercise_srcs[i][j]);
     }
 
     pub async fn discard_edits(&mut self) {}
@@ -213,7 +215,7 @@ impl StudyData {
     pub fn jump_to_exercise(&mut self, index: usize) {
         self.current_exercise = index;
         let (i, j) = self.coords[&self.past_exercises[index]];
-        self.move_tree = MoveTree::load(&self.exercise_srcs[i][j]);
+        self.move_tree.load(&self.exercise_srcs[i][j]);
     }
 
     /*

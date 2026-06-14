@@ -68,6 +68,7 @@ export default (props) => {
             invoke("main_menu").then(() => {
               context.setPhase("Main");
               context.setConfig(null);
+              context.setNextLabel("A");
             });
           }}
         >

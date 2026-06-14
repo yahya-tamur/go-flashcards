@@ -31,17 +31,23 @@ pub struct Problem {
     pub window: (usize, usize, usize, usize),
 }
 
+impl Default for Move {
+    fn default() -> Move {
+        Move {
+            loc: None,
+            color: Color::White,
+            comment: String::new(),
+            variant: Variant::None,
+            marks: Vec::new(),
+        }
+    }
+}
+
 impl Default for Problem {
     fn default() -> Problem {
         Problem {
             id: Uuid::new_v4(),
-            table: vec![vec![Some(Move {
-                loc: None,
-                color: Color::White,
-                comment: String::new(),
-                variant: Variant::None,
-                marks: Vec::new(),
-            })]],
+            table: vec![vec![Some(Move::default())]],
             initial: GameState::default(),
             window: (0, 18, 0, 18),
         }

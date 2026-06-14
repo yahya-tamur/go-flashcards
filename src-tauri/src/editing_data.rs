@@ -3,8 +3,8 @@ use crate::fs;
 use crate::move_tree::MoveTree;
 use crate::problem::Problem;
 
-use std::mem::swap;
 use std::path::Path;
+use std::sync::Arc;
 
 // setup phase:
 // tree_loc is None,
@@ -13,7 +13,7 @@ use std::path::Path;
 // call play to play move.
 #[derive(Debug)]
 pub struct EditingData {
-    pub config: ActiveConfig,
+    pub config: Arc<ActiveConfig>,
     pub file: String,
 
     pub move_tree: MoveTree,
@@ -23,22 +23,21 @@ pub struct EditingData {
 }
 
 impl EditingData {
-    fn save_current_and_load(&mut self, mut move_tree: MoveTree) {
-        swap(&mut move_tree, &mut self.move_tree);
-        self.exercises[self.current_exercise] = move_tree.save();
-    }
-
     pub fn jump_to_exercise(&mut self, index: usize) {
-        self.save_current_and_load(MoveTree::load(&self.exercises[index]));
+        self.exercises[self.current_exercise] = self.move_tree.save();
+        self.move_tree.load(&self.exercises[index]);
 
         self.current_exercise = index;
     }
 
     pub fn new_exercise(&mut self) {
-        self.save_current_and_load(MoveTree::default());
+        self.exercises[self.current_exercise] = self.move_tree.save();
 
         self.exercises.push(Problem::default());
         self.current_exercise = self.exercises.len() - 1;
+
+        self.move_tree
+            .load(&self.exercises[self.exercises.len() - 1]);
     }
 
     pub fn location(&self) -> (usize, usize) {
@@ -46,21 +45,23 @@ impl EditingData {
     }
 
     pub async fn load(path: &Path, exercise_file: &str) -> (bool, EditingData) {
-        let config = config::load_config(path, Some(exercise_file), true).await;
+        let config = Arc::new(config::load_config(path, Some(exercise_file), true).await);
         let (created, exercises) = fs::load_exercises(path, exercise_file).await.unwrap();
         (
             created,
             if exercises.is_empty() {
+                let exercises = vec![Problem::default()];
+                let move_tree = MoveTree::new(config.clone(), &exercises[0]);
                 EditingData {
                     config,
-                    exercises: vec![Problem::default()],
-                    move_tree: MoveTree::default(),
+                    exercises,
+                    move_tree,
                     current_exercise: 0,
                     file: exercise_file.to_string(),
                 }
             } else {
                 let i = exercises.len() - 1;
-                let move_tree = MoveTree::load(&exercises[i]);
+                let move_tree = MoveTree::new(config.clone(), &exercises[i]);
                 EditingData {
                     config,
                     exercises,

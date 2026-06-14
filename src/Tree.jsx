@@ -38,32 +38,40 @@ export default (props) => {
         return;
       }
       let [r, c] = [context.data.row, context.data.col];
-      if (e.key === "ArrowRight") {
-        c += 1;
-      } else if (e.key === "ArrowUp") {
-        r -= 1;
-        while (
-          r > 0 &&
-          (context.data.table[r][c] === null ||
-            context.data.table[r][c] === undefined)
-        ) {
+      switch (e.key) {
+        case "ArrowRight":
+          c += 1;
+          break;
+        case "ArrowUp":
           r -= 1;
-        }
-      } else if (e.key === "ArrowDown") {
-        r += 1;
-        while (
-          r < context.data.table.length - 1 &&
-          (context.data.table[r][c] === null ||
-            context.data.table[r][c] === undefined)
-        ) {
+          while (
+            r > 0 &&
+            (context.data.table[r][c] === null ||
+              context.data.table[r][c] === undefined)
+          ) {
+            r -= 1;
+          }
+          break;
+        case "ArrowDown":
           r += 1;
-        }
-      } else if (e.key === "ArrowLeft") {
-        c -= 1;
-        while (r > 0 && context.data.table[r][c] === null) {
-          r -= 1;
-        }
+          while (
+            r < context.data.table.length - 1 &&
+            (context.data.table[r][c] === null ||
+              context.data.table[r][c] === undefined)
+          ) {
+            r += 1;
+          }
+          break;
+        case "ArrowLeft":
+          c -= 1;
+          while (r > 0 && context.data.table[r][c] === null) {
+            r -= 1;
+          }
+          break;
+        default:
+          return;
       }
+
       if (
         context.data.table[r] !== undefined &&
         context.data.table[r][c] !== null &&
@@ -73,6 +81,7 @@ export default (props) => {
           .then(() => invoke("get_data"))
           .then((data) => {
             context.setData(data);
+            console.log(data.game.marks);
             context.setCursor(data.color === "Black" ? "White" : "Black");
           })
           .catch((e) => {

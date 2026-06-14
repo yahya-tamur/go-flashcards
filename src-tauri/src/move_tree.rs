@@ -1,48 +1,34 @@
+use crate::config::{ActiveConfig, ShowRecent};
 use crate::game_state::{Color, GameState, Mark};
 
 use crate::problem::{Move, Problem, Variant};
 use std::hash::{DefaultHasher, Hash, Hasher};
+use std::sync::Arc;
 
 #[derive(Clone, Debug)]
 pub struct MoveTree {
+    config: Arc<ActiveConfig>,
     pub problem: Problem,
     pub game: GameState,
     pub tree_loc: (usize, usize),
     new_branches: Vec<u64>,
 }
-/*
-impl Default for MoveTree {
-    fn default() -> MoveTree {
-    MoveTree {
-        id: Uuid::new_v4(),
-        table: vec![vec![Some(Move {
-                loc: None,
-                color: Color::White,
-                comment: String::new(),
-                variant: Variant::None,
-                marks: Vec::new(),
-            })]],
-        initial: GameState::default(),
-        game: GameState::default(),
-        tree_loc: (0, 0),
-        new_branches: Vec::new(),
-    }
-}
-}*/
 
+/*
 impl Default for MoveTree {
     fn default() -> MoveTree {
         MoveTree::load(&Problem::default())
     }
-}
+}*/
 
 impl MoveTree {
-    pub fn load(problem: &Problem) -> MoveTree {
+    pub fn new(config: Arc<ActiveConfig>, problem: &Problem) -> MoveTree {
         let problem = problem.clone();
         let mut game = problem.initial.clone();
-        game.play_move(&problem.table[0][0].as_ref().unwrap(), 0);
+        game.play_move(problem.table[0][0].as_ref().unwrap(), 0);
 
         MoveTree {
+            config,
             problem,
             game,
             tree_loc: (0, 0),
@@ -50,17 +36,24 @@ impl MoveTree {
         }
     }
 
-    pub fn save(mut self: MoveTree) -> Problem {
-        for r in 0..self.problem.table.len() {
-            for c in 0..self.problem.table[r].len() {
-                if let Some(mov) = self.problem.table[r][c].as_mut() {
+    pub fn load(&mut self, problem: &Problem) {
+        self.problem = problem.clone();
+        self.new_branches.clear();
+        self.jump(0, 0);
+    }
+
+    pub fn save(&self) -> Problem {
+        let mut problem = self.problem.clone();
+        for r in 0..problem.table.len() {
+            for c in 0..problem.table[r].len() {
+                if let Some(mov) = problem.table[r][c].as_mut() {
                     if mov.variant == Variant::New {
                         mov.variant = Variant::None;
                     }
                 }
             }
         }
-        self.problem
+        problem
     }
 
     pub fn finish_setup(&mut self, color: Color) {
@@ -68,13 +61,15 @@ impl MoveTree {
         self.problem.table[0][0].as_mut().unwrap().color = color;
     }
 
-    // maybe check if tree is empty.
+    // this should just not be called when not initializing.
     pub fn place_stone(&mut self, i: usize, j: usize, color: Option<Color>) {
         self.game.stones[i + 1][j + 1] = color;
+        self.problem.initial.stones[i + 1][j + 1] = color;
     }
 
     pub fn play(&mut self, mut loc: Option<(usize, usize)>, color: Color, study: bool) -> bool {
         // consolidate into transform
+        println!("{:?}", loc);
         if let Some((i, j)) = loc {
             loc = Some((i + 1, j + 1));
         }
@@ -201,21 +196,52 @@ impl MoveTree {
         self.game.captures = (0, 0);
         self.game.ko = None;
         self.tree_loc = (0, 0);
-        self.problem.initial = GameState::default();
+        println!("initial is game: {:?}", self.problem.initial == self.game);
+        self.problem.initial = self.game.clone();
+
         self.problem.table.truncate(1);
         self.problem.table[0].truncate(1);
+
+        let mov = self.problem.table[0].pop().unwrap().unwrap();
+
+        self.problem.table[0].push(Some(Move {
+            comment: mov.comment,
+            ..Default::default()
+        }));
+
+        self.game.numbers = [[None; 21]; 21];
     }
 
-    // caller will NOT account for border themselves. values inclusive
     pub fn set_window(&mut self, window: (usize, usize, usize, usize)) {
         let (row_start, row_end, col_start, col_end) = window;
-        let out_of_bounds = |r, c| {
-            r > (row_end + 1) || r < (row_start + 1) || c < (col_start + 1) || c > (col_end + 1)
-        };
+        let (row_start, row_end, col_start, col_end) =
+            (row_start + 1, row_end + 1, col_start + 1, col_end + 1);
+        let out_of_bounds = |r, c| r > row_end || r < row_start || c < col_start || c > col_end;
+
+        self.problem.window = window;
 
         for i in 0..21 {
             for j in 0..21 {
-                if out_of_bounds(i, j) && self.problem.initial.stones[i][j].is_some() {
+                if out_of_bounds(i, j) {
+                    self.game.marks[i][j] = None;
+                    self.game.stones[i][j] = None;
+                }
+            }
+        }
+    }
+
+    pub fn try_set_window(&mut self, window: (usize, usize, usize, usize)) {
+        let (row_start, row_end, col_start, col_end) = window;
+        let (row_start, row_end, col_start, col_end) =
+            (row_start + 1, row_end + 1, col_start + 1, col_end + 1);
+        let out_of_bounds = |r, c| r > row_end || r < row_start || c < col_start || c > col_end;
+
+        for i in 0..21 {
+            for j in 0..21 {
+                if out_of_bounds(i, j)
+                    && (self.problem.initial.stones[i][j].is_some()
+                        || self.problem.initial.marks[i][j].is_some())
+                {
                     return;
                 }
             }
@@ -228,18 +254,15 @@ impl MoveTree {
                         return;
                     }
                 }
-            }
-        }
-
-        self.problem.window = window;
-
-        for i in 0..21 {
-            for j in 0..21 {
-                if out_of_bounds(i, j) {
-                    self.game.stones[i][j] = None;
+                for &(i, j, ref _mark) in mov.marks.iter() {
+                    if out_of_bounds(i, j) {
+                        return;
+                    }
                 }
             }
         }
+
+        self.set_window(window);
     }
 
     fn signature(&self) -> u64 {
@@ -297,10 +320,30 @@ impl MoveTree {
     }
 
     pub fn set_mark(&mut self, mark: Option<Mark>, i: usize, j: usize) {
+        let (i, j) = (i + 1, j + 1);
+
+        // if there's a number or circle on this spot, don't let user add marks they can't see.
+
+        match self.config.show_recent {
+            ShowRecent::Number => {
+                if self.game.numbers[i][j].is_some() {
+                    return;
+                }
+            }
+            ShowRecent::Circle => {
+                if self.game.numbers[i][j] == Some(self.tree_loc.1) {
+                    return;
+                }
+            }
+            ShowRecent::None => {}
+        };
+
         self.game.marks[i][j] = mark.clone();
         if self.tree_loc == (0, 0) {
-            return;    
+            self.problem.initial.marks[i][j] = mark.clone();
+            return;
         }
+
         let current_move = self.current_mut();
         match (
             current_move

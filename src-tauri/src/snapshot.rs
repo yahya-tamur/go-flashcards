@@ -26,7 +26,7 @@ pub struct Snapshot {
     pub variant: Variant,
     pub current_location: usize,
     pub max_location: usize,
-    pub window: (usize, usize, usize, usize)
+    pub window: (usize, usize, usize, usize),
 }
 
 //transform will be applied here.
@@ -34,8 +34,8 @@ fn snapshot_game(game: &GameState, config: &ActiveConfig) -> GameSnapshot {
     let mut stones = [[None; 19]; 19];
     let mut marks = [const { [const { None }; 19] }; 19];
     for i in 0..19 {
-        stones[i][..].copy_from_slice(&game.stones[i][1..=19]);
-        marks[i][..].clone_from_slice(&game.marks[i][1..=19]);
+        stones[i][..].copy_from_slice(&game.stones[i + 1][1..=19]);
+        marks[i][..].clone_from_slice(&game.marks[i + 1][1..=19]);
     }
 
     match config.show_recent {

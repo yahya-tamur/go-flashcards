@@ -7,17 +7,31 @@ import { invoke } from "@tauri-apps/api/core";
 import { createSVGElement } from "./utils";
 
 import triangle_icon from "./assets/triangle.svg";
+import square_icon from "./assets/square.svg";
+import circle_icon from "./assets/circle.svg";
+import cross_icon from "./assets/cross.svg";
+import delete_mark_icon from "./assets/delete_mark.svg";
 
 import AppContext from "./AppContext";
 
 import Paper from "@mui/material/Paper";
 
 export default (props) => {
-  const mark_icons = { Triangle: triangle_icon };
+  const mark_icons = {
+    Triangle: triangle_icon,
+    Circle: circle_icon,
+    Cross: cross_icon,
+    Square: square_icon,
+  };
   const cursor_icons = {
     Delete: mui_clear,
+    DeleteMark: delete_mark_icon,
     Black: black_image,
     White: white_image,
+    Triangle: triangle_icon,
+    Circle: circle_icon,
+    Cross: cross_icon,
+    Square: square_icon,
   };
   const context = useContext(AppContext);
   const board_svg = useRef(null);
@@ -26,9 +40,13 @@ export default (props) => {
   const stonecontainer = useRef(null);
   const labelmask = useRef(null);
   const paper = useRef(null);
-  const [nextMark, setNextMark] = useState("A"); // useEffect on this!!
 
   const [ghost, setGhost] = useState(null);
+
+  const square_size = 100;
+  const margin = 150;
+  const partial = 70; // dots for partial board.
+  const partial_border = 0; // border from partial edges
 
   const get_coord = (e) => {
     if (
@@ -56,19 +74,21 @@ export default (props) => {
     let [left, right, top, bottom] = context.data.window;
 
     // correction for partial boards
-    i += left + (left > 0 ? -partial / square_size : 0);
-    j += top + (top > 0 ? -partial / square_size : 0);
+    i += left + (left > 0 ? -partial_border / square_size : 0);
+    j += top + (top > 0 ? -partial_border / square_size : 0);
 
     const si = Math.round(i);
     const sj = Math.round(j);
 
-    if (!(
-      si >= left &&
-      si <= right &&
-      sj >= top &&
-      sj <= bottom &&
-      (i - si) * (i - si) + (j - sj) * (j - sj) < 0.25
-    )) {
+    if (
+      !(
+        si >= left &&
+        si <= right &&
+        sj >= top &&
+        sj <= bottom &&
+        (i - si) * (i - si) + (j - sj) * (j - sj) < 0.25
+      )
+    ) {
       return null;
     }
     if (
@@ -76,38 +96,34 @@ export default (props) => {
       context.cursor === "White" ||
       context.cursor === "Delete"
     ) {
-      if ((context.phase === "Editing" || context.studyPhase === "Edit") &&
-        context.editingPhase === "Initialize") {
-          if (context.data.game.stones[si][sj] === context.cursor) {
-            return null;
-          }
-        } else {
-          if (context.data.game.stones[si][sj] !== null) {
-            return null;
-          }
-        }
-    } else {
       if (
-        context.data.game.marks[si][sj] === context.cursor || 
-        (context.cursor.Label !== null && context.data.game.marks[si][sj].Label === context.cursor.Label)) {
+        (context.phase === "Editing" || context.studyPhase === "Edit") &&
+        context.editingPhase === "Initialize"
+      ) {
+        if (context.data.game.stones[si][sj] === context.cursor) {
           return null;
         }
+      } else {
+        if (context.data.game.stones[si][sj] !== null) {
+          return null;
+        }
+      }
+    } else {
+      if (
+        context.data.game.marks[si][sj] === context.cursor ||
+        (context.cursor === "Label" &&
+          context.data.game.marks[si][sj]?.Label === context.nextLabel)
+      ) {
+        return null;
+      }
     }
-
     return [si, sj];
-    
   };
 
   const [viewBoxHeight, setViewBoxHeight] = useState(2100);
   const [viewBoxWidth, setViewBoxWidth] = useState(2100);
   const [viewBoxLeft, setViewBoxLeft] = useState(0);
   const [viewBoxTop, setViewBoxTop] = useState(0);
-  const [previousWindow, setPreviousWindow] = useState([
-    null,
-    null,
-    null,
-    null,
-  ]);
 
   const click = (w) => {
     if (
@@ -187,59 +203,115 @@ export default (props) => {
       }
     } else {
       invoke("set_mark", {
-          i: w[0],
-          j: w[1],
-          mark: current.cursor === "DeleteMark" ? undefined : current.cursor
+        i: w[0],
+        j: w[1],
+        mark:
+          context.cursor === "DeleteMark"
+            ? undefined
+            : context.cursor === "Label"
+              ? { Label: context.nextLabel }
+              : context.cursor,
+      })
+        .then(() => invoke("get_data"))
+        .then((data) => {
+          context.setData(data);
         })
-          .then(() => invoke("get_data"))
-          .then((data) => {
-            context.setData(data);
-          })
-          .catch((e) => {
-            console.log(e);
-          });
-
+        .catch((e) => {
+          console.log(e);
+        });
     }
   };
 
-  const square_size = 100;
-  const margin = 150;
-  const partial = 70; // dots for partial board.
-
-  // draws grid, background image, letters
   useEffect(() => {
-    let [left, right, top, bottom] = context.data?.window ?? [
-      0, 18, 0, 18,
-    ];
+    let return_val = () => {
+      if (labelmask.current) {
+        labelmask.current.replaceChildren();
+      }
+    };
+
     if (
-      left == previousWindow[0] &&
-      right == previousWindow[1] &&
-      top == previousWindow[2] &&
-      bottom == previousWindow[3]
+      labelmask.current === null ||
+      context.data === null ||
+      context.data === undefined
     ) {
-      return;
+      return return_val;
     }
-    if (gridcontainer.current) {
-      gridcontainer.current.replaceChildren();
+    let [left, right, top, bottom] = context.data?.window ?? [0, 18, 0, 18];
+
+    createSVGElement(
+      "rect",
+      {
+        x: viewBoxLeft,
+        y: viewBoxTop,
+        width: viewBoxWidth,
+        height: viewBoxHeight,
+        fill: "white",
+      },
+      labelmask.current,
+    );
+
+    for (let i = left; i <= right; i++) {
+      for (let j = top; j <= bottom; j++) {
+        if (
+          (context.data.game.marks[i][j] !== null ||
+            (!(
+              context.cursor === "Black" ||
+              context.cursor === "White" ||
+              context.cursor === "Delete"
+            ) &&
+              i === ghost?.[0] &&
+              j === ghost?.[1])) &&
+          context.data.game.stones[i][j] === null
+        ) {
+          createSVGElement(
+            "circle",
+            {
+              cx: margin + square_size * i,
+              cy: margin + square_size * j,
+              r: 0.4 * square_size,
+              strokeWidth: 0,
+              fill: "#000000",
+              filter: "url(#gaussian-blur)",
+            },
+            labelmask.current,
+          );
+        }
+      }
     }
-    setPreviousWindow([left, right, top, bottom]);
+  }, [labelmask, context.data, context.cursor, ghost]);
+
+  useEffect(() => {
+    let return_val = () => {
+      if (gridcontainer.current) {
+        gridcontainer.current.replaceChildren();
+      }
+    };
+
+    if (
+      labelmask.current === null ||
+      context.data === null ||
+      context.data === undefined
+    ) {
+      return return_val;
+    }
+    let [left, right, top, bottom] = context.data?.window ?? [0, 18, 0, 18];
 
     // Offset viewBox.
 
     //maybe add bigger margin for edges or letters on every side
-    setViewBoxLeft(square_size * left + (left > 0 ? -partial : 0));
-    setViewBoxTop(square_size * top + (top > 0 ? -partial : 0));
+    setViewBoxLeft(square_size * left + (left > 0 ? -partial_border : 0));
+    setViewBoxTop(square_size * top + (top > 0 ? -partial_border : 0));
     setViewBoxWidth(
       2 * margin +
         (right - left) * square_size +
-        (left > 0 ? partial : 0) +
-        (right < 18 ? partial : 0),
+        (left > 0 ? partial_border : 0) +
+        (right < 18 ? partial_border : 0),
     );
     setViewBoxHeight(
       2 * margin +
         (bottom - top) * square_size +
-        (top > 0 ? partial : 0) +
-        (bottom < 18 ? partial : 0),
+        (top > 0 ? partial_border : 0) +
+        (bottom < 18 ? partial_border : 0),
     );
 
     let stroke_width = 5;
@@ -385,25 +457,28 @@ export default (props) => {
       }
     }
 
-    /*return () => {
-      
-    };*/
+    return return_val;
   }, [gridcontainer, context.data]);
 
   // draws circles
   useEffect(() => {
-    console.log("A", context.data);
+    let return_val = () => {
+      if (stonecontainer.current) {
+        stonecontainer.current.replaceChildren();
+      }
+    };
+
     if (
       stonecontainer.current === null ||
       context.data === null ||
       context.data === undefined
     ) {
-      return;
+      return return_val;
     }
     let [left, right, top, bottom] = context.data.window;
 
-    for (let i = left; i < right; i++) {
-      for (let j = top; j < bottom; j++) {
+    for (let i = left; i <= right; i++) {
+      for (let j = top; j <= bottom; j++) {
         const w = context.data.game.stones[i][j];
 
         if (w !== null) {
@@ -420,29 +495,10 @@ export default (props) => {
           );
         }
         let label_color = w === "Black" ? "white" : "black";
-        if (
-          context.data.game.marks[i][j] !== null &&
-          context.data.game.stones[i][j] === null
-        ) {
-          createSVGElement(
-            "rect",
-            {
-              x: margin + square_size * (i - 0.4),
-              y: margin + square_size * (j - 0.4),
-              width: 0.8 * square_size,
-              height: 0.8 * square_size,
-              fill: "#888888",
-            },
-            labelmask.current,
-          );
-        }
 
-        if (
-          context.data.game.marks[i][j] !== null
-        ) {
-
-          if (context.data.game.marks[i][j].Label !== undefined ) {
-              let text = createSVGElement(
+        if (context.data.game.marks[i][j] !== null) {
+          if (context.data.game.marks[i][j].Label !== undefined) {
+            let text = createSVGElement(
               "text",
               {
                 x: margin + square_size * i,
@@ -451,7 +507,6 @@ export default (props) => {
                 height: square_size,
                 "text-anchor": "middle",
                 "dominant-baseline": "central",
-                filter: label_color === "black" ? "" : "url(#invert-color)",
               },
               stonecontainer.current,
             );
@@ -459,38 +514,26 @@ export default (props) => {
             text.style.webkitUserSelect = "none";
             text.style.font = "bold 40pt sans-serif";
             text.textContent = context.data.game.marks[i][j].Label;
-
           } else {
-
             let image = createSVGElement(
-            "image",
-            {
-              x: square_size * i + margin - 0.5 * square_size,
-              y: square_size * j + margin - 0.5 * square_size,
-              width: square_size,
-              height: square_size,
-              href: mark_icons[context.data.game.marks[i][j]],
-              filter: label_color === "black" ? "" : "url(#invert-color)",
-            },
-            stonecontainer.current,
-          );
-
+              "image",
+              {
+                x: square_size * i + margin - 0.5 * square_size,
+                y: square_size * j + margin - 0.5 * square_size,
+                width: square_size,
+                height: square_size,
+                href: mark_icons[context.data.game.marks[i][j]],
+                filter: label_color === "black" ? "" : "url(#invert-color)",
+              },
+              stonecontainer.current,
+            );
           }
-          
         }
-
       }
     }
 
-    return () => {
-      if (stonecontainer.current) {
-        stonecontainer.current.replaceChildren();
-      }
-      if (labelmask.current) {
-        labelmask.current.replaceChildren();
-      }
-    };
-  }, [context.data, stonecontainer, labelmask]);
+    return return_val;
+  }, [context.data, stonecontainer]);
 
   // creates ghost
 
@@ -498,7 +541,11 @@ export default (props) => {
     if (ghost === null || ghostcontainer.current === null) {
       return;
     }
-    if (context.cursor["Label"] === undefined) {
+    let label_color =
+      context.data.game.stones[ghost[0]][ghost[1]] === "Black"
+        ? "white"
+        : "black";
+    if (context.cursor !== "Label") {
       createSVGElement(
         "image",
         {
@@ -507,37 +554,35 @@ export default (props) => {
           width: square_size,
           height: square_size,
           href: cursor_icons[context.cursor],
-          
+          filter: label_color === "black" ? "" : "url(#invert-color)",
         },
         ghostcontainer.current,
       );
     } else {
-        let label_color = context.data.game.stones[i][j] === "Black" ? "white" : "black";
-        let text = createSVGElement(
-            "text",
-            {
-              x: margin + square_size * ghost[0],
-              y: margin + square_size * ghost[1],
-              width: square_size,
-              height: square_size,
-              "text-anchor": "middle",
-              "dominant-baseline": "central",
-            },
-            stonecontainer.current,
-          );
-          text.style.fill = label_color;
-          text.style.webkitUserSelect = "none";
-          text.style.font = "bold 40pt sans-serif";
-          text.textContent = context.cursor["Label"];
-
+      let text = createSVGElement(
+        "text",
+        {
+          x: margin + square_size * ghost[0],
+          y: margin + square_size * ghost[1],
+          width: square_size,
+          height: square_size,
+          "text-anchor": "middle",
+          "dominant-baseline": "central",
+        },
+        ghostcontainer.current,
+      );
+      text.style.fill = label_color;
+      text.style.webkitUserSelect = "none";
+      text.style.font = "bold 40pt sans-serif";
+      text.textContent = context.nextLabel;
     }
-    
+
     return () => {
       if (ghostcontainer?.current) {
         ghostcontainer.current.replaceChildren();
       }
     };
-  }, [ghostcontainer, ghost, context.cursor]);
+  }, [ghostcontainer, ghost, context.cursor, context.nextLabel]);
 
   let size_ref = useRef([null, null]); // there's a relevant stackexchange for this
 
@@ -577,6 +622,40 @@ export default (props) => {
   }, [paper, viewBoxHeight, viewBoxWidth]);
 
   const [mouseDown, setMouseDown] = useState(false);
+
+  // is(n't) there a better place for this?
+
+  useEffect(() => {
+    if (context.data === null || context.data === undefined) {
+      return;
+    }
+
+    let ch = context.nextLabel.charCodeAt(0);
+
+    if (
+      context.nextLabel.length !== 1 ||
+      ch < "A".charCodeAt(0) ||
+      ch >= "Z".charCodeAt(0)
+    ) {
+      return;
+    }
+
+    let seen_once = false;
+    for (const row of context.data.game.marks) {
+      for (const mark of row) {
+        if (mark?.Label === context.nextLabel) {
+          if (seen_once) {
+            return;
+          }
+          seen_once = true;
+        }
+      }
+    }
+    if (seen_once) {
+      context.setNextLabel(String.fromCharCode(ch + 1));
+      return;
+    }
+  }, [context.data]);
 
   return (
     <Paper
@@ -628,11 +707,14 @@ export default (props) => {
               context.data !== null &&
               mouseDown &&
               w !== null &&
-              (
-                ((context.phase === "Editing" || context.studyPhase === "Edit") &&
-              context.editingPhase === "Initialize") ||
-                !(context.cursor === "Black" || context.cursor === "White" || context.cursor === "Delete")
-              )
+              (((context.phase === "Editing" ||
+                context.studyPhase === "Edit") &&
+                context.editingPhase === "Initialize") ||
+                !(
+                  context.cursor === "Black" ||
+                  context.cursor === "White" ||
+                  context.cursor === "Delete"
+                ))
             ) {
               click(w);
             }
@@ -650,24 +732,11 @@ export default (props) => {
           }}
         >
           <defs>
-            <clipPath id="viewBoxClip">
-              <rect
-                width={viewBoxWidth}
-                height={viewBoxHeight}
-                x={viewBoxLeft}
-                y={viewBoxTop}
-              />
-            </clipPath>
-            <mask id="labelMask" maskUnits="userSpaceOnUse">
-              <rect
-                width={viewBoxWidth}
-                height={viewBoxHeight}
-                x={viewBoxLeft}
-                y={viewBoxTop}
-                fill="white"
-              />
-              <g fill="black" ref={labelmask} />
-            </mask>
+            <mask
+              id="labelMask"
+              maskUnits="objectBoundingBox"
+              ref={labelmask}
+            ></mask>
             <filter id="flatten-alpha">
               <feComponentTransfer>
                 <feFuncA type="linear" slope="999" />
@@ -682,6 +751,9 @@ export default (props) => {
                          0  0 -1  0  1
                          0  0  0  1  0"
               />
+            </filter>
+            <filter id="gaussian-blur">
+              <feGaussianBlur stdDeviation="5" />
             </filter>
           </defs>
 
@@ -698,7 +770,7 @@ export default (props) => {
             filter="url(#flatten-alpha)"
           />
           <g ref={stonecontainer} />
-          <g ref={ghostcontainer} opacity="0.6"/>
+          <g ref={ghostcontainer} opacity="0.6" />
         </svg>
       }
     </Paper>

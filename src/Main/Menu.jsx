@@ -109,7 +109,8 @@ export default (props) => {
                   <Button
                     disabled={
                       props.exercises.some((a) => a === newExercise) ||
-                      exercise_name_invalid(newExercise)
+                      exercise_name_invalid(newExercise) ||
+                      newExercise.length == 0
                     }
                     type="submit"
                     variant="contained"

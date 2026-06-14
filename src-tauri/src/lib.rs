@@ -76,6 +76,15 @@ async fn set_window(
 }
 
 #[tauri::command]
+async fn try_set_window(
+    state: tauri::State<'_, Mutex<AppData>>,
+    window: (usize, usize, usize, usize),
+) -> Result<(), String> {
+    apply_to_move_tree(state, |move_tree, _| move_tree.try_set_window(window)).await;
+    Ok(())
+}
+
+#[tauri::command]
 async fn play(
     state: tauri::State<'_, Mutex<AppData>>,
     loc: Option<(usize, usize)>,
@@ -132,8 +141,17 @@ async fn comment(state: tauri::State<'_, Mutex<AppData>>, comment: String) -> Re
 }
 
 #[tauri::command]
-async fn set_mark(state: tauri::State<'_, Mutex<AppData>>, mark: Option<Mark>, i: usize, j: usize) -> Result<(), String> {
-    apply_to_move_tree(state, |move_tree, _| move_tree.set_mark(mark, i, j)).await;
+async fn set_mark(
+    state: tauri::State<'_, Mutex<AppData>>,
+    mark: Option<Mark>,
+    i: usize,
+    j: usize,
+) -> Result<(), String> {
+    apply_to_move_tree(state, |move_tree, _| {
+        move_tree.set_mark(mark, i, j);
+    })
+    .await;
+
     Ok(())
 }
 
@@ -174,7 +192,9 @@ async fn save_exercises(
 ) -> Result<(), String> {
     match &mut *state.lock().await {
         AppData::Editing(editing_data) => {
-            let exercises = fs::list_exercises(&app.path().app_data_dir().unwrap()).await.unwrap();
+            let exercises = fs::list_exercises(&app.path().app_data_dir().unwrap())
+                .await
+                .unwrap();
             if exercises.into_iter().all(|e| e != editing_data.file) {
                 config::add_exercise(&app.path().app_data_dir().unwrap(), &editing_data.file).await;
             }
@@ -203,13 +223,10 @@ async fn load_exercises(
 }
 
 #[tauri::command]
-async fn get_config(
-    state: tauri::State<'_, Mutex<AppData>>,
-    app: tauri::AppHandle,
-) -> Result<ActiveConfig, String> {
+async fn get_config(state: tauri::State<'_, Mutex<AppData>>) -> Result<ActiveConfig, String> {
     match &mut *state.lock().await {
-        AppData::Editing(editing_data) => Ok(editing_data.config.clone()),
-        AppData::Study(study_data) => Ok(study_data.config.clone()),
+        AppData::Editing(editing_data) => Ok((*editing_data.config).clone()),
+        AppData::Study(study_data) => Ok((*study_data.config).clone()),
         _ => unimplemented!(),
     }
 }
@@ -342,6 +359,7 @@ pub fn run() {
             list_studies,
             main_menu,
             set_window,
+            try_set_window,
             load_study,
             answer,
             get_history,

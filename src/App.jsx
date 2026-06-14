@@ -56,6 +56,7 @@ function App() {
   const [data, setData] = useState(null);
   const [exerciseColor, setExerciseColor] = useState("");
   const [config, setConfig] = useState(null);
+  const [nextLabel, setNextLabel] = useState("A");
 
   const [cursor, setCursor] = useState("Black");
 
@@ -80,6 +81,8 @@ function App() {
           setConfig,
           cursor,
           setCursor,
+          nextLabel,
+          setNextLabel,
         }}
       >
         {phase === "Main" ? (
