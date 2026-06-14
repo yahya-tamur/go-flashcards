@@ -292,7 +292,7 @@ export default (props) => {
         text.style.font = "bold 14px sans-serif";
         if (mov.loc !== null) {
           let [i, j] = mov.loc;
-          text.textContent = `${"@ABCDEFGHJKLMNOPQRST"[i]}${20 - j}`;
+          text.textContent = `${"ABCDEFGHJKLMNOPQRST"[i]}${19 - j}`;
         } else {
           text.textContent = ".";
         }

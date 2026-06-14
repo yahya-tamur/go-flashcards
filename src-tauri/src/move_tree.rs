@@ -5,13 +5,17 @@ use crate::problem::{Move, Problem, Variant};
 use std::hash::{DefaultHasher, Hash, Hasher};
 use std::sync::Arc;
 
+use rand::{random_bool, random_range};
+
 #[derive(Clone, Debug)]
 pub struct MoveTree {
-    config: Arc<ActiveConfig>,
+    pub config: Arc<ActiveConfig>,
     pub problem: Problem,
     pub game: GameState,
     pub tree_loc: (usize, usize),
     new_branches: Vec<u64>,
+    pub orientation: usize,
+    pub color_swap: bool,
 }
 
 /*
@@ -26,6 +30,16 @@ impl MoveTree {
         let problem = problem.clone();
         let mut game = problem.initial.clone();
         game.play_move(problem.table[0][0].as_ref().unwrap(), 0);
+        let orientation = if config.random_orientation {
+            random_range(0..8)
+        } else {
+            0
+        };
+        let color_swap = if config.random_color {
+            random_bool(0.5)
+        } else {
+            false
+        };
 
         MoveTree {
             config,
@@ -33,6 +47,8 @@ impl MoveTree {
             game,
             tree_loc: (0, 0),
             new_branches: Vec::new(),
+            orientation,
+            color_swap,
         }
     }
 
@@ -40,6 +56,12 @@ impl MoveTree {
         self.problem = problem.clone();
         self.new_branches.clear();
         self.jump(0, 0);
+        if self.config.random_orientation {
+            self.orientation = random_range(0..8);
+        };
+        if self.config.random_color {
+            self.color_swap = random_bool(0.5);
+        }
     }
 
     pub fn save(&self) -> Problem {
@@ -58,21 +80,22 @@ impl MoveTree {
 
     pub fn finish_setup(&mut self, color: Color) {
         self.problem.initial = self.game.clone();
-        self.problem.table[0][0].as_mut().unwrap().color = color;
+        self.problem.table[0][0].as_mut().unwrap().color = self.send_recv_color(color);
     }
 
     // this should just not be called when not initializing.
     pub fn place_stone(&mut self, i: usize, j: usize, color: Option<Color>) {
-        self.game.stones[i + 1][j + 1] = color;
-        self.problem.initial.stones[i + 1][j + 1] = color;
+        let (i, j) = self.recv(i, j);
+        let color = color.map(|c| self.send_recv_color(c));
+        self.game.stones[i][j] = color;
+        self.problem.initial.stones[i][j] = color;
     }
 
     pub fn play(&mut self, mut loc: Option<(usize, usize)>, color: Color, study: bool) -> bool {
-        // consolidate into transform
-        println!("{:?}", loc);
         if let Some((i, j)) = loc {
-            loc = Some((i + 1, j + 1));
+            loc = Some(self.recv(i, j));
         }
+        let color = self.send_recv_color(color);
 
         let (r, c) = self.tree_loc;
         // check if step is on table
@@ -213,12 +236,26 @@ impl MoveTree {
     }
 
     pub fn set_window(&mut self, window: (usize, usize, usize, usize)) {
-        let (row_start, row_end, col_start, col_end) = window;
-        let (row_start, row_end, col_start, col_end) =
-            (row_start + 1, row_end + 1, col_start + 1, col_end + 1);
+        let (mut row_start, mut row_end, mut col_start, mut col_end) = window;
+
+        (row_start, col_start) = self.recv(row_start, col_start);
+        (row_end, col_end) = self.recv(row_end, col_end);
+
+        if row_start > row_end {
+            (row_start, row_end) = (row_end, row_start);
+        }
+        if col_start > col_end {
+            (col_start, col_end) = (col_end, col_start);
+        }
+
         let out_of_bounds = |r, c| r > row_end || r < row_start || c < col_start || c > col_end;
 
-        self.problem.window = window;
+        self.problem.window = (row_start, row_end, col_start, col_end);
+
+        println!(
+            "{}: {:?} {} {} {} {}",
+            self.orientation, self.problem.window, row_start, row_end, col_start, col_end
+        );
 
         for i in 0..21 {
             for j in 0..21 {
@@ -231,9 +268,18 @@ impl MoveTree {
     }
 
     pub fn try_set_window(&mut self, window: (usize, usize, usize, usize)) {
-        let (row_start, row_end, col_start, col_end) = window;
-        let (row_start, row_end, col_start, col_end) =
-            (row_start + 1, row_end + 1, col_start + 1, col_end + 1);
+        let (mut row_start, mut row_end, mut col_start, mut col_end) = window;
+
+        (row_start, col_start) = self.recv(row_start, col_start);
+        (row_end, col_end) = self.recv(row_end, col_end);
+
+        if row_start > row_end {
+            (row_start, row_end) = (row_end, row_start);
+        }
+        if col_start > col_end {
+            (col_start, col_end) = (col_end, col_start);
+        }
+
         let out_of_bounds = |r, c| r > row_end || r < row_start || c < col_start || c > col_end;
 
         for i in 0..21 {
@@ -320,7 +366,7 @@ impl MoveTree {
     }
 
     pub fn set_mark(&mut self, mark: Option<Mark>, i: usize, j: usize) {
-        let (i, j) = (i + 1, j + 1);
+        let (i, j) = self.recv(i, j);
 
         // if there's a number or circle on this spot, don't let user add marks they can't see.
 

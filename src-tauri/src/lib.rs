@@ -10,12 +10,13 @@ pub mod move_tree;
 pub mod problem;
 pub mod snapshot;
 pub mod study_data;
+pub mod transform;
 
 use config::ActiveConfig;
 use game_state::Mark;
 use move_tree::MoveTree;
 use problem::Variant;
-use snapshot::{snapshot, Snapshot};
+use snapshot::Snapshot;
 
 use tauri::{Builder, Manager};
 
@@ -52,16 +53,10 @@ async fn place_stone(
 #[tauri::command]
 async fn get_data(state: tauri::State<'_, Mutex<AppData>>) -> Result<Snapshot, String> {
     match &*state.lock().await {
-        AppData::Editing(editing_data) => Ok(snapshot(
-            &editing_data.move_tree,
-            editing_data.location(),
-            &editing_data.config,
-        )),
-        AppData::Study(study_data) => Ok(snapshot(
-            &study_data.move_tree,
-            study_data.location(),
-            &study_data.config,
-        )),
+        AppData::Editing(editing_data) => {
+            Ok(editing_data.move_tree.snapshot(editing_data.location()))
+        }
+        AppData::Study(study_data) => Ok(study_data.move_tree.snapshot(study_data.location())),
         _ => unimplemented!(),
     }
 }

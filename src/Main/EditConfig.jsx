@@ -86,7 +86,7 @@ export default (props) => {
         <Box
           sx={{
             width: "100%",
-            height: "60px",
+            minHeight: "60px",
 
             maxWidth: "100%",
             display: "flex",

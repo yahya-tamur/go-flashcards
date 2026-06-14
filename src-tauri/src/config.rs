@@ -12,23 +12,27 @@ pub enum ShowRecent {
 }
 
 #[derive(Deserialize, Debug, Clone, Serialize)]
+#[serde(rename_all = "snake_case")]
 #[serde(deny_unknown_fields)]
 pub struct ActiveConfig {
+    pub random_orientation: bool,
+    pub random_color: bool,
     pub show_recent: ShowRecent,
     pub sources: Option<Vec<String>>,
-    pub item2: bool,
-    pub item3: usize,
 }
 
 #[allow(dead_code)]
 #[derive(Deserialize, Debug)]
 #[serde(deny_unknown_fields)]
+#[serde(rename_all = "snake_case")]
 struct Config {
+    random_orientation: Option<bool>,
+    random_color: Option<bool>,
     show_recent: Option<Spanned<ShowRecent>>,
     sources: Option<Vec<Spanned<String>>>,
-    item2: Option<Spanned<bool>>,
-    item3: Option<Spanned<usize>>,
 }
+
+const REQUIRED_FOR_DEFAULT: [&str; 3] = ["show_recent", "random_orientation", "random_color"];
 
 use crate::fs;
 
@@ -89,7 +93,7 @@ pub async fn validate(app_data: &Path, input: Option<&str>) -> Result<(), (Strin
         return Err(("No default options found.".to_string(), 0, r));
     };
 
-    for default_option in ["show_recent", "item2", "item3"] {
+    for default_option in REQUIRED_FOR_DEFAULT {
         if !level2table["default"].contains_key(default_option) {
             return Err((
                 format!(r#"default should have "{default_option}" option."#),

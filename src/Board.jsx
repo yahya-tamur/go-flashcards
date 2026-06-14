@@ -496,7 +496,7 @@ export default (props) => {
         }
         let label_color = w === "Black" ? "white" : "black";
 
-        if (context.data.game.marks[i][j] !== null) {
+        if (context.data.game.marks[i][j] ?? null !== null) {
           if (context.data.game.marks[i][j].Label !== undefined) {
             let text = createSVGElement(
               "text",

@@ -49,7 +49,7 @@ impl Default for Problem {
             id: Uuid::new_v4(),
             table: vec![vec![Some(Move::default())]],
             initial: GameState::default(),
-            window: (0, 18, 0, 18),
+            window: (1, 19, 1, 19),
         }
     }
 }

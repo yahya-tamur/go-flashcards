@@ -1,11 +1,18 @@
 use serde::Serialize;
 
 use crate::{
-    config::{ActiveConfig, ShowRecent},
-    game_state::{Color, GameState, Mark},
+    config::ShowRecent,
+    game_state::{Color, Mark},
     move_tree::MoveTree,
-    problem::{Move, Variant},
+    problem::Variant,
 };
+
+#[derive(Serialize)]
+pub struct MoveSnapshot {
+    pub loc: Option<(usize, usize)>,
+    pub color: Color,
+    pub variant: Variant,
+}
 
 #[derive(Serialize)]
 pub struct GameSnapshot {
@@ -15,10 +22,11 @@ pub struct GameSnapshot {
     pub marks: [[Option<Mark>; 19]; 19],
 }
 
+// WARNING: table has move's, which contain non-transformed indices. !!!
 #[derive(Serialize)]
 pub struct Snapshot {
     pub game: GameSnapshot,
-    pub table: Vec<Vec<Option<Move>>>,
+    pub table: Vec<Vec<Option<MoveSnapshot>>>,
     pub row: usize,
     pub col: usize,
     pub color: Color,
@@ -29,71 +37,98 @@ pub struct Snapshot {
     pub window: (usize, usize, usize, usize),
 }
 
-//transform will be applied here.
-fn snapshot_game(game: &GameState, config: &ActiveConfig) -> GameSnapshot {
-    let mut stones = [[None; 19]; 19];
-    let mut marks = [const { [const { None }; 19] }; 19];
-    for i in 0..19 {
-        stones[i][..].copy_from_slice(&game.stones[i + 1][1..=19]);
-        marks[i][..].clone_from_slice(&game.marks[i + 1][1..=19]);
+impl MoveTree {
+    pub fn snapshot(&self, loc: (usize, usize)) -> Snapshot {
+        let (row, col) = self.tree_loc;
+        let current_move = self.current();
+
+        let (mut row_start, mut row_end, mut col_start, mut col_end) = self.problem.window;
+
+        (row_start, col_start) = self.send(row_start, col_start);
+        (row_end, col_end) = self.send(row_end, col_end);
+
+        if row_start > row_end {
+            (row_start, row_end) = (row_end, row_start);
+        }
+        if col_start > col_end {
+            (col_start, col_end) = (col_end, col_start);
+        }
+
+        let table = self
+            .problem
+            .table
+            .iter()
+            .map(|line| {
+                line.iter()
+                    .map(|movopt| {
+                        movopt.as_ref().map(|mov| MoveSnapshot {
+                            loc: mov.loc.map(|(i, j)| self.send(i, j)),
+                            color: self.send_recv_color(mov.color),
+                            variant: mov.variant,
+                        })
+                    })
+                    .collect()
+            })
+            .collect();
+
+        Snapshot {
+            game: self.snapshot_game(),
+            table,
+            row,
+            col,
+            color: self.send_recv_color(current_move.color),
+            comment: current_move.comment.clone(),
+            variant: current_move.variant,
+            current_location: loc.0,
+            max_location: loc.1,
+            window: (row_start, row_end, col_start, col_end),
+        }
     }
 
-    match config.show_recent {
-        ShowRecent::None => {}
-        ShowRecent::Circle => {
-            let mut n = None;
-            for row in game.numbers {
-                for m in row {
-                    if m > n {
-                        n = m;
+    //transform will be applied here.
+    fn snapshot_game(&self) -> GameSnapshot {
+        let mut stones = [[None; 19]; 19];
+        let mut marks = [const { [const { None }; 19] }; 19];
+
+        for i in 0..19 {
+            for j in 0..19 {
+                let (i_, j_) = self.recv(i, j);
+                stones[i][j] = self.game.stones[i_][j_].map(|c| self.send_recv_color(c));
+                marks[i][j] = self.game.marks[i_][j_].clone();
+            }
+        }
+
+        match self.config.show_recent {
+            ShowRecent::None => {}
+            ShowRecent::Circle => {
+                let n = Some(self.tree_loc.1);
+                'a: for (i, line) in marks.iter_mut().enumerate() {
+                    for (j, mark) in line.iter_mut().enumerate() {
+                        let (i_, j_) = self.recv(i, j);
+                        if self.game.numbers[i_][j_] == n {
+                            *mark = Some(Mark::Circle);
+                            break 'a;
+                        }
                     }
                 }
             }
-            if let Some(n) = n {
-                for (i, row) in game.numbers.iter().enumerate() {
-                    for (j, num) in row.iter().enumerate() {
-                        if *num == Some(n) {
-                            marks[i - 1][j - 1] = Some(Mark::Circle);
+            ShowRecent::Number => {
+                for (i, line) in marks.iter_mut().enumerate() {
+                    for (j, mark) in line.iter_mut().enumerate() {
+                        let (i_, j_) = self.recv(i, j);
+                        if let Some(n) = self.game.numbers[i_][j_] {
+                            *mark = Some(Mark::Label(n.to_string()));
                         }
                     }
                 }
             }
         }
-        ShowRecent::Number => {
-            for (i, row) in game.numbers.iter().enumerate() {
-                for (j, n) in row.iter().enumerate() {
-                    if let Some(n) = n {
-                        marks[i - 1][j - 1] = Some(Mark::Label(n.to_string()));
-                    }
-                }
-            }
+
+        GameSnapshot {
+            stones,
+            marks,
+            captures: self.game.captures,
+            ko: self.game.ko,
         }
-    }
-
-    // apply transform...
-
-    GameSnapshot {
-        stones,
-        marks,
-        captures: game.captures,
-        ko: game.ko,
-    }
-}
-
-//copies game and tree. If tauri serializes anyway, is that necessary?
-pub fn snapshot(move_tree: &MoveTree, loc: (usize, usize), config: &ActiveConfig) -> Snapshot {
-    let (row, col) = move_tree.tree_loc;
-    let current_move = move_tree.current();
-    Snapshot {
-        game: snapshot_game(&move_tree.game.clone(), config),
-        table: move_tree.problem.table.clone(),
-        row,
-        col,
-        color: current_move.color,
-        comment: current_move.comment.clone(),
-        variant: current_move.variant,
-        current_location: loc.0,
-        max_location: loc.1,
-        window: move_tree.problem.window,
     }
 }

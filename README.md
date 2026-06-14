@@ -2,7 +2,6 @@ Remaining Goals
 ---------------
 
   GOAL FOR NOW ===>> 
-        - transform exercises. 
         - to / from sgf
   <====
 
@@ -23,8 +22,6 @@ Remaining Goals
     - custom art per flashcard set.
         - expose config to frontend =>
           - put number in stone button in maketree?
-    - randomize color?
-    - randomize orientation?
     - history length
     - customize algorithm behavior
     - sources: multiple, shared.
