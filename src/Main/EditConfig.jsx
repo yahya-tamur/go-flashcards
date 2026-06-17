@@ -174,18 +174,6 @@ export default (props) => {
                   setError(err);
                   props.setStudies([]);
                 });
-              /*.then(() => {
-                 
-                  props.setStudies(a);
-                })
-                .then(() => invoke("list_studies"))
-                .catch(
-                  
-                  (err) => {
-
-                    
-                  }
-                });*/
             }}
           >
             {code === lastSaved && error === undefined ? "Saved." : "Save"}
