@@ -2,12 +2,20 @@ Remaining Goals
 ---------------
 
   GOAL FOR NOW ===>> 
-        - sgf doesn't transfer marks, so I shouldn't either.
-        - to / from sgf
-  <====
+    -> one way conversion is complete, but not thoroughly tested.
+
+    -> finish other way and check unit, counit.
+
+
+    - sgf doesn't transfer marks, so I shouldn't either.
+
+    - better frontend for sgf convert.
+  <<====
 
   that should be the end of backend? unless specific config for study sources below?
     - no, small changes but can make exercise set.
+
+
 
   - Actually make a good flashcard set and use this to study.
 
@@ -36,6 +44,7 @@ Remaining Goals
   Small Items:
 
 
+  - all the lines look too thick for 1080p?
 
   - different config for different components of study set?
 

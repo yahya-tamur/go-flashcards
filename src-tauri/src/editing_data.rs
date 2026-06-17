@@ -30,10 +30,10 @@ impl EditingData {
         self.current_exercise = index;
     }
 
-    pub fn new_exercise(&mut self) {
+    pub fn new_exercise(&mut self, prob: Option<Problem>) {
         self.exercises[self.current_exercise] = self.move_tree.save();
 
-        self.exercises.push(Problem::default());
+        self.exercises.push(prob.unwrap_or_else(Problem::default));
         self.current_exercise = self.exercises.len() - 1;
 
         self.move_tree

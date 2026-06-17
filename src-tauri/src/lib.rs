@@ -8,10 +8,10 @@ pub mod fs;
 pub mod game_state;
 pub mod move_tree;
 pub mod problem;
+pub mod sgf;
 pub mod snapshot;
 pub mod study_data;
 pub mod transform;
-pub mod sgf;
 
 use config::ActiveConfig;
 use game_state::Mark;
@@ -106,7 +106,7 @@ async fn delete_branch(state: tauri::State<'_, Mutex<AppData>>) -> Result<bool, 
 async fn new_exercise(state: tauri::State<'_, Mutex<AppData>>) -> Result<(), String> {
     match &mut *state.lock().await {
         AppData::Editing(editing_data) => {
-            editing_data.new_exercise();
+            editing_data.new_exercise(None);
             Ok(())
         }
         AppData::Study(study_data) => {
@@ -328,8 +328,17 @@ async fn get_history(state: tauri::State<'_, Mutex<AppData>>) -> Result<Vec<bool
 }
 
 #[tauri::command]
-async fn import_sgf(app: tauri::AppHandle,) -> Result<(), String> {
-    sgf_parse(&app.path().app_data_dir().unwrap());
+async fn import_sgf(
+    app: tauri::AppHandle,
+    state: tauri::State<'_, Mutex<AppData>>,
+) -> Result<(), String> {
+    match &mut *state.lock().await {
+        AppData::Editing(editing_data) => {
+            let prob = sgf_parse(&app.path().app_data_dir().unwrap());
+            editing_data.new_exercise(Some(prob));
+        }
+        _ => unimplemented!(),
+    }
     Ok(())
 }
 
@@ -338,7 +347,7 @@ pub fn run() {
     Builder::default()
         //.any_thread()
         .plugin(tauri_plugin_dialog::init())
-     //    .plugin(tauri_plugin_fs::init())
+        //    .plugin(tauri_plugin_fs::init())
         .setup(|app| {
             app.manage(Mutex::new(AppData::default()));
             Ok(())
