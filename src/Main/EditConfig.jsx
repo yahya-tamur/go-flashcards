@@ -21,6 +21,7 @@ import Paper from "@mui/material/Paper";
 import Button from "@mui/material/Button";
 
 import AppContext from "../AppContext";
+import { border } from "@mui/system";
 
 const addHighlight = StateEffect.define({
   map: ({ from, to }, change) => ({
@@ -40,6 +41,7 @@ const highlightField = StateField.define({
     // Apply new effects
     for (let e of tr.effects) {
       if (e.is(addHighlight)) {
+        decorations = Decoration.none;
         decorations = decorations.update({
           add: [highlightMark.range(e.value.from, e.value.to)],
         });
@@ -60,7 +62,11 @@ const scrollStyle = EditorView.theme({
   ".cm-scroller": {
     overflow: "visible",
   },
-  ".cm-highlight": { textDecoration: "underline 3px red" },
+  ".cm-highlight": {
+    borderBottom: "3px solid red",
+    backgroundColor: "#5d6e4dff",
+  },
+  ".cm-content": { minHeight: "calc(100vh - 70px)" },
 });
 
 export default (props) => {
@@ -96,25 +102,22 @@ export default (props) => {
         <Box
           sx={{
             overflow: "scroll",
-
-            maxHeight: "calc(100% - 60px)",
+            height: "calc(100% - 70px)",
+            display: "flex",
+            flexDirection: "column",
           }}
         >
           {
             <CodeMirror
               className="editor"
               value={code}
-              style={{
-                maxHeight: "100%",
-                overflow: "visible",
-                width: "100%",
-              }}
               ref={editorRef}
               theme={editorTheme}
               extensions={[
                 StreamLanguage.define(toml),
                 highlightField,
                 scrollStyle,
+                EditorView.lineWrapping,
               ]}
               onChange={(e) => {
                 setCode(e);
@@ -126,7 +129,7 @@ export default (props) => {
         <Box
           sx={{
             width: "100%",
-            minHeight: "60px",
+            minHeight: "70px",
 
             maxWidth: "100%",
             display: "flex",
@@ -148,7 +151,7 @@ export default (props) => {
           <Button
             disabled={code === lastSaved}
             variant="contained"
-            sx={{ height: "40px", margin: "10px" }}
+            sx={{ height: "40px", margin: "15px" }}
             onClick={async () => {
               await invoke("set_config_str", { config: code })
                 .then(() => {
@@ -164,7 +167,12 @@ export default (props) => {
                 .catch((err) => {
                   let [_, left, right] = err;
                   console.log(err, code);
-                  if (right > left) {
+                  if (left == right) {
+                    left = Math.max(0, left - 2);
+                    right = Math.min(code.length, right + 2);
+                  }
+                  if (left < right) {
+                    console.log("highlighting", left, right);
                     editorRef.current?.view?.dispatch({
                       effects: addHighlight.of({ from: left, to: right }),
                     });
@@ -177,26 +185,6 @@ export default (props) => {
             }}
           >
             {code === lastSaved && error === undefined ? "Saved." : "Save"}
-          </Button>
-          <Button
-            variant="contained"
-            onClick={() => {
-              editorRef.current?.view?.dispatch({
-                effects: [addHighlight.of({ from: 2, to: 8 })],
-              });
-            }}
-          >
-            test
-          </Button>
-          <Button
-            variant="contained"
-            onClick={() => {
-              editorRef.current?.view?.dispatch({
-                effects: removeHighlight.of(),
-              });
-            }}
-          >
-            test
           </Button>
         </Box>
       </Paper>
