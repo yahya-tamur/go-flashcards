@@ -20,6 +20,8 @@ import DialogContent from "@mui/material/DialogContent";
 import DialogContentText from "@mui/material/DialogContentText";
 import DialogTitle from "@mui/material/DialogTitle";
 
+import { ask } from "@tauri-apps/plugin-dialog";
+
 import NumberSpinner from "../components/NumberSpinner";
 
 import AppContext from "../AppContext";
@@ -118,6 +120,28 @@ export default (props) => {
           }}
         >
           Save
+        </Button>
+        <Button
+          variant="contained"
+          sx={{ height: "40px" }}
+          onClick={async () => {
+            invoke("import_sgf")
+              .then(() => invoke("get_data"))
+              .then((data) => {
+                if (data.table.length === 1 && data.table[0].length === 1) {
+                  context.setEditingPhase("Initialize");
+                } else {
+                  context.setEditingPhase("MakeTree");
+                }
+                context.setData(data);
+                context.setCursor(data.color === "Black" ? "White" : "Black");
+              })
+              .catch((e) => {
+                console.log(e);
+              });
+          }}
+        >
+          Import sgf
         </Button>
       </Box>
       <Dialog

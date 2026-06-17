@@ -11,6 +11,7 @@ pub mod problem;
 pub mod snapshot;
 pub mod study_data;
 pub mod transform;
+pub mod sgf;
 
 use config::ActiveConfig;
 use game_state::Mark;
@@ -24,6 +25,8 @@ use tokio::sync::Mutex;
 
 use app_data::AppData;
 use game_state::Color;
+
+use crate::sgf::sgf_parse;
 
 // is std sync mutex better? is tauri multithreaded? probably doesn't matter, since
 // won't be getting too many requests / second. Probably didn't even need mutex.
@@ -324,11 +327,18 @@ async fn get_history(state: tauri::State<'_, Mutex<AppData>>) -> Result<Vec<bool
     }
 }
 
+#[tauri::command]
+async fn import_sgf(app: tauri::AppHandle,) -> Result<(), String> {
+    sgf_parse(&app.path().app_data_dir().unwrap());
+    Ok(())
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     Builder::default()
         //.any_thread()
-        .plugin(tauri_plugin_fs::init())
+        .plugin(tauri_plugin_dialog::init())
+     //    .plugin(tauri_plugin_fs::init())
         .setup(|app| {
             app.manage(Mutex::new(AppData::default()));
             Ok(())
@@ -359,7 +369,8 @@ pub fn run() {
             answer,
             get_history,
             stop_editing,
-            set_mark
+            set_mark,
+            import_sgf,
         ])
         .run(tauri::generate_context!())
         .unwrap();
