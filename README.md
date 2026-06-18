@@ -43,6 +43,8 @@ Remaining Goals
   
   Small Items:
 
+  - black territory, white territory marks
+
 
   - all the lines look too thick for 1080p?
 
