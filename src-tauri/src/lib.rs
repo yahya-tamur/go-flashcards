@@ -26,7 +26,7 @@ use tokio::sync::Mutex;
 use app_data::AppData;
 use game_state::Color;
 
-use crate::sgf::sgf_parse;
+use crate::sgf::{sgf_parse, problem_to_sgf};
 
 // is std sync mutex better? is tauri multithreaded? probably doesn't matter, since
 // won't be getting too many requests / second. Probably didn't even need mutex.
@@ -334,8 +334,9 @@ async fn import_sgf(
 ) -> Result<(), String> {
     match &mut *state.lock().await {
         AppData::Editing(editing_data) => {
-            let prob = sgf_parse(&app.path().app_data_dir().unwrap());
-            editing_data.new_exercise(Some(prob));
+          //  let prob = sgf_parse(&app.path().app_data_dir().unwrap());
+          //  editing_data.new_exercise(Some(prob));
+          problem_to_sgf(editing_data.current_problem());
         }
         _ => unimplemented!(),
     }

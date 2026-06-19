@@ -5,7 +5,7 @@ use sgf_parse::{
     SgfNode, SimpleText, Text,
 };
 use std::{collections::HashSet, fs, hash::Hash, ops::ControlFlow, path::Path};
-use uuid::Uuid;
+use uuid::{Uuid, Version::Custom};
 
 use crate::{
     game_state::{Color::*, GameState, Mark::*},
@@ -23,8 +23,6 @@ pub fn sgf_parse(app_data: &Path) -> Problem {
 }
 
 // will destroy input!
-
-//
 
 // maybe provide US node when serializing.
 
@@ -69,7 +67,7 @@ pub fn sgf_to_problem(mut start: SgfNode<Prop>) -> Problem {
         }
     }
 
-    // also try to color initial based on next move later
+    // TODO!!: also try to color initial based on next move later
 
     let mut table = vec![vec![Some(Move {
         loc: None,
@@ -169,6 +167,12 @@ pub fn sgf_to_problem(mut start: SgfNode<Prop>) -> Problem {
 }
 
 pub fn problem_to_sgf(problem: &Problem) -> SgfNode<Prop> {
+
+        let pt = |i: usize, j: usize| Point {
+        x: (i - 1) as u8,
+        y: (j - 1) as u8,
+    };
+
     let mut start = SgfNode::<Prop>::new(
         vec![
             Prop::FF(4),
@@ -182,10 +186,22 @@ pub fn problem_to_sgf(problem: &Problem) -> SgfNode<Prop> {
         true,
     );
 
-    let pt = |i: usize, j: usize| Point {
-        x: (i - 1) as u8,
-        y: (j - 1) as u8,
-    };
+    start.properties.push(Prop::TR(vec![Point{x: 3, y: 4}].into_iter().collect()));
+    start.properties.push(Prop::CR(vec![Point{x: 4, y: 4}].into_iter().collect()));
+    start.properties.push(Prop::TR(vec![Point{x: 5, y: 4}].into_iter().collect()));
+    let (row_start, row_end, col_start, col_end) = problem.window;
+    start.properties.push(Prop::VW(
+        (row_start..=row_end)
+            .flat_map(|i| (col_start..=col_end).map(move |j| (i, j)))
+            .map(|(i, j)| pt(i, j))
+            .collect(),
+    ));
+
+    println!("{}", start.serialize());
+    panic!();
+
+    /*
+
 
     let mut black = HashSet::new();
     let mut white = HashSet::new();
@@ -273,7 +289,27 @@ pub fn problem_to_sgf(problem: &Problem) -> SgfNode<Prop> {
             .collect(),
     ));
 
+    let mut node_table: Vec<Vec<Option<SgfNode<Prop>>>> = problem
+        .table
+        .iter()
+        .map(|line| vec![const { None }; line.len()])
+        .collect();
 
-    
-    panic!()
+    node_table[0][0] = Some(start);
+
+    for (i, line) in problem.table.iter().enumerate().rev() {
+        for (j, node) in line.iter().enumerate().rev() {
+            let Some(node) = node else {
+                continue;
+            };
+            let props : Vec<Prop> = Vec::new();
+
+            node_table[i][j] = S
+        }
+    }
+
+
+    // make table of Prop's first.
+
+    panic!()*/
 }

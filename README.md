@@ -42,6 +42,7 @@ Remaining Goals
     - android file situation
   
   Small Items:
+  - VW prop
 
   - black territory, white territory marks
 

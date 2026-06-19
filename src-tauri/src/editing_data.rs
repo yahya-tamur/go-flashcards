@@ -23,6 +23,12 @@ pub struct EditingData {
 }
 
 impl EditingData {
+
+    //only for testing!
+    pub fn current_problem(&self) -> &Problem {
+        &self.exercises[self.current_exercise]
+    }
+
     pub fn jump_to_exercise(&mut self, index: usize) {
         self.exercises[self.current_exercise] = self.move_tree.save();
         self.move_tree.load(&self.exercises[index]);
