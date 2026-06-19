@@ -336,7 +336,10 @@ async fn import_sgf(
         AppData::Editing(editing_data) => {
           //  let prob = sgf_parse(&app.path().app_data_dir().unwrap());
           //  editing_data.new_exercise(Some(prob));
-          problem_to_sgf(editing_data.current_problem());
+          let sgf = problem_to_sgf(editing_data.current_problem());
+          println!("{:#?}", sgf);
+          println!("");
+          println!("{}", sgf.serialize());
         }
         _ => unimplemented!(),
     }

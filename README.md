@@ -1,5 +1,8 @@
 Remaining Goals
 ---------------
+today:
+- two separate buttons for sgf conversion.
+=====================
 
   GOAL FOR NOW ===>> 
     -> one way conversion is complete, but not thoroughly tested.

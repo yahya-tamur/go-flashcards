@@ -1,7 +1,16 @@
 // not even crate fs or async
 
+// ALL COMMENTS:
+// add to sgf? :
+    // AP: application program
+    // US: user who typed it in.??
+    // uuid of problem.
+// initial color? (sgf -> problem especially.)
+// imports, esp. when sgf_parse::thing ovelaps.
+
+
 use sgf_parse::{
-    go::{self, parse, Point, Prop},
+    go::{self, parse, Point, Prop, *},
     SgfNode, SimpleText, Text,
 };
 use std::{collections::HashSet, fs, hash::Hash, ops::ControlFlow, path::Path};
@@ -22,9 +31,6 @@ pub fn sgf_parse(app_data: &Path) -> Problem {
     sgf_to_problem(collection.pop().unwrap())
 }
 
-// will destroy input!
-
-// maybe provide US node when serializing.
 
 pub fn sgf_to_problem(mut start: SgfNode<Prop>) -> Problem {
     let x = |p: &go::Point| p.x as usize + 1;
@@ -51,6 +57,8 @@ pub fn sgf_to_problem(mut start: SgfNode<Prop>) -> Problem {
                 Prop::SQ(set) => set.iter().for_each(|p| gs.marks[x(p)][y(p)] = Some(Square)),
                 Prop::TR(set) => set.iter().for_each(|p| gs.marks[x(p)][y(p)] = Some(Triangle)),
                 Prop::MA(set) => set.iter().for_each(|p| gs.marks[x(p)][y(p)] = Some(Cross)),
+                Prop::TB(set) => set.iter().for_each(|p| gs.marks[x(p)][y(p)] = Some(BlackTerritory)),
+                Prop::TW(set) => set.iter().for_each(|p| gs.marks[x(p)][y(p)] = Some(WhiteTerritory)),
                 Prop::LB(dict) => dict.iter().for_each(|(p, cmt)| gs.marks[x(p)][y(p)] = Some(Label(cmt.to_string()))),
                 Prop::CR(set) => set.iter().for_each(|p| gs.marks[x(p)][y(p)] = Some(Circle)),
                 Prop::N(text) => comment = format!("{}{}{}",text,if comment.is_empty() { "" } else { " " },comment),
@@ -67,7 +75,6 @@ pub fn sgf_to_problem(mut start: SgfNode<Prop>) -> Problem {
         }
     }
 
-    // TODO!!: also try to color initial based on next move later
 
     let mut table = vec![vec![Some(Move {
         loc: None,
@@ -104,6 +111,12 @@ pub fn sgf_to_problem(mut start: SgfNode<Prop>) -> Problem {
                     Prop::CR(set) => set
                         .iter()
                         .for_each(|p| new_move.marks.push((x(p), y(p), Circle))),
+                    Prop::TB(set) => set
+                        .iter()
+                        .for_each(|p| new_move.marks.push((x(p), y(p), BlackTerritory))),
+                    Prop::TW(set) => set
+                        .iter()
+                        .for_each(|p| new_move.marks.push((x(p), y(p), WhiteTerritory))),
                     Prop::LB(dict) => dict.iter().for_each(|(p, cmt)| {
                         new_move.marks.push((x(p), y(p), Label(cmt.to_string())))
                     }),
@@ -166,26 +179,71 @@ pub fn sgf_to_problem(mut start: SgfNode<Prop>) -> Problem {
     }
 }
 
-pub fn problem_to_sgf(problem: &Problem) -> SgfNode<Prop> {
+#[derive(Default)]
+struct NodeBuilder {
+    other_props: Vec<Prop>,
+    black: Option<go::Move>,
+    white: Option<go::Move>,
+    add_black: HashSet<Point>,
+    add_white: HashSet<Point>,
+    black_territory: HashSet<Point>,
+    white_territory: HashSet<Point>,
+    circle: HashSet<Point>,
+    cross: HashSet<Point>,
+    triangle: HashSet<Point>,
+    square: HashSet<Point>,
+    label: HashSet<(Point, SimpleText)>
+}
 
-        let pt = |i: usize, j: usize| Point {
-        x: (i - 1) as u8,
-        y: (j - 1) as u8,
-    };
+impl NodeBuilder {
+    fn start(other_props: Vec<Prop>) -> NodeBuilder {
+        NodeBuilder {
+            other_props, ..Default::default()
+        }
+    }
+    fn finalize(mut self, root: bool) -> SgfNode<Prop> {
+        if let Some(m) = self.black {
+            self.other_props.push(Prop::B(m));
+        };
+        if let Some(m) = self.white {
+            self.other_props.push(Prop::W(m));
+        };
+        if !self.add_black.is_empty() {
+            self.other_props.push(Prop::AB(self.add_black))
+        };
+        if !self.add_white.is_empty() {
+            self.other_props.push(Prop::AB(self.add_white))
+        };
+        if !self.black_territory.is_empty() {
+            self.other_props.push(Prop::TB(self.black_territory))
+        };
+        if !self.white_territory.is_empty() {
+            self.other_props.push(Prop::TW(self.white_territory))
+        };
+        if !self.circle.is_empty() {
+            self.other_props.push(Prop::CR(self.circle))
+        };
+        if !self.cross.is_empty() {
+            self.other_props.push(Prop::MA(self.cross))
+        };
+        if !self.triangle.is_empty() {
+            self.other_props.push(Prop::TR(self.triangle))
+        };
+        if !self.square.is_empty() {
+            self.other_props.push(Prop::SQ(self.square))
+        };
+        if !self.label.is_empty() {
+            self.other_props.push(Prop::LB(self.label))
+        };
+        SgfNode::<Prop>::new(
+            self.other_props,
+            vec![],
+            root,
+        )
+    }
+}
 
-    let mut start = SgfNode::<Prop>::new(
-        vec![
-            Prop::FF(4),
-            Prop::CA(SimpleText {
-                text: "UTF-8".to_owned(),
-            }),
-            Prop::GM(1),
-            Prop::SZ((19, 19)), //RU?
-        ],
-        vec![],
-        true,
-    );
-
+    /*
     start.properties.push(Prop::TR(vec![Point{x: 3, y: 4}].into_iter().collect()));
     start.properties.push(Prop::CR(vec![Point{x: 4, y: 4}].into_iter().collect()));
     start.properties.push(Prop::TR(vec![Point{x: 5, y: 4}].into_iter().collect()));
@@ -200,81 +258,77 @@ pub fn problem_to_sgf(problem: &Problem) -> SgfNode<Prop> {
     println!("{}", start.serialize());
     panic!();
 
-    /*
+    */
 
+pub fn problem_to_sgf(problem: &Problem) -> SgfNode<Prop> {
 
-    let mut black = HashSet::new();
-    let mut white = HashSet::new();
-    let mut circle = HashSet::new();
-    let mut cross = HashSet::new();
-    let mut triangle = HashSet::new();
-    let mut square = HashSet::new();
-    let mut label = HashSet::new();
+    let pt = |i: usize, j: usize| Point {
+        x: (i - 1) as u8,
+        y: (j - 1) as u8,
+    };
+
+    let mut start = NodeBuilder::start(
+vec![
+            Prop::FF(4),
+            Prop::CA(SimpleText {
+                text: "UTF-8".to_owned(),
+            }),
+            Prop::GM(1),
+            Prop::SZ((19, 19)), //RU?
+        ],
+
+    );
+
 
     for i in 1..19 {
         for j in 1..19 {
             match problem.initial.stones[i][j] {
                 Some(Black) => {
-                    black.insert(pt(i, j));
+                    start.add_black.insert(pt(i, j));
                 }
                 Some(White) => {
-                    white.insert(pt(i, j));
+                    start.add_white.insert(pt(i, j));
                 }
                 _ => {}
             };
             match problem.initial.marks[i][j] {
                 Some(Circle) => {
-                    circle.insert(pt(i, j));
+                    start.circle.insert(pt(i, j));
                 }
                 Some(Square) => {
-                    square.insert(pt(i, j));
+                    start.square.insert(pt(i, j));
                 }
                 Some(Triangle) => {
-                    triangle.insert(pt(i, j));
+                    start.triangle.insert(pt(i, j));
                 }
                 Some(Cross) => {
-                    cross.insert(pt(i, j));
+                    start.cross.insert(pt(i, j));
+                }
+                Some(BlackTerritory) => {
+                    start.black_territory.insert(pt(i, j));
+                }
+                Some(WhiteTerritory) => {
+                    start.white_territory.insert(pt(i,j));
                 }
                 Some(Label(ref str)) => {
-                    label.insert((pt(i, j), SimpleText { text: str.clone() }));
+                    start.label.insert((pt(i, j), SimpleText { text: str.clone() }));
                 }
-                _ => {}
+                None => {}
             }
         }
     }
 
-    if !black.is_empty() {
-        start.properties.push(Prop::AB(black))
-    };
-    if !white.is_empty() {
-        start.properties.push(Prop::AW(white))
-    };
-    if !circle.is_empty() {
-        start.properties.push(Prop::CR(circle))
-    };
-    if !cross.is_empty() {
-        start.properties.push(Prop::MA(cross))
-    };
-    if !triangle.is_empty() {
-        start.properties.push(Prop::TR(triangle))
-    };
-    if !square.is_empty() {
-        start.properties.push(Prop::SQ(square))
-    };
-    if !label.is_empty() {
-        start.properties.push(Prop::LB(label))
-    };
 
     let first_move: &Move = problem.table[0][0].as_ref().unwrap();
 
     if !first_move.comment.is_empty() {
-        start.properties.push(Prop::C(Text {
+        start.other_props.push(Prop::C(Text {
             text: first_move.comment.clone(),
         }));
     }
 
     start
-        .properties
+        .other_props
         .push(Prop::PL(if first_move.color == Black {
             sgf_parse::Color::White
         } else {
@@ -282,12 +336,14 @@ pub fn problem_to_sgf(problem: &Problem) -> SgfNode<Prop> {
         }));
 
     let (row_start, row_end, col_start, col_end) = problem.window;
-    start.properties.push(Prop::VW(
+    start.other_props.push(Prop::VW(
         (row_start..=row_end)
             .flat_map(|i| (col_start..=col_end).map(move |j| (i, j)))
             .map(|(i, j)| pt(i, j))
             .collect(),
     ));
+
+    let start = start.finalize(true);
 
     let mut node_table: Vec<Vec<Option<SgfNode<Prop>>>> = problem
         .table
@@ -297,19 +353,77 @@ pub fn problem_to_sgf(problem: &Problem) -> SgfNode<Prop> {
 
     node_table[0][0] = Some(start);
 
-    for (i, line) in problem.table.iter().enumerate().rev() {
-        for (j, node) in line.iter().enumerate().rev() {
+    for (i, line) in problem.table.iter().enumerate() {
+        for (j, node) in line.iter().enumerate().skip(1) {
             let Some(node) = node else {
                 continue;
             };
-            let props : Vec<Prop> = Vec::new();
-
-            node_table[i][j] = S
+            let mut nb = NodeBuilder::default();
+            let move_prop = match node.loc {
+                Some((i,j)) => {go::Move::Move(pt(i,j))},
+                None => {go::Move::Pass},
+            };
+            match node.color {
+                Black => nb.black = Some(move_prop),
+                White => nb.white = Some(move_prop)
+            };
+            if !node.comment.is_empty() {
+                nb.other_props.push(Prop::C(Text {text: node.comment.clone()}));
+            }
+            for &(i, j, ref mark) in node.marks.iter() {
+                match mark {
+                    Circle => {
+                        nb.circle.insert(pt(i, j));
+                    }
+                    Square => {
+                        nb.square.insert(pt(i, j));
+                    }
+                    Triangle => {
+                        nb.triangle.insert(pt(i, j));
+                    }
+                    Cross => {
+                        nb.cross.insert(pt(i, j));
+                    }
+                    BlackTerritory => {
+                        nb.black_territory.insert(pt(i, j));
+                    }
+                    WhiteTerritory => {
+                        nb.white_territory.insert(pt(i,j));
+                    }
+                    Label(str) => {
+                        nb.label.insert((pt(i, j), SimpleText { text: str.clone() }));
+                    }
+                }
+            }
+            node_table[i][j] = Some(nb.finalize(false));
         }
     }
 
+   // println!("{:#?}", node_table);
 
-    // make table of Prop's first.
+    let m = node_table.iter().map(|line| line.len()).max().unwrap();
 
-    panic!()*/
+    for j in (1..m).rev() {
+        for i in 0..node_table.len() {
+            if node_table[i].len() <= j {
+                continue;
+            }
+            if node_table[i][j].is_some() {
+                let (mut p_i, p_j) = (i, j - 1);
+                while node_table[p_i][p_j].is_none() {
+                    p_i -= 1;
+                }
+                let (parent, child) = if p_i == i {
+                    let (left, right) = node_table[i].split_at_mut(j);
+                    (&mut left[p_j], &mut right[0])
+                } else {
+                    let (top, bottom) = node_table.split_at_mut(i);
+                    (&mut top[p_i][p_j], &mut bottom[0][j])
+                };
+                parent.as_mut().unwrap().children.push(child.take().unwrap());
+            }
+        }
+    }
+
+    node_table[0][0].take().unwrap()
 }
