@@ -29,7 +29,7 @@ struct Config {
     random_orientation: Option<bool>,
     random_color: Option<bool>,
     show_recent: Option<Spanned<ShowRecent>>,
-    sources: Option<Vec<Spanned<String>>>
+    sources: Option<Vec<Spanned<String>>>,
 }
 
 const REQUIRED_FOR_DEFAULT: [&str; 3] = ["show_recent", "random_orientation", "random_color"];

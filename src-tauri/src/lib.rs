@@ -26,8 +26,6 @@ use tokio::sync::Mutex;
 use app_data::AppData;
 use game_state::Color;
 
-use crate::sgf::{sgf_parse, problem_to_sgf};
-
 // is std sync mutex better? is tauri multithreaded? probably doesn't matter, since
 // won't be getting too many requests / second. Probably didn't even need mutex.
 
@@ -106,7 +104,7 @@ async fn delete_branch(state: tauri::State<'_, Mutex<AppData>>) -> Result<bool, 
 async fn new_exercise(state: tauri::State<'_, Mutex<AppData>>) -> Result<(), String> {
     match &mut *state.lock().await {
         AppData::Editing(editing_data) => {
-            editing_data.new_exercise(None);
+            editing_data.new_exercise();
             Ok(())
         }
         AppData::Study(study_data) => {
@@ -328,18 +326,36 @@ async fn get_history(state: tauri::State<'_, Mutex<AppData>>) -> Result<Vec<bool
 }
 
 #[tauri::command]
+async fn export_sgf(
+    app: tauri::AppHandle,
+    state: tauri::State<'_, Mutex<AppData>>,
+) -> Result<(), String> {
+    match &mut *state.lock().await {
+        AppData::Editing(editing_data) => {
+            fs::save_sgf(
+                &app.path().app_data_dir().unwrap(),
+                &editing_data.file,
+                &editing_data.export_sgf(),
+            )
+            .await
+            .unwrap();
+        }
+        _ => unimplemented!(),
+    }
+    Ok(())
+}
+
+#[tauri::command]
 async fn import_sgf(
     app: tauri::AppHandle,
     state: tauri::State<'_, Mutex<AppData>>,
 ) -> Result<(), String> {
     match &mut *state.lock().await {
         AppData::Editing(editing_data) => {
-          //  let prob = sgf_parse(&app.path().app_data_dir().unwrap());
-          //  editing_data.new_exercise(Some(prob));
-          let sgf = problem_to_sgf(editing_data.current_problem());
-          println!("{:#?}", sgf);
-          println!("");
-          println!("{}", sgf.serialize());
+            let Ok(sgf) = fs::receive_sgf(app).await else {
+                return Err("no".to_string());
+            };
+            editing_data.import_sgf(&sgf);
         }
         _ => unimplemented!(),
     }
@@ -384,6 +400,7 @@ pub fn run() {
             stop_editing,
             set_mark,
             import_sgf,
+            export_sgf,
         ])
         .run(tauri::generate_context!())
         .unwrap();

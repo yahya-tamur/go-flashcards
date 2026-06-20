@@ -143,6 +143,22 @@ export default (props) => {
         >
           Import sgf
         </Button>
+        <Button
+          variant="contained"
+          sx={{ height: "40px" }}
+          onClick={async () => {
+            invoke("export_sgf")
+              .then(() => {
+                alert(`Saved.`);
+                console.log(context.data);
+              })
+              .catch((e) => {
+                console.log(e);
+              });
+          }}
+        >
+          Export sgf
+        </Button>
       </Box>
       <Dialog
         open={savedMsgOpen}

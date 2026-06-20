@@ -2,9 +2,13 @@ use crate::config::{self, ActiveConfig};
 use crate::fs;
 use crate::move_tree::MoveTree;
 use crate::problem::Problem;
+use crate::sgf::{problem_to_sgf, sgf_to_problem};
 
 use std::path::Path;
 use std::sync::Arc;
+
+use sgf_parse::go::parse;
+use sgf_parse::{serialize, GameTree::GoGame};
 
 // setup phase:
 // tree_loc is None,
@@ -23,7 +27,6 @@ pub struct EditingData {
 }
 
 impl EditingData {
-
     //only for testing!
     pub fn current_problem(&self) -> &Problem {
         &self.exercises[self.current_exercise]
@@ -36,10 +39,10 @@ impl EditingData {
         self.current_exercise = index;
     }
 
-    pub fn new_exercise(&mut self, prob: Option<Problem>) {
+    pub fn new_exercise(&mut self) {
         self.exercises[self.current_exercise] = self.move_tree.save();
 
-        self.exercises.push(prob.unwrap_or_else(Problem::default));
+        self.exercises.push(Problem::default());
         self.current_exercise = self.exercises.len() - 1;
 
         self.move_tree
@@ -85,5 +88,32 @@ impl EditingData {
         fs::save_exercises(path, &self.exercises, &self.file)
             .await
             .unwrap()
+    }
+
+    pub fn export_sgf(&self) -> String {
+        let problems: Vec<sgf_parse::GameTree> = self
+            .exercises
+            .iter()
+            .map(|prob| GoGame(problem_to_sgf(prob)))
+            .collect();
+        serialize(problems.iter())
+    }
+
+    pub fn import_sgf(&mut self, sgf: &str) -> bool {
+        self.exercises[self.current_exercise] = self.move_tree.save();
+
+        let Ok(trees) = parse(sgf) else {
+            return false;
+        };
+        for game in trees {
+            self.exercises.push(sgf_to_problem(game));
+        }
+
+        self.current_exercise = self.exercises.len() - 1;
+
+        self.move_tree
+            .load(&self.exercises[self.exercises.len() - 1]);
+
+        true
     }
 }

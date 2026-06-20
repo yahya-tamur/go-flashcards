@@ -122,6 +122,37 @@ pub async fn list_exercises(app_data: &Path) -> Result<Vec<String>> {
     Ok(v.into_iter().map(|(a, _b)| a).collect())
 }
 
+use tauri_plugin_dialog::DialogExt;
+
+pub async fn receive_sgf(app: tauri::AppHandle) -> std::result::Result<String, ()> {
+    if let Some(filepath) = app
+        .dialog()
+        .file()
+        .add_filter("Sgf", &["sgf"])
+        .blocking_pick_file()
+    {
+        let path = filepath.into_path().map_err(|_| ())?;
+        let filecontent = fs::read(path).await.map_err(|_| ())?;
+        let sgfstr = String::from_utf8(filecontent).map_err(|_| ())?;
+
+        Ok(sgfstr)
+    } else {
+        Err(())
+    }
+}
+
+pub async fn save_sgf(app_data: &Path, name: &str, sgf: &str) -> Result<()> {
+    fs::write(
+        app_data
+            .join("app_data")
+            .join("sgfs")
+            .join(name.to_owned() + ".sgf"),
+        sgf,
+    )
+    .await?;
+    Ok(())
+}
+
 //pub async fn load_config(app_data: &Path) -> Result<Config> {
 //
 //}

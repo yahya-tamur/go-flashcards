@@ -1,23 +1,11 @@
 Remaining Goals
 ---------------
-today:
-- two separate buttons for sgf conversion.
-=====================
 
-  GOAL FOR NOW ===>> 
-    -> one way conversion is complete, but not thoroughly tested.
-
-    -> finish other way and check unit, counit.
-
-
-    - sgf doesn't transfer marks, so I shouldn't either.
-
-    - better frontend for sgf convert.
-  <<====
+  - sgf doesn't transfer marks, so I shouldn't either.
 
   - reorganize config again.
 
-  - Actually make a good flashcard set and use this to study.
+  (-) Actually make a good flashcard set and use this to study.
 
 
   - UI Overhaul
@@ -42,14 +30,11 @@ today:
     - android file situation
   
   Small Items:
-  - VW prop
+  - VW prop (sgf parse followup)
 
   - black territory, white territory marks
 
-
   - all the lines look too thick for 1080p?
-
-  - different config for different components of study set?
 
   - In comments, moves marked like {S1} also get transformed.
 

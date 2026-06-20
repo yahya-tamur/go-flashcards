@@ -2,35 +2,24 @@
 
 // ALL COMMENTS:
 // add to sgf? :
-    // AP: application program
-    // US: user who typed it in.??
-    // uuid of problem.
+// AP: application program
+// US: user who typed it in.??
+// uuid of problem.
 // initial color? (sgf -> problem especially.)
 // imports, esp. when sgf_parse::thing ovelaps.
 
-
 use sgf_parse::{
-    go::{self, parse, Point, Prop, *},
+    go::{self, Point, Prop},
     SgfNode, SimpleText, Text,
 };
-use std::{collections::HashSet, fs, hash::Hash, ops::ControlFlow, path::Path};
-use uuid::{Uuid, Version::Custom};
+
+use std::collections::HashSet;
+use uuid::Uuid;
 
 use crate::{
     game_state::{Color::*, GameState, Mark::*},
     problem::{Move, Problem, Variant},
 };
-
-pub fn sgf_parse(app_data: &Path) -> Problem {
-    println!("AA");
-    let sgf = fs::read(app_data.join("app_data").join("test.sgf")).unwrap();
-    let sgf = str::from_utf8(&sgf).unwrap();
-
-    let mut collection = parse(sgf).unwrap();
-
-    sgf_to_problem(collection.pop().unwrap())
-}
-
 
 pub fn sgf_to_problem(mut start: SgfNode<Prop>) -> Problem {
     let x = |p: &go::Point| p.x as usize + 1;
@@ -41,10 +30,10 @@ pub fn sgf_to_problem(mut start: SgfNode<Prop>) -> Problem {
 
     let (mut min_row, mut max_row, mut min_col, mut max_col) = (1usize, 19usize, 1usize, 19usize);
     let mut initial_color = Black;
+    let mut id = Uuid::new_v4();
 
     while start.get_move().is_none() && start.children.len() <= 1 {
         for prop in start.properties() {
-            #[cfg_attr(rustfmt, rustfmt_skip)]
             match prop {
                 Prop::AB(set) => set.iter().for_each(|p| gs.stones[x(p)][y(p)] = Some(Black)),
                 Prop::AW(set) => set.iter().for_each(|p| gs.stones[x(p)][y(p)] = Some(White)),
@@ -55,15 +44,48 @@ pub fn sgf_to_problem(mut start: SgfNode<Prop>) -> Problem {
                     max_col = max_col.max(y(p));
                 }),
                 Prop::SQ(set) => set.iter().for_each(|p| gs.marks[x(p)][y(p)] = Some(Square)),
-                Prop::TR(set) => set.iter().for_each(|p| gs.marks[x(p)][y(p)] = Some(Triangle)),
+                Prop::TR(set) => set
+                    .iter()
+                    .for_each(|p| gs.marks[x(p)][y(p)] = Some(Triangle)),
                 Prop::MA(set) => set.iter().for_each(|p| gs.marks[x(p)][y(p)] = Some(Cross)),
-                Prop::TB(set) => set.iter().for_each(|p| gs.marks[x(p)][y(p)] = Some(BlackTerritory)),
-                Prop::TW(set) => set.iter().for_each(|p| gs.marks[x(p)][y(p)] = Some(WhiteTerritory)),
-                Prop::LB(dict) => dict.iter().for_each(|(p, cmt)| gs.marks[x(p)][y(p)] = Some(Label(cmt.to_string()))),
+                Prop::TB(set) => set
+                    .iter()
+                    .for_each(|p| gs.marks[x(p)][y(p)] = Some(BlackTerritory)),
+                Prop::TW(set) => set
+                    .iter()
+                    .for_each(|p| gs.marks[x(p)][y(p)] = Some(WhiteTerritory)),
+                Prop::LB(dict) => dict
+                    .iter()
+                    .for_each(|(p, cmt)| gs.marks[x(p)][y(p)] = Some(Label(cmt.to_string()))),
                 Prop::CR(set) => set.iter().for_each(|p| gs.marks[x(p)][y(p)] = Some(Circle)),
-                Prop::N(text) => comment = format!("{}{}{}",text,if comment.is_empty() { "" } else { " " },comment),
-                Prop::C(text) => comment = format!("{}{}{}",comment,if comment.is_empty() { "" } else { " " },text),                   
-                Prop::PL(color) => initial_color = if *color == sgf_parse::Color::Black {Black} else {White},
+                Prop::N(text) => {
+                    comment = format!(
+                        "{}{}{}",
+                        text,
+                        if comment.is_empty() { "" } else { " " },
+                        comment
+                    )
+                }
+                Prop::C(text) => {
+                    comment = format!(
+                        "{}{}{}",
+                        comment,
+                        if comment.is_empty() { "" } else { " " },
+                        text
+                    )
+                }
+                Prop::PL(color) => {
+                    initial_color = if *color == sgf_parse::Color::Black {
+                        Black
+                    } else {
+                        White
+                    }
+                }
+                Prop::GN(game_name) => {
+                    if let Ok(uuid) = Uuid::try_parse(&game_name.text) {
+                        id = uuid;
+                    }
+                }
                 Prop::B(_) | Prop::W(_) => unreachable!(""),
                 a => println!("ignoring property {}", a),
             }
@@ -74,7 +96,6 @@ pub fn sgf_to_problem(mut start: SgfNode<Prop>) -> Problem {
             break;
         }
     }
-
 
     let mut table = vec![vec![Some(Move {
         loc: None,
@@ -94,6 +115,7 @@ pub fn sgf_to_problem(mut start: SgfNode<Prop>) -> Problem {
             table.push(vec![None; j]);
         }
         first_loop = false;
+
         loop {
             let mut new_move = Move::default();
 
@@ -121,11 +143,12 @@ pub fn sgf_to_problem(mut start: SgfNode<Prop>) -> Problem {
                         new_move.marks.push((x(p), y(p), Label(cmt.to_string())))
                     }),
                     Prop::N(text) => {
-                        if text.text == "Corrent" {
+                        if text.text == "Correct" {
                             new_move.variant = Variant::Correct
                         } else if text.text == "Incorrect" {
                             new_move.variant = Variant::Incorrect
                         } else {
+                            println!("{}", text.text);
                             new_move.comment = format!(
                                 "{}{}{}",
                                 text,
@@ -171,9 +194,19 @@ pub fn sgf_to_problem(mut start: SgfNode<Prop>) -> Problem {
             j += 1;
         }
     }
+    if table[0].len() > 1 {
+        let (root, rest) = table[0].split_at_mut(1);
+        if let Some(mov) = rest[0].as_ref() {
+            root[0].as_mut().unwrap().color = match mov.color {
+                Black => White,
+                White => Black,
+            };
+        }
+    }
+
     Problem {
         initial: gs,
-        id: Uuid::new_v4(),
+        id,
         table,
         window: (min_row, max_row, min_col, max_col),
     }
@@ -192,13 +225,14 @@ struct NodeBuilder {
     cross: HashSet<Point>,
     triangle: HashSet<Point>,
     square: HashSet<Point>,
-    label: HashSet<(Point, SimpleText)>
+    label: HashSet<(Point, SimpleText)>,
 }
 
 impl NodeBuilder {
     fn start(other_props: Vec<Prop>) -> NodeBuilder {
         NodeBuilder {
-            other_props, ..Default::default()
+            other_props,
+            ..Default::default()
         }
     }
     fn finalize(mut self, root: bool) -> SgfNode<Prop> {
@@ -235,39 +269,36 @@ impl NodeBuilder {
         if !self.label.is_empty() {
             self.other_props.push(Prop::LB(self.label))
         };
-        SgfNode::<Prop>::new(
-            self.other_props,
-            vec![],
-            root,
-        )
+        SgfNode::<Prop>::new(self.other_props, vec![], root)
     }
 }
 
 pub fn problem_to_sgf(problem: &Problem) -> SgfNode<Prop> {
-
     let pt = |i: usize, j: usize| Point {
         x: (i - 1) as u8,
         y: (j - 1) as u8,
     };
 
     // US field? (user who input the game/problem)
-    let mut start = NodeBuilder::start(
-        vec![
-            Prop::FF(4),
-            Prop::CA(SimpleText {
-                text: "UTF-8".to_owned(),
-            }),
-            Prop::GM(1),
-            Prop::SZ((19, 19)), //RU?
-            Prop::AP((SimpleText {
-                text: "go-flashcards".to_owned()},
-                SimpleText { text: env!("CARGO_PKG_VERSION").to_owned() },
-            )),
-            Prop::GN(SimpleText { text: problem.id.to_string() }),
-        ],
-
-    );
-
+    let mut start = NodeBuilder::start(vec![
+        Prop::FF(4),
+        Prop::CA(SimpleText {
+            text: "UTF-8".to_owned(),
+        }),
+        Prop::GM(1),
+        Prop::SZ((19, 19)),
+        Prop::AP((
+            SimpleText {
+                text: "go-flashcards".to_owned(),
+            },
+            SimpleText {
+                text: env!("CARGO_PKG_VERSION").to_owned(),
+            },
+        )),
+        Prop::GN(SimpleText {
+            text: problem.id.to_string(),
+        }),
+    ]);
 
     for i in 1..19 {
         for j in 1..19 {
@@ -297,16 +328,17 @@ pub fn problem_to_sgf(problem: &Problem) -> SgfNode<Prop> {
                     start.black_territory.insert(pt(i, j));
                 }
                 Some(WhiteTerritory) => {
-                    start.white_territory.insert(pt(i,j));
+                    start.white_territory.insert(pt(i, j));
                 }
                 Some(Label(ref str)) => {
-                    start.label.insert((pt(i, j), SimpleText { text: str.clone() }));
+                    start
+                        .label
+                        .insert((pt(i, j), SimpleText { text: str.clone() }));
                 }
                 None => {}
             }
         }
     }
-
 
     let first_move: &Move = problem.table[0][0].as_ref().unwrap();
 
@@ -349,15 +381,22 @@ pub fn problem_to_sgf(problem: &Problem) -> SgfNode<Prop> {
             };
             let mut nb = NodeBuilder::default();
             let move_prop = match node.loc {
-                Some((i,j)) => {go::Move::Move(pt(i,j))},
-                None => {go::Move::Pass},
+                Some((i, j)) => go::Move::Move(pt(i, j)),
+                None => go::Move::Pass,
             };
             match node.color {
                 Black => nb.black = Some(move_prop),
-                White => nb.white = Some(move_prop)
+                White => nb.white = Some(move_prop),
             };
+            match node.variant {
+                Variant::Correct => nb.other_props.push(Prop::N(SimpleText::from("Correct"))),
+                Variant::Incorrect => nb.other_props.push(Prop::N(SimpleText::from("Incorrect"))),
+                _ => {}
+            }
             if !node.comment.is_empty() {
-                nb.other_props.push(Prop::C(Text {text: node.comment.clone()}));
+                nb.other_props.push(Prop::C(Text {
+                    text: node.comment.clone(),
+                }));
             }
             for &(i, j, ref mark) in node.marks.iter() {
                 match mark {
@@ -377,10 +416,11 @@ pub fn problem_to_sgf(problem: &Problem) -> SgfNode<Prop> {
                         nb.black_territory.insert(pt(i, j));
                     }
                     WhiteTerritory => {
-                        nb.white_territory.insert(pt(i,j));
+                        nb.white_territory.insert(pt(i, j));
                     }
                     Label(str) => {
-                        nb.label.insert((pt(i, j), SimpleText { text: str.clone() }));
+                        nb.label
+                            .insert((pt(i, j), SimpleText { text: str.clone() }));
                     }
                 }
             }
@@ -407,7 +447,11 @@ pub fn problem_to_sgf(problem: &Problem) -> SgfNode<Prop> {
                     let (top, bottom) = node_table.split_at_mut(i);
                     (&mut top[p_i][p_j], &mut bottom[0][j])
                 };
-                parent.as_mut().unwrap().children.push(child.take().unwrap());
+                parent
+                    .as_mut()
+                    .unwrap()
+                    .children
+                    .push(child.take().unwrap());
             }
         }
     }
