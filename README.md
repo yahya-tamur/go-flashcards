@@ -24,6 +24,7 @@ Remaining Goals
       - popups on save?
       - popups on correct / incorrect?
       - next button? 
+    - more options in export to sgf
 
   - phone app
     - phone ui
