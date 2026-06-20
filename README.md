@@ -15,10 +15,7 @@ today:
     - better frontend for sgf convert.
   <<====
 
-  that should be the end of backend? unless specific config for study sources below?
-    - no, small changes but can make exercise set.
-
-
+  - reorganize config again.
 
   - Actually make a good flashcard set and use this to study.
 
@@ -26,7 +23,7 @@ today:
   - UI Overhaul
     - check tablet for design idea
     - less tall tree view with smaller stones
-    - captures?
+    - captures? no?
     
     - Histogram
     - custom svg like board, table.

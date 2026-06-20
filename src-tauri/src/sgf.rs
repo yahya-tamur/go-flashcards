@@ -243,23 +243,6 @@ impl NodeBuilder {
     }
 }
 
-    /*
-    start.properties.push(Prop::TR(vec![Point{x: 3, y: 4}].into_iter().collect()));
-    start.properties.push(Prop::CR(vec![Point{x: 4, y: 4}].into_iter().collect()));
-    start.properties.push(Prop::TR(vec![Point{x: 5, y: 4}].into_iter().collect()));
-    let (row_start, row_end, col_start, col_end) = problem.window;
-    start.properties.push(Prop::VW(
-        (row_start..=row_end)
-            .flat_map(|i| (col_start..=col_end).map(move |j| (i, j)))
-            .map(|(i, j)| pt(i, j))
-            .collect(),
-    ));
-
-    println!("{}", start.serialize());
-    panic!();
-
-    */
-
 pub fn problem_to_sgf(problem: &Problem) -> SgfNode<Prop> {
 
     let pt = |i: usize, j: usize| Point {
@@ -267,14 +250,20 @@ pub fn problem_to_sgf(problem: &Problem) -> SgfNode<Prop> {
         y: (j - 1) as u8,
     };
 
+    // US field? (user who input the game/problem)
     let mut start = NodeBuilder::start(
-vec![
+        vec![
             Prop::FF(4),
             Prop::CA(SimpleText {
                 text: "UTF-8".to_owned(),
             }),
             Prop::GM(1),
             Prop::SZ((19, 19)), //RU?
+            Prop::AP((SimpleText {
+                text: "go-flashcards".to_owned()},
+                SimpleText { text: env!("CARGO_PKG_VERSION").to_owned() },
+            )),
+            Prop::GN(SimpleText { text: problem.id.to_string() }),
         ],
 
     );
@@ -398,8 +387,6 @@ vec![
             node_table[i][j] = Some(nb.finalize(false));
         }
     }
-
-   // println!("{:#?}", node_table);
 
     let m = node_table.iter().map(|line| line.len()).max().unwrap();
 
