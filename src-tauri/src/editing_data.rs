@@ -39,14 +39,28 @@ impl EditingData {
         self.current_exercise = index;
     }
 
-    pub fn new_exercise(&mut self) {
+    pub fn new_exercise(&mut self, insert: bool) {
         self.exercises[self.current_exercise] = self.move_tree.save();
 
-        self.exercises.push(Problem::default());
-        self.current_exercise = self.exercises.len() - 1;
+        if insert {
+            self.exercises
+                .insert(self.current_exercise, Problem::default());
+        } else {
+            self.exercises.push(Problem::default());
+            self.current_exercise = self.exercises.len() - 1;
+        };
 
-        self.move_tree
-            .load(&self.exercises[self.exercises.len() - 1]);
+        self.move_tree.load(&self.exercises[self.current_exercise]);
+    }
+
+    pub fn delete_exercise(&mut self) {
+        self.exercises.remove(self.current_exercise);
+        if self.exercises.is_empty() {
+            self.exercises.push(Problem::default());
+        } else if self.exercises.len() == self.current_exercise {
+            self.current_exercise -= 1;
+        }
+        self.move_tree.load(&self.exercises[self.current_exercise]);
     }
 
     pub fn location(&self) -> (usize, usize) {

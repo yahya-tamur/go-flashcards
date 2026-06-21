@@ -39,6 +39,17 @@ pub async fn save_exercises(
     Ok(())
 }
 
+pub async fn delete_exercise(app_data: &Path, exercise_file: &str) -> Result<()> {
+    fs::remove_file(
+        app_data
+            .join("app_data")
+            .join("exercises")
+            .join(exercise_file.to_owned() + ".json.gz"),
+    )
+    .await?;
+    Ok(())
+}
+
 pub async fn load_exercises(app_data: &Path, exercise_file: &str) -> Result<(bool, Vec<Problem>)> {
     let file = app_data
         .join("app_data")
@@ -142,6 +153,7 @@ pub async fn receive_sgf(app: tauri::AppHandle) -> std::result::Result<String, (
 }
 
 pub async fn save_sgf(app_data: &Path, name: &str, sgf: &str) -> Result<()> {
+    fs::create_dir_all(app_data.join("app_data").join("sgfs")).await?;
     fs::write(
         app_data
             .join("app_data")

@@ -70,7 +70,12 @@ export default (props) => {
             })
               .then(() => invoke("get_data"))
               .then((data) => {
-                context.setData(data);
+                if (
+                  data.window[0] !== context.data.window[0] ||
+                  data.window[1] !== context.data.window[1]
+                ) {
+                  context.setData(data);
+                }
               })
               .catch((e) => {
                 console.log("error");
@@ -97,7 +102,12 @@ export default (props) => {
             })
               .then(() => invoke("get_data"))
               .then((data) => {
-                context.setData(data);
+                if (
+                  data.window[2] !== context.data.window[2] ||
+                  data.window[3] !== context.data.window[3]
+                ) {
+                  context.setData(data);
+                }
               })
               .catch((e) => {
                 console.log("error");

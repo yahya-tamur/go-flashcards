@@ -3,35 +3,52 @@ Remaining Goals
 
   - sgf doesn't transfer marks, so I shouldn't either.
 
-  - reorganize config again.
+  - source-specific config for sets.
+    - config file schema:
+      - [[aa.sources-config]] => {source: "", ...config} ?
+      - change implementation of current config in study?
+        - will this change algorithm config? ofc not. theme config?
+        - is there some frontend that needs to change?
 
   (-) Actually make a good flashcard set and use this to study.
 
 
   - UI Overhaul
-    - check tablet for design idea
-    - less tall tree view with smaller stones
-    - captures? no?
-    
-    - Histogram
-    - custom svg like board, table.
-    - not sure where to put this in the ui, what would look nice.
-    
-    - a lot of screens are ok but not great
-    - tactility:
-      - exit without saving? popup on edit
-        - same on config
-      - popups on save?
-      - popups on correct / incorrect?
-      - next button? 
-    - more options in export to sgf
+      - check tablet for design ideas
 
-  - phone app
-    - phone ui
-    - android file situation
-  
-  Small Items:
-  - VW prop (sgf parse followup)
+      - less tall tree view with smaller stones
+      
+      - captures? no?
+      
+      - Histogram
+        - custom svg like board, table.
+        - see tablet
+      
+      - tactility:
+        - exit without saving? popup on edit
+          - same on config
+        - popups on save?
+        - popups on correct / incorrect?
+        - next button? 
+
+      - more options in export to sgf
+      
+      - number spinner is too wide
+
+    - phone app
+      - phone ui
+      - android file situation
+
+  - updater plugin
+
+  - sgf parse followup (SZ, VW props)
+
+  - app performance, especially with:
+    - spam marks / place stone:
+      - do some bs  on frontend + send one command on DragEnd or whatever
+      - slider: ?? maybe same with svg viewport?
+
+  - apply vite suggestions for smaller bundle
 
   - black territory, white territory marks
 
@@ -41,10 +58,6 @@ Remaining Goals
 
   - buttons to type marks in comments?
 
-  - delete:
-    - whole exercise
-    - exercise file
-    - insert exercise in middle?
   
   - Add to config:
     - custom art per flashcard set.
@@ -75,3 +88,4 @@ Remaining Goals
 
   - initialize app data with example usage?
   - add licence to all the files + make repo public
+  - 

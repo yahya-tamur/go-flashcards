@@ -125,7 +125,13 @@ export default (props) => {
   const [viewBoxLeft, setViewBoxLeft] = useState(0);
   const [viewBoxTop, setViewBoxTop] = useState(0);
 
+  const [clickable, setClickable] = useState(true);
+
   const click = (w) => {
+    if (!clickable) {
+      return;
+    }
+    setClickable(false);
     if (
       context.cursor === "Black" ||
       context.cursor === "White" ||
@@ -142,11 +148,17 @@ export default (props) => {
         })
           .then(() => invoke("get_data"))
           .then((data) => {
-            context.setData(data);
+            if (
+              context.data.game.stones[w[0]][w[1]] !==
+              data.game.stones[w[0]][w[1]]
+            ) {
+              context.setData(data);
+            }
           })
           .catch((e) => {
             console.log(e);
-          });
+          })
+          .finally(() => setClickable(true));
       } else {
         invoke("play", {
           loc: [w[0], w[1]],
@@ -154,6 +166,12 @@ export default (props) => {
         })
           .then(() => invoke("get_data"))
           .then((data) => {
+            if (
+              context.data.game.stones[w[0]][w[1]] ===
+              data.game.stones[w[0]][w[1]]
+            ) {
+              return;
+            }
             context.setData(data);
             context.setCursor(data.color === "Black" ? "White" : "Black");
             if (context.phase === "Study" && context.studyPhase === "Guess") {
@@ -199,7 +217,8 @@ export default (props) => {
           .catch((e) => {
             console.log(e);
             setGhost(null);
-          });
+          })
+          .finally(() => setClickable(true));
       }
     } else {
       invoke("set_mark", {
@@ -214,11 +233,16 @@ export default (props) => {
       })
         .then(() => invoke("get_data"))
         .then((data) => {
-          context.setData(data);
+          if (
+            context.data.game.marks[w[0]][w[1]] !== data.game.marks[w[0]][w[1]]
+          ) {
+            context.setData(data);
+          }
         })
         .catch((e) => {
           console.log(e);
-        });
+        })
+        .finally(() => setClickable(true));
     }
   };
 

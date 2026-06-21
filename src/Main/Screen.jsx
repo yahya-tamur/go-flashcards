@@ -9,6 +9,7 @@ import Box from "@mui/material/Box";
 export default () => {
   const [exercises, setExercises] = useState([]);
   const [studies, setStudies] = useState([]);
+  const [configSignal, setConfigSignal] = useState(0);
 
   useEffect(() => {
     invoke("list_exercises").then((a) => {
@@ -31,7 +32,11 @@ export default () => {
         {initialConfig === null ? (
           <Box />
         ) : (
-          <EditConfig initialConfig={initialConfig} setStudies={setStudies} />
+          <EditConfig
+            initialConfig={initialConfig}
+            setStudies={setStudies}
+            configSignal={configSignal}
+          />
         )}
       </Box>
       <Box
@@ -44,7 +49,13 @@ export default () => {
           overflow: "hidden",
         }}
       >
-        <Menu exercises={exercises} studies={studies} />
+        <Menu
+          exercises={exercises}
+          setExercises={setExercises}
+          studies={studies}
+          setConfigSignal={setConfigSignal}
+          configSignal={configSignal}
+        />
       </Box>
     </main>
   );

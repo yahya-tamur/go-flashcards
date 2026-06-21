@@ -101,14 +101,25 @@ async fn delete_branch(state: tauri::State<'_, Mutex<AppData>>) -> Result<bool, 
 }
 
 #[tauri::command]
-async fn new_exercise(state: tauri::State<'_, Mutex<AppData>>) -> Result<(), String> {
+async fn new_exercise(state: tauri::State<'_, Mutex<AppData>>, insert: bool) -> Result<(), String> {
     match &mut *state.lock().await {
         AppData::Editing(editing_data) => {
-            editing_data.new_exercise();
+            editing_data.new_exercise(insert);
             Ok(())
         }
         AppData::Study(study_data) => {
             study_data.next().await;
+            Ok(())
+        }
+        _ => unimplemented!(),
+    }
+}
+
+#[tauri::command]
+async fn delete_exercise(state: tauri::State<'_, Mutex<AppData>>) -> Result<(), String> {
+    match &mut *state.lock().await {
+        AppData::Editing(editing_data) => {
+            editing_data.delete_exercise();
             Ok(())
         }
         _ => unimplemented!(),
@@ -199,6 +210,14 @@ async fn save_exercises(
         }
         _ => unimplemented!(),
     }
+}
+
+#[tauri::command]
+async fn delete_exercise_file(app: tauri::AppHandle, exercise: String) -> Result<(), String> {
+    fs::delete_exercise(&app.path().app_data_dir().unwrap(), &exercise)
+        .await
+        .unwrap();
+    Ok(())
 }
 
 // frontend switches itself to EditingPhase.
@@ -379,10 +398,12 @@ pub fn run() {
             delete_branch,
             place_stone,
             new_exercise,
+            delete_exercise,
             finish_setup,
             collapse_tree,
             comment,
             set_variant,
+            delete_exercise_file,
             jump_to_exercise,
             save_exercises,
             load_exercises,

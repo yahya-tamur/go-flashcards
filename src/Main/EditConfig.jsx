@@ -66,7 +66,7 @@ const scrollStyle = EditorView.theme({
     borderBottom: "3px solid red",
     backgroundColor: "#5d6e4dff",
   },
-  ".cm-content": { minHeight: "calc(100vh - 70px)" },
+  ".cm-content": { minHeight: "calc(100vh - 90px)" },
 });
 
 export default (props) => {
@@ -79,11 +79,23 @@ export default (props) => {
   useEffect(() => {
     invoke("set_config_str", { config: props.initialConfig }).catch((err) => {
       if (err !== error) {
+        let [_, left, right] = err;
+        console.log(err, code);
+        if (left == right) {
+          left = Math.max(0, left - 2);
+          right = Math.min(code.length, right + 2);
+        }
+        if (left < right) {
+          console.log("highlighting", left, right);
+          editorRef.current?.view?.dispatch({
+            effects: addHighlight.of({ from: left, to: right }),
+          });
+        }
         setCode(code);
         setError(err);
       }
     });
-  }, []);
+  }, [props.configSignal]);
 
   return (
     <>
@@ -96,16 +108,19 @@ export default (props) => {
           maxWidth: "100%",
           display: "flex",
           flexDirection: "column",
+          padding: "20px",
+          paddingBottom: 0,
         }}
-        elevation={2}
+        elevation={10}
       >
-        <Box
+        <Paper
           sx={{
             overflow: "scroll",
-            height: "calc(100% - 70px)",
+            height: "calc(100vh - 90px)",
             display: "flex",
             flexDirection: "column",
           }}
+          elevation={2}
         >
           {
             <CodeMirror
@@ -124,12 +139,13 @@ export default (props) => {
               }}
             />
           }
-        </Box>
+        </Paper>
 
         <Box
           sx={{
             width: "100%",
             minHeight: "70px",
+            maxHeight: "70px",
 
             maxWidth: "100%",
             display: "flex",
@@ -144,6 +160,7 @@ export default (props) => {
               overflowWrap: "break-word",
               overflow: "scroll",
               maxHeight: "100%",
+              marginTop: "10px",
             }}
           >
             {error !== undefined ? error[0] : ""}

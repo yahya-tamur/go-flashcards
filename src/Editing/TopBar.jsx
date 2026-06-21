@@ -8,17 +8,24 @@ import { createSVGElement } from "../utils";
 import "../App.css";
 
 import Button from "@mui/material/Button";
+import ButtonGroup from "@mui/material/ButtonGroup";
 import Paper from "@mui/material/Paper";
 import Box from "@mui/material/Box";
 import TextField from "@mui/material/TextField";
 import Slider from "@mui/material/Slider";
-import ClearIcon from "@mui/icons-material/Clear";
 
 import Dialog from "@mui/material/Dialog";
 import DialogActions from "@mui/material/DialogActions";
 import DialogContent from "@mui/material/DialogContent";
 import DialogContentText from "@mui/material/DialogContentText";
 import DialogTitle from "@mui/material/DialogTitle";
+
+import ClearIcon from "@mui/icons-material/Clear";
+import FileUploadIcon from "@mui/icons-material/FileUpload";
+import DownloadIcon from "@mui/icons-material/Download";
+
+import KeyboardArrowDownOutlinedIcon from "@mui/icons-material/KeyboardArrowDownOutlined";
+import KeyboardArrowRightOutlinedIcon from "@mui/icons-material/KeyboardArrowRightOutlined";
 
 import { ask } from "@tauri-apps/plugin-dialog";
 
@@ -31,6 +38,7 @@ import { createSvgIcon } from "@mui/material/utils";
 
 export default (props) => {
   let context = useContext(AppContext);
+  const [dialogContent, setDialogContent] = useState("");
   const [savedMsgOpen, setSavedMsgOpen] = useState(false);
   //  useEffect(
   //    setComment(props.data?.tree?.comment)
@@ -95,69 +103,108 @@ export default (props) => {
               });
           }}
         />
+
+        <ButtonGroup variant="contained">
+          <IconButton
+            disabled={context.editingPhase === "Initialize"}
+            onClick={async () => {
+              invoke("delete_exercise")
+                .then(() => invoke("get_data"))
+                .then((data) => {
+                  if (data.table.length === 1 && data.table[0].length === 1) {
+                    context.setEditingPhase("Initialize");
+                  } else {
+                    context.setEditingPhase("MakeTree");
+                  }
+                  context.setData(data);
+                  context.setCursor(data.color === "Black" ? "White" : "Black");
+                });
+            }}
+          >
+            <ClearIcon color="error" />
+          </IconButton>
+          <IconButton
+            disabled={context.editingPhase === "Initialize"}
+            onClick={async () => {
+              invoke("new_exercise", { insert: true })
+                .then(() => invoke("get_data"))
+                .then((data) => {
+                  context.setData(data);
+                  context.setCursor("Black");
+                  context.setEditingPhase("Initialize");
+                });
+            }}
+          >
+            <KeyboardArrowDownOutlinedIcon />
+          </IconButton>
+          <IconButton
+            disabled={context.editingPhase === "Initialize"}
+            onClick={async () => {
+              invoke("new_exercise", { insert: false })
+                .then(() => invoke("get_data"))
+                .then((data) => {
+                  context.setData(data);
+                  context.setCursor("Black");
+                  context.setEditingPhase("Initialize");
+                });
+            }}
+          >
+            <KeyboardArrowRightOutlinedIcon />
+          </IconButton>
+        </ButtonGroup>
+
+        <ButtonGroup size="small">
+          <IconButton
+            variant="contained"
+            onClick={async () => {
+              invoke("import_sgf")
+                .then(() => invoke("get_data"))
+                .then((data) => {
+                  if (data.table.length === 1 && data.table[0].length === 1) {
+                    context.setEditingPhase("Initialize");
+                  } else {
+                    context.setEditingPhase("MakeTree");
+                  }
+                  context.setData(data);
+                  context.setCursor(data.color === "Black" ? "White" : "Black");
+                })
+                .catch((e) => {
+                  console.log(e);
+                });
+            }}
+          >
+            <DownloadIcon />
+          </IconButton>
+          <IconButton
+            variant="contained"
+            onClick={async () => {
+              invoke("export_sgf")
+                .then(() => {
+                  setDialogContent("Exported to sgf, under app_data/sgf.");
+                  setSavedMsgOpen(true);
+                  console.log(context.data);
+                })
+                .catch((e) => {
+                  console.log(e);
+                });
+            }}
+          >
+            <FileUploadIcon />
+          </IconButton>
+        </ButtonGroup>
         <Button
-          variant="contained"
+          size="small"
           disabled={context.editingPhase === "Initialize"}
+          variant="contained"
           sx={{ height: "40px" }}
           onClick={async () => {
-            invoke("new_exercise")
-              .then(() => invoke("get_data"))
-              .then((data) => {
-                context.setData(data);
-                context.setCursor("Black");
-                context.setEditingPhase("Initialize");
-              });
-          }}
-        >
-          New
-        </Button>
-        <Button
-          disabled={context.editingPhase === "Initialize"}
-          variant="contained"
-          sx={{ height: "40px" }}
-          onClick={async () => {
-            invoke("save_exercises").then(() => setSavedMsgOpen(true));
+            invoke("save_exercises").then(() => {
+              setDialogContent("Saved.");
+              setSavedMsgOpen(true);
+            });
           }}
         >
           Save
-        </Button>
-        <Button
-          variant="contained"
-          sx={{ height: "40px" }}
-          onClick={async () => {
-            invoke("import_sgf")
-              .then(() => invoke("get_data"))
-              .then((data) => {
-                if (data.table.length === 1 && data.table[0].length === 1) {
-                  context.setEditingPhase("Initialize");
-                } else {
-                  context.setEditingPhase("MakeTree");
-                }
-                context.setData(data);
-                context.setCursor(data.color === "Black" ? "White" : "Black");
-              })
-              .catch((e) => {
-                console.log(e);
-              });
-          }}
-        >
-          Import sgf
-        </Button>
-        <Button
-          variant="contained"
-          sx={{ height: "40px" }}
-          onClick={async () => {
-            invoke("export_sgf")
-              .then(() => {
-                alert(`Saved.`);
-                console.log(context.data);
-              })
-              .catch((e) => {
-                console.log(e);
-              });
-          }}
-        >
-          Export sgf
         </Button>
       </Box>
       <Dialog
@@ -167,10 +214,12 @@ export default (props) => {
         onClose={() => setSavedMsgOpen(false)}
       >
         <DialogContent>
-          <DialogContentText>Saved.</DialogContentText>
+          <DialogContentText>{dialogContent}</DialogContentText>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setSavedMsgOpen(false)}>Ok</Button>
+          <Button variant="contained" onClick={() => setSavedMsgOpen(false)}>
+            Ok
+          </Button>
         </DialogActions>
       </Dialog>
     </Paper>

@@ -21,13 +21,21 @@ import InboxIcon from "@mui/icons-material/Inbox";
 import DraftsIcon from "@mui/icons-material/Drafts";
 import InputBase from "@mui/material/InputBase";
 import IconButton from "@mui/material/IconButton";
-import MenuIcon from "@mui/icons-material/Menu";
+import ClearIcon from "@mui/icons-material/Clear";
 import TextField from "@mui/material/TextField";
 import SearchIcon from "@mui/icons-material/Search";
 import DirectionsIcon from "@mui/icons-material/Directions";
 
+import Dialog from "@mui/material/Dialog";
+import DialogActions from "@mui/material/DialogActions";
+import DialogContent from "@mui/material/DialogContent";
+import DialogContentText from "@mui/material/DialogContentText";
+import DialogTitle from "@mui/material/DialogTitle";
+
 export default (props) => {
   const context = useContext(AppContext);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [fileToDelete, setFileToDelete] = useState("");
 
   // "main", "exercises", "study"
   const [menu, setMenu] = useState("main");
@@ -78,7 +86,21 @@ export default (props) => {
         <>
           <List sx={{ overflow: "scroll" }}>
             {props.exercises.map((e, i) => (
-              <ListItem key={i} disablePadding>
+              <ListItem
+                key={i}
+                disablePadding
+                secondaryAction={
+                  <IconButton
+                    edge="end"
+                    onClick={() => {
+                      setFileToDelete(e);
+                      setDeleteDialogOpen(true);
+                    }}
+                  >
+                    <ClearIcon />
+                  </IconButton>
+                }
+              >
                 <ListItemButton
                   onClick={() => {
                     invoke("load_exercises", { exercise: e })
@@ -177,6 +199,46 @@ export default (props) => {
           </Button>
         </>
       )}
+
+      <Dialog
+        open={deleteDialogOpen}
+        fullWidth
+        maxWidth="xs"
+        onClose={() => setDeleteDialogOpen(false)}
+      >
+        <DialogContent>
+          <DialogContentText>
+            Are you sure you want to delete "{fileToDelete}"?{" "}
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button
+            variant="contained"
+            autoFocus
+            onClick={() => {
+              setDeleteDialogOpen(false);
+            }}
+          >
+            Cancel
+          </Button>
+          <Button
+            variant="contained"
+            onClick={() => {
+              invoke("delete_exercise_file", { exercise: fileToDelete }).then(
+                () => {
+                  invoke("list_exercises").then((a) => {
+                    props.setExercises(a);
+                    setDeleteDialogOpen(false);
+                    props.setConfigSignal(props.configSignal + 1);
+                  });
+                },
+              );
+            }}
+          >
+            Yes
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Paper>
   );
 };
