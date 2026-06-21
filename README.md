@@ -1,6 +1,11 @@
 Remaining Goals
 ---------------
 
+  - timeline:
+    - one or two weeks of looking over, doing small things.
+    - then, little should remain.
+      - maybe only auto-respond
+
   - sgf doesn't transfer marks, so I shouldn't either.
 
   - source-specific config for sets.
@@ -15,6 +20,7 @@ Remaining Goals
 
   - UI Overhaul
       - check tablet for design ideas
+        => mobile, desktop versions of 3 screens only
 
       - less tall tree view with smaller stones
       
@@ -65,6 +71,7 @@ Remaining Goals
           - put number in stone button in maketree?
     - history length
     - customize algorithm behavior
+      - new bucket for mistakes in last 3?
     - sources: multiple, shared.
 
 
