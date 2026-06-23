@@ -57,6 +57,7 @@ Remaining Goals
   - apply vite suggestions for smaller bundle
 
   - black territory, white territory marks
+  - sometimes show next moves on board (color based on variant, who plays first?)
 
   - all the lines look too thick for 1080p?
 
