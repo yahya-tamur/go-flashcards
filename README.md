@@ -6,22 +6,9 @@ Remaining Goals
     - then, little should remain.
       - maybe only auto-respond
 
-  - sgf doesn't transfer marks, so I shouldn't either. => check!
-
-  - make config check when you click a source file, not on save?
-  - make all default options optional?
-  
-    - which configs are source-specific?
-      - yes:
-        - random-orientation
-        - random-color
-        - show-recent
-        - custom art
-        - shared or specific source
-        - transfer marks
-      - no:
-        - algorithm
-        - history
+  !- fix initial marks situation:
+    - initial game state shouldn't contain any marks.
+      - serde ignore + default.
 
 
   (-) Actually make a good flashcard set and use this to study.
