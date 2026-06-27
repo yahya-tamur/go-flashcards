@@ -29,6 +29,11 @@ flate2 = "1.1.9"
 toml = { version = "1.1.2", features = ["preserve_order"] }
 rand = "0.10.1"
 regex = "1.12.3"
-sgf-parse = "4.2.8"
+sgf-parse = {
+    git = "https://github.com/julianandrews/sgf-parse.git",
+    rev = "e9289575ddf3c079b405878799a889aa0da95b4e"
+}
 tauri-plugin-dialog = "2"
+struct-patch = "0.12.5"
+indexmap = { version = "2.14.0", features = ["serde"] }
 

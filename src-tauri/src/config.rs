@@ -1,9 +1,15 @@
-use std::{collections::HashMap, path::Path};
-use toml::{Spanned, Table, Value};
+use indexmap::IndexMap;
+use std::{
+    collections::{HashMap, HashSet},
+    path::Path,
+};
+use toml::Spanned;
+
+use struct_patch::Patch;
 
 use serde::{Deserialize, Serialize};
 
-#[derive(Deserialize, Debug, Copy, Clone, Serialize)]
+#[derive(PartialEq, Deserialize, Debug, Copy, Clone, Serialize)]
 #[serde(rename_all = "snake_case")]
 pub enum ShowRecent {
     None,
@@ -11,71 +17,131 @@ pub enum ShowRecent {
     Number,
 }
 
-#[derive(Deserialize, Debug, Clone, Serialize)]
-#[serde(rename_all = "snake_case")]
-#[serde(deny_unknown_fields)]
+#[derive(Deserialize, Patch, PartialEq, Debug, Clone, Serialize)]
+#[patch(attribute(derive(Deserialize, Debug, Clone)))]
+#[patch(attribute(serde(deny_unknown_fields, rename_all = "snake_case")))]
 pub struct ActiveConfig {
+    pub transfer_marks: bool,
     pub random_orientation: bool,
     pub random_color: bool,
     pub show_recent: ShowRecent,
-    pub sources: Option<Vec<String>>,
 }
 
-#[allow(dead_code)]
+#[derive(Deserialize, Patch, PartialEq, Debug, Clone)]
+#[patch(attribute(derive(Deserialize, Debug, Clone)))]
+#[patch(attribute(serde(deny_unknown_fields, rename_all = "snake_case")))]
+pub struct FlashcardSetConfig {
+    pub algorithm: u32,
+}
+
+#[derive(Deserialize, Debug)]
+#[serde(deny_unknown_fields, rename_all = "snake_case")]
+struct ConfigFile {
+    #[serde(rename = "editing")]
+    editing_config: Option<EditingConfig>,
+
+    #[serde(rename = "flashcard_set", default)]
+    study_sets: IndexMap<String, StudyConfig>,
+
+    #[serde(flatten)]
+    default_config: ActiveConfig,
+
+    #[serde(flatten)]
+    set_config: FlashcardSetConfig,
+}
+
 #[derive(Deserialize, Debug)]
 #[serde(deny_unknown_fields)]
 #[serde(rename_all = "snake_case")]
-struct Config {
-    random_orientation: Option<bool>,
-    random_color: Option<bool>,
-    show_recent: Option<Spanned<ShowRecent>>,
-    sources: Option<Vec<Spanned<String>>>,
+struct EditingConfig {
+    #[serde(default)]
+    source_config: HashMap<Spanned<String>, ActiveConfigPatch>,
+
+    #[serde(flatten)]
+    config: ActiveConfigPatch,
 }
 
-const REQUIRED_FOR_DEFAULT: [&str; 3] = ["show_recent", "random_orientation", "random_color"];
+#[derive(Deserialize, Debug)]
+#[serde(deny_unknown_fields)]
+#[serde(rename_all = "snake_case")]
+struct StudyConfig {
+    sources: Vec<Spanned<String>>,
+    #[serde(default)]
+    source_config: HashMap<Spanned<String>, ActiveConfigPatch>,
+
+    #[serde(flatten)]
+    config: ActiveConfigPatch,
+
+    #[serde(flatten)]
+    set_config: FlashcardSetConfigPatch,
+}
 
 use crate::fs;
 
 pub async fn flashcard_sets(app_data: &Path) -> Vec<String> {
-    let input = fs::load_config(app_data).await.unwrap();
-    let table: Table = toml::from_str(&input).unwrap();
-    table
-        .into_iter()
-        .map(|t| t.0)
-        .filter(|s| *s != "default" && *s != "editing")
-        .collect()
+    let Ok(input) = fs::load_config(app_data).await else {
+        return Vec::new();
+    };
+    let Ok(config) = toml::from_str::<ConfigFile>(&input) else {
+        return Vec::new();
+    };
+
+    config.study_sets.into_keys().collect()
 }
 
-pub async fn load_config(app_data: &Path, name: Option<&str>, exercise: bool) -> ActiveConfig {
+pub async fn load_editing(app_data: &Path, name: &str) -> ActiveConfig {
     let input = fs::load_config(app_data).await.unwrap();
-    let mut table: HashMap<String, Table> = toml::from_str(&input).unwrap();
+    let config: ConfigFile = toml::from_str(&input).unwrap();
 
-    let mut config = table.remove("default").unwrap();
+    let mut active_config = config.default_config.clone();
 
-    if let Some(target) = name {
-        if let Some(map) = table.remove(target) {
-            config.extend(map);
+    if let Some(editing_config) = config.editing_config {
+        active_config = active_config << editing_config.config;
+        if let Some(src_config) = editing_config.source_config.get(name) {
+            active_config = active_config << src_config.clone();
         }
     }
+    active_config
+}
 
-    if exercise {
-        if let Some(map) = table.remove("editing") {
-            config.extend(map);
-        }
-    }
+pub async fn load_study(
+    app_data: &Path,
+    name: &str,
+) -> (FlashcardSetConfig, Vec<(String, ActiveConfig)>) {
+    let input = fs::load_config(app_data).await.unwrap();
+    let config: ConfigFile = toml::from_str(&input).unwrap();
 
-    config.try_into().unwrap()
+    let mut set_config = config.set_config.clone();
+    let mut active_config = config.default_config.clone();
+
+    let study_config = config.study_sets.get(name).unwrap();
+
+    active_config = active_config << study_config.config.clone();
+    set_config = set_config << study_config.set_config.clone();
+
+    (
+        set_config,
+        study_config
+            .sources
+            .iter()
+            .map(|source| {
+                let mut config = active_config.clone();
+                if let Some(src_config) = study_config.source_config.get(source) {
+                    config = config << src_config.clone();
+                }
+                (source.as_ref().clone(), config)
+            })
+            .collect(),
+    )
 }
 
 pub async fn validate(app_data: &Path, input: Option<&str>) -> Result<(), (String, usize, usize)> {
-    // will check: - no unnecessary options,
-
     let input: &str = match input {
         Some(input) => input,
         None => &fs::load_config(app_data).await.unwrap(),
     };
 
-    let table: HashMap<Spanned<String>, Config> = toml::from_str(input).map_err(|err| {
+    let config: ConfigFile = toml::from_str(input).map_err(|err| {
         if let Some(range) = err.span() {
             (err.message().to_string(), range.start, range.end)
         } else {
@@ -83,61 +149,49 @@ pub async fn validate(app_data: &Path, input: Option<&str>) -> Result<(), (Strin
         }
     })?;
 
-    // possible, since there are no top level items, which is checked earlier.
-    let level2table: HashMap<String, HashMap<Spanned<String>, Value>> =
-        toml::from_str(input).unwrap();
+    let exercise_files: HashSet<String> = fs::list_exercises(app_data)
+        .await
+        .unwrap()
+        .into_iter()
+        .collect();
 
-    // check default has all necessary options (and no sources option)
-    let Some((default_span, _default_options)) = table.get_key_value("default") else {
-        let r = input.find("\n").unwrap_or(input.len());
-        return Err(("No default options found.".to_string(), 0, r));
-    };
-
-    for default_option in REQUIRED_FOR_DEFAULT {
-        if !level2table["default"].contains_key(default_option) {
-            return Err((
-                format!(r#"default should have "{default_option}" option."#),
-                default_span.span().start,
-                default_span.span().end,
-            ));
+    if let Some(editing_config) = config.editing_config {
+        for source in editing_config.source_config.keys() {
+            if !exercise_files.contains(source.get_ref()) {
+                return Err((
+                    format!(r#"source "{}" not found."#, source.get_ref()),
+                    source.span().start,
+                    source.span().end,
+                ));
+            }
         }
     }
 
-    // check all sources are valid.
-
-    let exercise_list = fs::list_exercises(app_data).await.unwrap();
-
-    for (key, val) in &table {
-        if key.get_ref() == "default" || key.get_ref() == "editing" {
-            if let Some((key_span, _)) = level2table[key.get_ref()].get_key_value("sources") {
+    for (_name, study_set) in config.study_sets {
+        let mut sources: HashSet<String> = HashSet::new();
+        for source in study_set.sources.iter() {
+            if !exercise_files.contains(source.get_ref()) {
                 return Err((
-                    format!("{key} should not have 'sources' option."),
-                    key_span.span().start,
-                    key_span.span().end,
+                    format!(r#"source "{}" not found."#, source.get_ref()),
+                    source.span().start,
+                    source.span().end,
                 ));
             }
-        } else {
-            match &val.sources {
-                Some(v) => {
-                    for source in v {
-                        if exercise_list.iter().all(|a| a != source.get_ref()) {
-                            return Err((
-                                format!(r#"source "{}" not found."#, source.get_ref()),
-                                source.span().start,
-                                source.span().end,
-                            ));
-                        }
-                    }
-                }
-                None => {
-                    if exercise_list.iter().all(|a| a != key.get_ref()) {
-                        return Err((
-                            format!(r#"source "{}" not found."#, key.get_ref()),
-                            key.span().start,
-                            key.span().end,
-                        ));
-                    }
-                }
+            if !sources.insert(source.get_ref().clone()) {
+                return Err((
+                    format!(r#"duplicate source "{}"."#, source.get_ref()),
+                    source.span().start,
+                    source.span().end,
+                ));
+            }
+        }
+        for source in study_set.source_config.keys() {
+            if !sources.contains(source.as_ref()) {
+                return Err((
+                    format!(r#"source "{}" not in this set."#, source.get_ref()),
+                    source.span().start,
+                    source.span().end,
+                ));
             }
         }
     }
@@ -150,27 +204,32 @@ use regex::Regex;
 pub async fn add_exercise(app_data: &Path, name: &str) -> bool {
     let bare_key_re = Regex::new(r#"^[A-Za-z0-9_\-]*$"#).unwrap();
 
+    let qname = &format!(
+        r#""{}""#,
+        name.to_string().replace("\\", "\\\\").replace("\"", "\\\"")
+    );
+
     let name = if bare_key_re.is_match(name) {
         name
     } else {
-        &format!(
-            r#""{}""#,
-            name.to_string().replace("\\", "\\\\").replace("\"", "\\\"")
-        )
+        qname
     };
+
+    let new_set = format!("[flashcard_set.{}]\nsources = [{}]", name, qname);
 
     let old_config = fs::load_config(app_data).await.unwrap();
     let mut i = 0;
+
     if !old_config.is_empty() && old_config[old_config.len() - 1..old_config.len()] == *"\n" {
         i += 1;
-    }
-    if old_config.len() > 1 && old_config[old_config.len() - 2..old_config.len() - 1] == *"\n" {
-        i += 1;
+        if old_config.len() > 1 && old_config[old_config.len() - 2..old_config.len() - 1] == *"\n" {
+            i += 1;
+        }
     }
 
     fs::save_config(
         app_data,
-        &format!("{}{}[{}]", old_config, "\n".repeat(2 - i), name),
+        &format!("{}{}{}", old_config, "\n".repeat(2 - i), new_set),
     )
     .await
     .unwrap();

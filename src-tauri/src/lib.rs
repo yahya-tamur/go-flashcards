@@ -107,6 +107,13 @@ async fn new_exercise(state: tauri::State<'_, Mutex<AppData>>, insert: bool) -> 
             editing_data.new_exercise(insert);
             Ok(())
         }
+        _ => unimplemented!(),
+    }
+}
+
+#[tauri::command]
+async fn next_exercise(state: tauri::State<'_, Mutex<AppData>>) -> Result<(), String> {
+    match &mut *state.lock().await {
         AppData::Study(study_data) => {
             study_data.next().await;
             Ok(())
@@ -241,7 +248,7 @@ async fn load_exercises(
 async fn get_config(state: tauri::State<'_, Mutex<AppData>>) -> Result<ActiveConfig, String> {
     match &mut *state.lock().await {
         AppData::Editing(editing_data) => Ok((*editing_data.config).clone()),
-        AppData::Study(study_data) => Ok((*study_data.config).clone()),
+        AppData::Study(study_data) => Ok((study_data.get_config()).clone()),
         _ => unimplemented!(),
     }
 }
@@ -398,6 +405,7 @@ pub fn run() {
             delete_branch,
             place_stone,
             new_exercise,
+            next_exercise,
             delete_exercise,
             finish_setup,
             collapse_tree,

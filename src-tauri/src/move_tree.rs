@@ -29,7 +29,7 @@ impl MoveTree {
     pub fn new(config: Arc<ActiveConfig>, problem: &Problem) -> MoveTree {
         let problem = problem.clone();
         let mut game = problem.initial.clone();
-        game.play_move(problem.table[0][0].as_ref().unwrap(), 0);
+        game.play_move(problem.table[0][0].as_ref().unwrap(), 0, true);
         let orientation = if config.random_orientation {
             random_range(0..8)
         } else {
@@ -50,6 +50,10 @@ impl MoveTree {
             orientation,
             color_swap,
         }
+    }
+
+    pub fn swap_config(&mut self, config: Arc<ActiveConfig>) {
+        self.config = config;
     }
 
     pub fn load(&mut self, problem: &Problem) {
@@ -110,7 +114,7 @@ impl MoveTree {
             if let Some(mov) = &self.problem.table[r_][c + 1] {
                 if mov.loc == loc && mov.color == color {
                     self.tree_loc = (r_, c + 1);
-                    self.game.play_move(mov, c + 1);
+                    self.game.play_move(mov, c + 1, self.config.transfer_marks);
                     return true;
                 }
             }
@@ -124,7 +128,10 @@ impl MoveTree {
             marks: Vec::new(),
         };
 
-        if !self.game.play_move(&new_move, c + 1) {
+        if !self
+            .game
+            .play_move(&new_move, c + 1, self.config.transfer_marks)
+        {
             return false;
         }
 
@@ -165,7 +172,7 @@ impl MoveTree {
         self.game = self.problem.initial.clone();
 
         for (num, &mov) in moves.iter().rev().enumerate() {
-            self.game.play_move(mov, num);
+            self.game.play_move(mov, num, self.config.transfer_marks);
         }
     }
 
@@ -219,7 +226,6 @@ impl MoveTree {
         self.game.captures = (0, 0);
         self.game.ko = None;
         self.tree_loc = (0, 0);
-        println!("initial is game: {:?}", self.problem.initial == self.game);
         self.problem.initial = self.game.clone();
 
         self.problem.table.truncate(1);
@@ -229,6 +235,7 @@ impl MoveTree {
 
         self.problem.table[0].push(Some(Move {
             comment: mov.comment,
+            // add current marks here
             ..Default::default()
         }));
 
@@ -385,10 +392,10 @@ impl MoveTree {
         };
 
         self.game.marks[i][j] = mark.clone();
-        if self.tree_loc == (0, 0) {
-            self.problem.initial.marks[i][j] = mark.clone();
-            return;
-        }
+        //    if self.tree_loc == (0, 0) {
+        //        self.problem.initial.marks[i][j] = mark.clone();
+        //       return;
+        //   }
 
         let current_move = self.current_mut();
         match (

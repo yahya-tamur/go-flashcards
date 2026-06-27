@@ -68,7 +68,7 @@ impl EditingData {
     }
 
     pub async fn load(path: &Path, exercise_file: &str) -> (bool, EditingData) {
-        let config = Arc::new(config::load_config(path, Some(exercise_file), true).await);
+        let config = Arc::new(config::load_editing(path, exercise_file).await);
         let (created, exercises) = fs::load_exercises(path, exercise_file).await.unwrap();
         (
             created,

@@ -163,7 +163,7 @@ export default (props) => {
             )}
             sx={{ height: "40px" }}
             onClick={async () => {
-              invoke("new_exercise")
+              invoke("next_exercise")
                 .then(() => invoke("get_data"))
                 .then((data) => {
                   context.setData(data);

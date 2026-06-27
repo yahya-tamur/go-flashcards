@@ -1,7 +1,7 @@
 use std::collections::{HashMap, VecDeque};
 use std::sync::Arc;
 
-use crate::config::{self, ActiveConfig};
+use crate::config::{self, ActiveConfig, FlashcardSetConfig};
 use crate::flashcard_algorithm::pick;
 use crate::move_tree::MoveTree;
 use crate::problem::Problem;
@@ -40,7 +40,8 @@ impl History {
 #[derive(Debug)]
 pub struct StudyData {
     pub move_tree: MoveTree,
-    pub config: Arc<ActiveConfig>,
+    pub src_configs: Vec<Arc<ActiveConfig>>,
+    pub set_config: FlashcardSetConfig,
 
     // think about current
 
@@ -64,20 +65,17 @@ impl StudyData {
     pub async fn load(path: &Path, flashcard_set: &str) -> StudyData {
         // load everything...
         // is unwrap ok here?
-        let config = config::load_config(path, Some(flashcard_set), false).await;
-
-        let names: Vec<String> = match &config.sources {
-            Some(v) => v.clone(),
-            None => vec![flashcard_set.to_string()],
-        };
+        let (set_config, sources) = config::load_study(path, flashcard_set).await;
 
         let mut exercise_srcs: Vec<Vec<Problem>> = Vec::new();
         let mut history_srcs: Vec<Vec<History>> = Vec::new();
+        let mut src_configs: Vec<Arc<ActiveConfig>> = Vec::new();
+        let mut names: Vec<String> = Vec::new();
 
-        for name in &names {
-            let exercise_src = fs::load_exercises(path, name).await.unwrap().1;
+        for (name, config) in sources {
+            let exercise_src = fs::load_exercises(path, &name).await.unwrap().1;
             // later use config
-            let mut history_src = fs::load_history(path, name).await.unwrap();
+            let mut history_src = fs::load_history(path, &name).await.unwrap();
 
             let mut i = 0usize;
 
@@ -97,7 +95,7 @@ impl StudyData {
                             hist: VecDeque::new(),
                         })
                     }
-                    fs::save_history(path, &history_src, name).await.unwrap();
+                    fs::save_history(path, &history_src, &name).await.unwrap();
                 }
                 _ => {
                     let mut hist_map: HashMap<Uuid, VecDeque<bool>> = history_src
@@ -112,11 +110,13 @@ impl StudyData {
                             hist: hist_map.remove(&id).unwrap_or_default(),
                         })
                     }
-                    fs::save_history(path, &history_src, name).await.unwrap();
+                    fs::save_history(path, &history_src, &name).await.unwrap();
                 }
             }
             exercise_srcs.push(exercise_src);
             history_srcs.push(history_src);
+            src_configs.push(Arc::new(config));
+            names.push(name);
         }
 
         let mut coords: HashMap<Uuid, (usize, usize)> = HashMap::new();
@@ -127,19 +127,19 @@ impl StudyData {
                 coords.insert(history.id, (i, j));
             }
         }
-        let config = Arc::new(config);
-        let (sel_i, sel_j) = pick(&config, &selection_pool);
+        let (sel_i, sel_j) = pick(&set_config, &selection_pool);
         let current = selection_pool[sel_i][sel_j];
         let past_exercises = vec![current];
         let current_exercise = 0;
         let (i, j) = coords[&current];
 
-        let move_tree = MoveTree::new(config.clone(), &exercise_srcs[i][j]);
+        let move_tree = MoveTree::new(src_configs[i].clone(), &exercise_srcs[i][j]);
 
         // load
         StudyData {
             move_tree,
-            config,
+            src_configs,
+            set_config,
             past_exercises,
             current_exercise,
             current_selection: (sel_i, sel_j),
@@ -180,7 +180,7 @@ impl StudyData {
     }
 
     pub async fn next(&mut self) {
-        let (sel_i, sel_j) = pick(&self.config, &self.selection_pool);
+        let (sel_i, sel_j) = pick(&self.set_config, &self.selection_pool);
         let next_id = self.selection_pool[sel_i][sel_j];
         let (i, j) = self.coords[&next_id];
 
@@ -188,6 +188,7 @@ impl StudyData {
         self.current_exercise = self.past_exercises.len();
         self.past_exercises.push(next_id);
 
+        self.move_tree.swap_config(self.src_configs[i].clone());
         self.move_tree.load(&self.exercise_srcs[i][j]);
     }
 
@@ -215,9 +216,14 @@ impl StudyData {
     pub fn jump_to_exercise(&mut self, index: usize) {
         self.current_exercise = index;
         let (i, j) = self.coords[&self.past_exercises[index]];
+        self.move_tree.swap_config(self.src_configs[i].clone());
         self.move_tree.load(&self.exercise_srcs[i][j]);
     }
 
+    pub fn get_config(&mut self) -> ActiveConfig {
+        let (i, _j) = self.coords[&self.past_exercises[self.current_exercise]];
+        (*self.src_configs[i]).clone()
+    }
     /*
     // will probably never implement.
     // situation on deleting everything?

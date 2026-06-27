@@ -1356,11 +1356,13 @@ name = "go-flashcards"
 version = "0.1.0"
 dependencies = [
  "flate2",
+ "indexmap 2.14.0",
  "rand 0.10.1",
  "regex",
  "serde",
  "serde_json",
  "sgf-parse",
+ "struct-patch",
  "tauri",
  "tauri-build",
  "tauri-plugin-dialog",
@@ -3181,8 +3183,7 @@ dependencies = [
 [[package]]
 name = "sgf-parse"
 version = "4.2.8"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b11229a863fdd9fb55912b1493e4c0e03d449a12e93c80f606ba8d241bce3756"
+source = "git+https://github.com/julianandrews/sgf-parse.git?rev=e9289575ddf3c079b405878799a889aa0da95b4e#e9289575ddf3c079b405878799a889aa0da95b4e"
 
 [[package]]
 name = "sha2"
@@ -3328,6 +3329,26 @@ name = "strsim"
 version = "0.11.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7da8b5736845d9f2fcb837ea5d9e2628564b3b043a70948a3f0b778838c5fb4f"
+
+[[package]]
+name = "struct-patch"
+version = "0.12.5"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "16653188c79fd54e2aee455daa0d14e4975292a4a935500bddee6684ad9ead47"
+dependencies = [
+ "struct-patch-derive",
+]
+
+[[package]]
+name = "struct-patch-derive"
+version = "0.12.5"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "48a28cbfd427a1b2e4d441ce9dd2f59763a25a36f3d51c34ee439f08c758df0c"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn 2.0.117",
+]
 
 [[package]]
 name = "swift-rs"

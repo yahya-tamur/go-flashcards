@@ -6,14 +6,23 @@ Remaining Goals
     - then, little should remain.
       - maybe only auto-respond
 
-  - sgf doesn't transfer marks, so I shouldn't either.
+  - sgf doesn't transfer marks, so I shouldn't either. => check!
 
-  - source-specific config for sets.
-    - config file schema:
-      - [[aa.sources-config]] => {source: "", ...config} ?
-      - change implementation of current config in study?
-        - will this change algorithm config? ofc not. theme config?
-        - is there some frontend that needs to change?
+  - make config check when you click a source file, not on save?
+  - make all default options optional?
+  
+    - which configs are source-specific?
+      - yes:
+        - random-orientation
+        - random-color
+        - show-recent
+        - custom art
+        - shared or specific source
+        - transfer marks
+      - no:
+        - algorithm
+        - history
+
 
   (-) Actually make a good flashcard set and use this to study.
 
@@ -47,7 +56,7 @@ Remaining Goals
 
   - updater plugin
 
-  - sgf parse followup (SZ, VW props)
+  - sgf parse followup
 
   - app performance, especially with:
     - spam marks / place stone:
@@ -84,6 +93,8 @@ Remaining Goals
     - consistent error handling, esp. in the backend. Result vs. panic
 
 - Consider.
+
+  - adding config per source file.
 
   - play moves automatically
     - frontend only? noop mode (cursor?).

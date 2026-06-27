@@ -173,7 +173,10 @@ impl GameState {
         Some(captures)
     }
 
-    pub fn play_move(&mut self, mov: &Move, number: usize) -> bool {
+    pub fn play_move(&mut self, mov: &Move, number: usize, transfer_marks: bool) -> bool {
+        if !transfer_marks {
+            self.marks = [const { [const { None }; 21] }; 21];
+        }
         if let Some((i, j)) = mov.loc {
             let Some(captures) = self.try_play(i, j, mov.color) else {
                 return false;
@@ -195,19 +198,7 @@ impl GameState {
         for &(i, j, ref mark) in &mov.marks {
             self.marks[i][j] = Some(mark.clone());
         }
-        /*
-        self.marks[3][3] = Some(Mark::Triangle);
-        self.marks[1][1] = Some(Mark::Label("A".to_string()));
-        self.marks[1][2] = Some(Mark::Label("B".to_string()));
-        self.marks[2][1] = Some(Mark::Label("C".to_string()));
 
-        self.marks[4][4] = Some(Mark::Triangle);
-        self.marks[4][10] = Some(Mark::Triangle);
-
-        self.marks[19][19] = Some(Mark::Label("F".to_string()));
-        self.marks[19][18] = Some(Mark::Label("G".to_string()));
-        self.marks[18][19] = Some(Mark::Label("H".to_string()));
-        self.marks[18][18] = Some(Mark::Label("I".to_string()));*/
         true
     }
 }
