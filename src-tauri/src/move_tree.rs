@@ -18,18 +18,15 @@ pub struct MoveTree {
     pub color_swap: bool,
 }
 
-/*
-impl Default for MoveTree {
-    fn default() -> MoveTree {
-        MoveTree::load(&Problem::default())
-    }
-}*/
-
 impl MoveTree {
     pub fn new(config: Arc<ActiveConfig>, problem: &Problem) -> MoveTree {
         let problem = problem.clone();
         let mut game = problem.initial.clone();
-        game.play_move(problem.table[0][0].as_ref().unwrap(), 0, true);
+        game.play_move(
+            problem.table[0][0].as_ref().unwrap(),
+            0,
+            config.transfer_marks,
+        );
         let orientation = if config.random_orientation {
             random_range(0..8)
         } else {
@@ -49,22 +46,6 @@ impl MoveTree {
             new_branches: Vec::new(),
             orientation,
             color_swap,
-        }
-    }
-
-    pub fn swap_config(&mut self, config: Arc<ActiveConfig>) {
-        self.config = config;
-    }
-
-    pub fn load(&mut self, problem: &Problem) {
-        self.problem = problem.clone();
-        self.new_branches.clear();
-        self.jump(0, 0);
-        if self.config.random_orientation {
-            self.orientation = random_range(0..8);
-        };
-        if self.config.random_color {
-            self.color_swap = random_bool(0.5);
         }
     }
 

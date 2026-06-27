@@ -22,7 +22,6 @@ pub struct GameSnapshot {
     pub marks: [[Option<Mark>; 19]; 19],
 }
 
-// WARNING: table has move's, which contain non-transformed indices. !!!
 #[derive(Serialize)]
 pub struct Snapshot {
     pub game: GameSnapshot,
@@ -38,6 +37,8 @@ pub struct Snapshot {
 }
 
 impl MoveTree {
+    // 'loc' is not tree location but extra info to send to frontend --
+    // it's current exercise , number of exercises.
     pub fn snapshot(&self, loc: (usize, usize)) -> Snapshot {
         let (row, col) = self.tree_loc;
         let current_move = self.current();
@@ -85,7 +86,6 @@ impl MoveTree {
         }
     }
 
-    //transform will be applied here.
     fn snapshot_game(&self) -> GameSnapshot {
         let mut stones = [[None; 19]; 19];
         let mut marks = [const { [const { None }; 19] }; 19];

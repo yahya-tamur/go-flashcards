@@ -1,7 +1,4 @@
-use serde::{
-    ser::{SerializeSeq, SerializeStruct},
-    Deserialize, Serialize, Serializer,
-};
+use serde::{Deserialize, Serialize};
 use std::hash::Hash;
 
 use crate::problem::Move;
@@ -34,9 +31,12 @@ pub fn other_color(c: Color) -> Color {
 #[derive(Clone, Serialize, Deserialize, Debug, PartialEq, Eq)]
 pub struct GameState {
     pub stones: [[Option<Color>; 21]; 21],
-    pub captures: (usize, usize),
-    pub ko: Option<(usize, usize)>,
 
+    #[serde(default, skip_serializing)]
+    pub captures: (usize, usize),
+    #[serde(default, skip_serializing)]
+    pub ko: Option<(usize, usize)>,
+    #[serde(default, skip_serializing)]
     pub marks: [[Option<Mark>; 21]; 21],
     #[serde(default, skip_serializing)]
     pub numbers: [[Option<usize>; 21]; 21],
@@ -51,56 +51,6 @@ impl Default for GameState {
             marks: [const { [const { None }; 21] }; 21],
             numbers: Default::default(),
         }
-    }
-}
-
-struct BorderRow<'a, T>(&'a [T; 21]);
-
-impl<'a, T> Serialize for BorderRow<'a, T>
-where
-    T: Serialize,
-{
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut seq = serializer.serialize_seq(Some(19))?;
-        for a in &self.0[1..=19] {
-            seq.serialize_element(a)?;
-        }
-        seq.end()
-    }
-}
-
-struct BorderGrid<'a, T>(&'a [[T; 21]; 21]);
-
-impl<'a, T> Serialize for BorderGrid<'a, T>
-where
-    T: Serialize,
-{
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut seq = serializer.serialize_seq(Some(19))?;
-        for a in &self.0[1..=19] {
-            seq.serialize_element(&BorderRow(a))?;
-        }
-        seq.end()
-    }
-}
-
-impl GameState {
-    pub fn internal_serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut state = serializer.serialize_struct("GameState", 4)?;
-        state.serialize_field("stones", &BorderGrid(&self.stones))?;
-        state.serialize_field("captures", &self.captures)?;
-        state.serialize_field("ko", &self.ko)?;
-        state.serialize_field("marks", &BorderGrid(&self.marks))?;
-        state.end()
     }
 }
 

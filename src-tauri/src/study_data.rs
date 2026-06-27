@@ -151,6 +151,11 @@ impl StudyData {
         }
     }
 
+    fn load_tree(&mut self) {
+        let (i, j) = self.coords[&self.past_exercises[self.current_exercise]];
+        self.move_tree = MoveTree::new(self.src_configs[i].clone(), &self.exercise_srcs[i][j]);
+    }
+
     pub async fn answer(&mut self, app_data: &Path, correct: bool) {
         let (sel_i, sel_j) = self.current_selection;
 
@@ -182,14 +187,12 @@ impl StudyData {
     pub async fn next(&mut self) {
         let (sel_i, sel_j) = pick(&self.set_config, &self.selection_pool);
         let next_id = self.selection_pool[sel_i][sel_j];
-        let (i, j) = self.coords[&next_id];
 
         self.current_selection = (sel_i, sel_j);
         self.current_exercise = self.past_exercises.len();
         self.past_exercises.push(next_id);
 
-        self.move_tree.swap_config(self.src_configs[i].clone());
-        self.move_tree.load(&self.exercise_srcs[i][j]);
+        self.load_tree();
     }
 
     pub fn location(&self) -> (usize, usize) {
@@ -207,17 +210,13 @@ impl StudyData {
                 .await
                 .unwrap();
         }
-        self.move_tree.load(&self.exercise_srcs[i][j]);
+        self.load_tree();
     }
-
-    pub async fn discard_edits(&mut self) {}
 
     // does not update selection. DO NOT try answering etc. after this.
     pub fn jump_to_exercise(&mut self, index: usize) {
         self.current_exercise = index;
-        let (i, j) = self.coords[&self.past_exercises[index]];
-        self.move_tree.swap_config(self.src_configs[i].clone());
-        self.move_tree.load(&self.exercise_srcs[i][j]);
+        self.load_tree();
     }
 
     pub fn get_config(&mut self) -> ActiveConfig {

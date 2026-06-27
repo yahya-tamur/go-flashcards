@@ -32,11 +32,14 @@ impl EditingData {
         &self.exercises[self.current_exercise]
     }
 
+    fn load_tree(&mut self) {
+        self.move_tree = MoveTree::new(self.config.clone(), &self.exercises[self.current_exercise]);
+    }
+
     pub fn jump_to_exercise(&mut self, index: usize) {
         self.exercises[self.current_exercise] = self.move_tree.save();
-        self.move_tree.load(&self.exercises[index]);
-
         self.current_exercise = index;
+        self.load_tree();
     }
 
     pub fn new_exercise(&mut self, insert: bool) {
@@ -50,7 +53,7 @@ impl EditingData {
             self.current_exercise = self.exercises.len() - 1;
         };
 
-        self.move_tree.load(&self.exercises[self.current_exercise]);
+        self.load_tree();
     }
 
     pub fn delete_exercise(&mut self) {
@@ -60,7 +63,7 @@ impl EditingData {
         } else if self.exercises.len() == self.current_exercise {
             self.current_exercise -= 1;
         }
-        self.move_tree.load(&self.exercises[self.current_exercise]);
+        self.load_tree();
     }
 
     pub fn location(&self) -> (usize, usize) {
@@ -125,8 +128,7 @@ impl EditingData {
 
         self.current_exercise = self.exercises.len() - 1;
 
-        self.move_tree
-            .load(&self.exercises[self.exercises.len() - 1]);
+        self.load_tree();
 
         true
     }
