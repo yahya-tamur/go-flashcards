@@ -21,7 +21,13 @@ pub struct MoveTree {
 impl MoveTree {
     pub fn new(config: Arc<ActiveConfig>, problem: &Problem) -> MoveTree {
         let problem = problem.clone();
-        let mut game = problem.initial.clone();
+        let mut game = GameState::default();
+        for &(i, j) in problem.initial_black.iter() {
+            game.stones[i][j] = Some(Color::Black);
+        }
+        for &(i, j) in problem.initial_white.iter() {
+            game.stones[i][j] = Some(Color::White);
+        }
         game.play_move(
             problem.table[0][0].as_ref().unwrap(),
             0,
@@ -64,7 +70,19 @@ impl MoveTree {
     }
 
     pub fn finish_setup(&mut self, color: Color) {
-        self.problem.initial = self.game.clone();
+        self.problem.initial_black.clear();
+        self.problem.initial_white.clear();
+
+        for i in 0..21 {
+            for j in 0..21 {
+                match self.game.stones[i][j] {
+                    Some(Color::Black) => self.problem.initial_black.push((i, j)),
+                    Some(Color::White) => self.problem.initial_white.push((i, j)),
+                    _ => {}
+                }
+            }
+        }
+
         self.problem.table[0][0].as_mut().unwrap().color = self.send_recv_color(color);
     }
 
@@ -73,7 +91,6 @@ impl MoveTree {
         let (i, j) = self.recv(i, j);
         let color = color.map(|c| self.send_recv_color(c));
         self.game.stones[i][j] = color;
-        self.problem.initial.stones[i][j] = color;
     }
 
     pub fn play(&mut self, mut loc: Option<(usize, usize)>, color: Color, study: bool) -> bool {
@@ -150,7 +167,13 @@ impl MoveTree {
             }
         }
 
-        self.game = self.problem.initial.clone();
+        self.game = GameState::default();
+        for &(i, j) in self.problem.initial_black.iter() {
+            self.game.stones[i][j] = Some(Color::Black);
+        }
+        for &(i, j) in self.problem.initial_white.iter() {
+            self.game.stones[i][j] = Some(Color::White);
+        }
 
         for (num, &mov) in moves.iter().rev().enumerate() {
             self.game.play_move(mov, num, self.config.transfer_marks);
@@ -206,20 +229,31 @@ impl MoveTree {
     pub fn collapse_tree(&mut self) {
         self.game.captures = (0, 0);
         self.game.ko = None;
+
+        for i in 0..21 {
+            for j in 0..21 {
+                match self.game.stones[i][j] {
+                    Some(Color::Black) => self.problem.initial_black.push((i, j)),
+                    Some(Color::White) => self.problem.initial_white.push((i, j)),
+                    _ => {}
+                }
+            }
+        }
+
+        let (r, c) = self.tree_loc;
+
+        let branch = self.problem.table[r].split_off(c);
+        let mov = branch.into_iter().next().unwrap().unwrap();
+
+        self.problem.table = vec![vec![Some(Move {
+            loc: None,
+            comment: mov.comment.clone(),
+            color: Color::White,
+            variant: Variant::None,
+            marks: mov.marks,
+        })]];
+
         self.tree_loc = (0, 0);
-        self.problem.initial = self.game.clone();
-
-        self.problem.table.truncate(1);
-        self.problem.table[0].truncate(1);
-
-        let mov = self.problem.table[0].pop().unwrap().unwrap();
-
-        self.problem.table[0].push(Some(Move {
-            comment: mov.comment,
-            // add current marks here
-            ..Default::default()
-        }));
-
         self.game.numbers = [[None; 21]; 21];
     }
 
@@ -270,14 +304,14 @@ impl MoveTree {
 
         let out_of_bounds = |r, c| r > row_end || r < row_start || c < col_start || c > col_end;
 
-        for i in 0..21 {
-            for j in 0..21 {
-                if out_of_bounds(i, j)
-                    && (self.problem.initial.stones[i][j].is_some()
-                        || self.problem.initial.marks[i][j].is_some())
-                {
-                    return;
-                }
+        for &(i, j) in self.problem.initial_black.iter() {
+            if out_of_bounds(i, j) {
+                return;
+            }
+        }
+        for &(i, j) in self.problem.initial_white.iter() {
+            if out_of_bounds(i, j) {
+                return;
             }
         }
 
@@ -373,10 +407,6 @@ impl MoveTree {
         };
 
         self.game.marks[i][j] = mark.clone();
-        //    if self.tree_loc == (0, 0) {
-        //        self.problem.initial.marks[i][j] = mark.clone();
-        //       return;
-        //   }
 
         let current_move = self.current_mut();
         match (

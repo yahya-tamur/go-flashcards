@@ -1,4 +1,4 @@
-use crate::game_state::{Color, GameState, Mark};
+use crate::game_state::{Color, Mark};
 
 use uuid::Uuid;
 
@@ -25,7 +25,8 @@ pub struct Move {
 #[derive(Clone, Serialize, Deserialize, Debug)]
 pub struct Problem {
     pub id: Uuid,
-    pub initial: GameState,
+    pub initial_black: Vec<(usize, usize)>,
+    pub initial_white: Vec<(usize, usize)>,
     pub table: Vec<Vec<Option<Move>>>,
 
     pub window: (usize, usize, usize, usize),
@@ -48,7 +49,8 @@ impl Default for Problem {
         Problem {
             id: Uuid::new_v4(),
             table: vec![vec![Some(Move::default())]],
-            initial: GameState::default(),
+            initial_black: Vec::new(),
+            initial_white: Vec::new(),
             window: (1, 19, 1, 19),
         }
     }

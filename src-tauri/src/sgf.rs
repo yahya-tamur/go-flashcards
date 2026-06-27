@@ -17,7 +17,7 @@ use std::collections::HashSet;
 use uuid::Uuid;
 
 use crate::{
-    game_state::{Color::*, GameState, Mark::*},
+    game_state::{Color::*, Mark::*},
     problem::{Move, Problem, Variant},
 };
 
@@ -25,60 +25,73 @@ pub fn sgf_to_problem(mut start: SgfNode<Prop>) -> Problem {
     let x = |p: &go::Point| p.x as usize + 1;
     let y = |p: &go::Point| p.y as usize + 1;
 
-    let mut gs: GameState = GameState::default();
-    let mut comment: String = String::new();
+    // let mut gs: GameState = GameState::default();
+    let mut initial_black = Vec::new();
+    let mut initial_white = Vec::new();
+
+    let mut mov: Move = Move::default();
 
     let (mut min_row, mut max_row, mut min_col, mut max_col) = (1usize, 19usize, 1usize, 19usize);
-    let mut initial_color = Black;
     let mut id = Uuid::new_v4();
 
     while start.get_move().is_none() && start.children.len() <= 1 {
         for prop in start.properties() {
             match prop {
-                Prop::AB(set) => set.iter().for_each(|p| gs.stones[x(p)][y(p)] = Some(Black)),
-                Prop::AW(set) => set.iter().for_each(|p| gs.stones[x(p)][y(p)] = Some(White)),
-                Prop::VW(set) => set.iter().for_each(|p| {
-                    min_row = min_row.min(x(p));
-                    max_row = max_row.max(x(p));
-                    min_col = min_col.min(y(p));
-                    max_col = max_col.max(y(p));
-                }),
-                Prop::SQ(set) => set.iter().for_each(|p| gs.marks[x(p)][y(p)] = Some(Square)),
+                Prop::AB(set) => set.iter().for_each(|p| initial_black.push((x(p), y(p)))),
+                Prop::AW(set) => set.iter().for_each(|p| initial_white.push((x(p), y(p)))),
+                Prop::VW(set) => {
+                    min_row = set.iter().map(&x).min().unwrap();
+                    max_row = set.iter().map(&x).max().unwrap();
+                    min_col = set.iter().map(&y).min().unwrap();
+                    max_col = set.iter().map(&y).max().unwrap();
+                }
+                Prop::SQ(set) => set
+                    .iter()
+                    .for_each(|p| mov.marks.push((x(p), y(p), Square))),
                 Prop::TR(set) => set
                     .iter()
-                    .for_each(|p| gs.marks[x(p)][y(p)] = Some(Triangle)),
-                Prop::MA(set) => set.iter().for_each(|p| gs.marks[x(p)][y(p)] = Some(Cross)),
+                    .for_each(|p| mov.marks.push((x(p), y(p), Triangle))),
+                Prop::MA(set) => set.iter().for_each(|p| mov.marks.push((x(p), y(p), Cross))),
                 Prop::TB(set) => set
                     .iter()
-                    .for_each(|p| gs.marks[x(p)][y(p)] = Some(BlackTerritory)),
+                    .for_each(|p| mov.marks.push((x(p), y(p), BlackTerritory))),
                 Prop::TW(set) => set
                     .iter()
-                    .for_each(|p| gs.marks[x(p)][y(p)] = Some(WhiteTerritory)),
+                    .for_each(|p| mov.marks.push((x(p), y(p), WhiteTerritory))),
                 Prop::LB(dict) => dict
                     .iter()
-                    .for_each(|(p, cmt)| gs.marks[x(p)][y(p)] = Some(Label(cmt.to_string()))),
-                Prop::CR(set) => set.iter().for_each(|p| gs.marks[x(p)][y(p)] = Some(Circle)),
+                    .for_each(|(p, cmt)| mov.marks.push((x(p), y(p), Label(cmt.to_string())))),
+                Prop::CR(set) => set
+                    .iter()
+                    .for_each(|p| mov.marks.push((x(p), y(p), Circle))),
                 Prop::N(text) => {
-                    comment = format!(
-                        "{}{}{}",
-                        text,
-                        if comment.is_empty() { "" } else { " " },
-                        comment
-                    )
+                    if text.text == "Correct" {
+                        mov.variant = Variant::Correct
+                    } else if text.text == "Incorrect" {
+                        mov.variant = Variant::Incorrect
+                    } else {
+                        println!("{}", text.text);
+                        mov.comment = format!(
+                            "{}{}{}",
+                            text,
+                            if mov.comment.is_empty() { "" } else { " " },
+                            mov.comment
+                        )
+                    }
                 }
                 Prop::C(text) => {
-                    comment = format!(
+                    mov.comment = format!(
                         "{}{}{}",
-                        comment,
-                        if comment.is_empty() { "" } else { " " },
+                        mov.comment,
+                        if mov.comment.is_empty() { "" } else { " " },
                         text
                     )
                 }
                 Prop::PL(color) => {
-                    initial_color = if *color == sgf_parse::Color::Black {
-                        Black
-                    } else {
+                    mov.color = if *color == sgf_parse::Color::Black {
                         White
+                    } else {
+                        Black
                     }
                 }
                 Prop::GN(game_name) => {
@@ -97,12 +110,7 @@ pub fn sgf_to_problem(mut start: SgfNode<Prop>) -> Problem {
         }
     }
 
-    let mut table = vec![vec![Some(Move {
-        loc: None,
-        comment,
-        color: initial_color,
-        ..Move::default()
-    })]];
+    let mut table = vec![vec![Some(mov)]];
     let mut first_loop = true;
     let mut i = 0;
     let mut stack: Vec<(SgfNode<Prop>, usize)> = vec![(start, 1)];
@@ -205,7 +213,8 @@ pub fn sgf_to_problem(mut start: SgfNode<Prop>) -> Problem {
     }
 
     Problem {
-        initial: gs,
+        initial_black,
+        initial_white,
         id,
         table,
         window: (min_row, max_row, min_col, max_col),
@@ -246,7 +255,7 @@ impl NodeBuilder {
             self.other_props.push(Prop::AB(self.add_black))
         };
         if !self.add_white.is_empty() {
-            self.other_props.push(Prop::AB(self.add_white))
+            self.other_props.push(Prop::AW(self.add_white))
         };
         if !self.black_territory.is_empty() {
             self.other_props.push(Prop::TB(self.black_territory))
@@ -300,52 +309,57 @@ pub fn problem_to_sgf(problem: &Problem) -> SgfNode<Prop> {
         }),
     ]);
 
-    for i in 1..19 {
-        for j in 1..19 {
-            match problem.initial.stones[i][j] {
-                Some(Black) => {
-                    start.add_black.insert(pt(i, j));
-                }
-                Some(White) => {
-                    start.add_white.insert(pt(i, j));
-                }
-                _ => {}
-            };
-            match problem.initial.marks[i][j] {
-                Some(Circle) => {
-                    start.circle.insert(pt(i, j));
-                }
-                Some(Square) => {
-                    start.square.insert(pt(i, j));
-                }
-                Some(Triangle) => {
-                    start.triangle.insert(pt(i, j));
-                }
-                Some(Cross) => {
-                    start.cross.insert(pt(i, j));
-                }
-                Some(BlackTerritory) => {
-                    start.black_territory.insert(pt(i, j));
-                }
-                Some(WhiteTerritory) => {
-                    start.white_territory.insert(pt(i, j));
-                }
-                Some(Label(ref str)) => {
-                    start
-                        .label
-                        .insert((pt(i, j), SimpleText { text: str.clone() }));
-                }
-                None => {}
-            }
-        }
+    for &(i, j) in problem.initial_black.iter() {
+        start.add_black.insert(pt(i, j));
+    }
+    for &(i, j) in problem.initial_white.iter() {
+        start.add_white.insert(pt(i, j));
     }
 
     let first_move: &Move = problem.table[0][0].as_ref().unwrap();
+
+    for mark in first_move.marks.iter() {
+        match *mark {
+            (i, j, Circle) => {
+                start.circle.insert(pt(i, j));
+            }
+            (i, j, Square) => {
+                start.square.insert(pt(i, j));
+            }
+            (i, j, Triangle) => {
+                start.triangle.insert(pt(i, j));
+            }
+            (i, j, Cross) => {
+                start.cross.insert(pt(i, j));
+            }
+            (i, j, BlackTerritory) => {
+                start.black_territory.insert(pt(i, j));
+            }
+            (i, j, WhiteTerritory) => {
+                start.white_territory.insert(pt(i, j));
+            }
+            (i, j, Label(ref str)) => {
+                start
+                    .label
+                    .insert((pt(i, j), SimpleText { text: str.clone() }));
+            }
+        }
+    }
 
     if !first_move.comment.is_empty() {
         start.other_props.push(Prop::C(Text {
             text: first_move.comment.clone(),
         }));
+    }
+
+    match first_move.variant {
+        Variant::Correct => start.other_props.push(Prop::N(SimpleText {
+            text: "Correct".to_owned(),
+        })),
+        Variant::Incorrect => start.other_props.push(Prop::N(SimpleText {
+            text: "Incorrect".to_owned(),
+        })),
+        _ => {}
     }
 
     start

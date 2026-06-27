@@ -28,17 +28,13 @@ pub fn other_color(c: Color) -> Color {
     }
 }
 
-#[derive(Clone, Serialize, Deserialize, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub struct GameState {
     pub stones: [[Option<Color>; 21]; 21],
 
-    #[serde(default, skip_serializing)]
     pub captures: (usize, usize),
-    #[serde(default, skip_serializing)]
     pub ko: Option<(usize, usize)>,
-    #[serde(default, skip_serializing)]
     pub marks: [[Option<Mark>; 21]; 21],
-    #[serde(default, skip_serializing)]
     pub numbers: [[Option<usize>; 21]; 21],
 }
 

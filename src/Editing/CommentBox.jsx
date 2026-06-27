@@ -40,23 +40,32 @@ export default (props) => {
       }}
       elevation={10}
     >
-      <TextField
-        placeholder="Comment"
-        multiline
-        value={context.data?.comment ?? ""}
-        onChange={(e) => {
-          console.log(e.target.value);
-          invoke("comment", {
-            comment: e.target.value,
-          })
-            .then(() => invoke("get_data"))
-            .then((data) => {
-              context.setData(data);
-            });
-        }}
-        sx={{ display: "flex", flexGrow: 1 }}
-        slotProps={{ input: { sx: { height: "100%", alignItems: "start" } } }}
-      />
+      {
+        <TextField
+          placeholder="Comment"
+          multiline
+          variant="standard"
+          value={context.data?.comment ?? ""}
+          onChange={(e) => {
+            e.preventDefault();
+            console.log(e.target.value);
+            invoke("comment", {
+              comment: e.target.value,
+            })
+              .then(() => invoke("get_data"))
+              .then((data) => {
+                context.setData(data);
+              });
+          }}
+          sx={{
+            display: "flex",
+            flexGrow: 1,
+
+            "& .MuiInputBase-root": { padding: "10pt" },
+          }}
+          slotProps={{ input: { sx: { height: "100%", alignItems: "start" } } }}
+        />
+      }
     </Paper>
   );
 };

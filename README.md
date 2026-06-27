@@ -2,33 +2,29 @@ Remaining Goals
 ---------------
 
   - timeline:
-    - fuck it, maybe it won't be done in the summer.
+    - ok, maybe it won't be done in the summer.
 
-- fix initial marks situation:
-  - initial game state shouldn't contain any marks.
-  - NO:  - serde ignore + default.
-    -  GameState shouldn't have a default serialize implementation (!?)
-
-  - Convert Problem to have a vec of black stones, a vec of white stones.
-  - Need to rewrite:
-    - save, finish setup.
-    - marks, comment should be stored in first move.
-  - consider snapshot ~> location.
-
-- app performance, especially with:
+  !- app performance, especially with:
     - spam marks / place stone:
       - do some bs  on frontend + send only one command on DragEnd or whatever
       - slider: ?? maybe same with svg viewport?
-    - apply vite suggestions for smaller bundle
+      - typing comments
 
+    - maybe stop taking in all new data at all times
+      - maybe a lot of front end state should no longer be tied to data.game. ...
+    - apply vite suggestions for smaller bundle
+  - consider snapshot ~> location.
+
+  - multiple spaces in file names?
 
   (-) Actually make a good flashcard set and use this to study.
 
+  - comment box is bad and should be shared between edit and study
 
   - UI Overhaul
       - check tablet for design ideas
         -> Study: Guess, View (mobile, desktop)
-        -> Edit: Initialize, MakeTree (mobile, desktop)
+        -> Edit: Initialize, MakeTree (mobile, desktop) - tooltips on buttons
         -> MainMenu (mobile)
 
         -- This should be like 95%
@@ -57,6 +53,7 @@ Remaining Goals
       - android file situation
 
   - black territory, white territory marks
+    - input with drag?
   - sometimes show next moves on board (color based on variant, who plays first?)
 
   - all the lines look too thick for 1080p?
@@ -82,8 +79,6 @@ Remaining Goals
     - front end may be especially messy
     - Look over console.log's. Use it maybe but consistent, only for useful things
     - consistent error handling, esp. in the backend. Result vs. panic
-
-  
 
 - Consider.
 

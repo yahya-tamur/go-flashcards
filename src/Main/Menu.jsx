@@ -43,7 +43,7 @@ export default (props) => {
   const [newExercise, setNewExercise] = useState("");
 
   const exercise_name_invalid = (s) =>
-    /[\u{0000}-\u{0008}]|[\u{000A}-\u{001F}]|\u{007F}/u.test(s);
+    /\/|\\|[\u{0000}-\u{0008}]|[\u{000A}-\u{001F}]|\u{007F}/u.test(s);
 
   return (
     <Paper
