@@ -55,18 +55,28 @@ export default (props) => {
         }}
       >
         <Slider
-          value={context.data?.window.slice(0, 2) ?? [0, 18]}
+          value={context.window.slice(0, 2)}
           marks
-          onChange={async (event, newValue) => {
+          onChange={(e) => {
+            let [a, b] = e.target.value;
+            if (a !== context.window[0] || b !== context.window[1]) {
+              context.setWindow([a, b, context.window[2], context.window[3]]);
+            }
+          }}
+          onChangeCommitted={async (event, newValue) => {
             if (context.data === null || context.data === undefined) {
               return;
             }
 
-            let [row_start, row_end] = newValue;
-            let [col_start, col_end] = context.data.window.slice(2, 4);
-
+            if (
+              context.window.every(
+                (value, index) => context.data.window[index] === value,
+              )
+            ) {
+              return;
+            }
             await invoke("set_window", {
-              window: [row_start, row_end, col_start, col_end],
+              window: context.window,
             })
               .then(() => invoke("get_data"))
               .then((data) => {
@@ -87,18 +97,28 @@ export default (props) => {
           sx={{ margin: "5px 30px", width: "calc(100% - 60px)" }}
         />
         <Slider
-          value={context.data?.window.slice(2, 4) ?? [0, 18]}
+          value={context.window.slice(2, 4)}
           marks
-          onChange={async (event, newValue) => {
+          onChange={(e) => {
+            let [a, b] = e.target.value;
+            if (a !== context.window[2] || b !== context.window[3]) {
+              context.setWindow([context.window[0], context.window[1], a, b]);
+            }
+          }}
+          onChangeCommitted={async (event, newValue) => {
             if (context.data === null || context.data === undefined) {
               return;
             }
 
-            let [row_start, row_end] = context.data.window.slice(0, 2);
-            let [col_start, col_end] = newValue;
-
+            if (
+              context.window.every(
+                (value, index) => context.data.window[index] === value,
+              )
+            ) {
+              return;
+            }
             await invoke("set_window", {
-              window: [row_start, row_end, col_start, col_end],
+              window: context.window,
             })
               .then(() => invoke("get_data"))
               .then((data) => {

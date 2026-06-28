@@ -72,15 +72,6 @@ async fn set_window(
 }
 
 #[tauri::command]
-async fn try_set_window(
-    state: tauri::State<'_, Mutex<AppData>>,
-    window: (usize, usize, usize, usize),
-) -> Result<(), String> {
-    apply_to_move_tree(state, |move_tree, _| move_tree.try_set_window(window)).await;
-    Ok(())
-}
-
-#[tauri::command]
 async fn play(
     state: tauri::State<'_, Mutex<AppData>>,
     loc: Option<(usize, usize)>,
@@ -422,7 +413,6 @@ pub fn run() {
             list_studies,
             main_menu,
             set_window,
-            try_set_window,
             load_study,
             answer,
             get_history,

@@ -6,7 +6,7 @@ import Board from "../Board";
 import Tree from "../Tree";
 import InitializeMenu from "../InitializeMenu";
 import MakeTreeMenu from "../MakeTreeMenu";
-import CommentBox from "./CommentBox";
+import CommentBox from "../CommentBox";
 import TopBar from "./TopBar";
 import "../App.css";
 import AppContext from "../AppContext";

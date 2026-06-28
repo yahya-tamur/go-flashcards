@@ -56,4 +56,41 @@ impl MoveTree {
             c
         }
     }
+
+    pub fn send_window(
+        &self,
+        window: (usize, usize, usize, usize),
+    ) -> (usize, usize, usize, usize) {
+        let (mut row_start, mut row_end, mut col_start, mut col_end) = window;
+
+        (row_start, col_start) = self.send(row_start, col_start);
+        (row_end, col_end) = self.send(row_end, col_end);
+
+        if row_start > row_end {
+            (row_start, row_end) = (row_end, row_start);
+        }
+        if col_start > col_end {
+            (col_start, col_end) = (col_end, col_start);
+        }
+        (row_start, row_end, col_start, col_end)
+    }
+
+    pub fn recv_window(
+        &self,
+        window: (usize, usize, usize, usize),
+    ) -> (usize, usize, usize, usize) {
+        let (mut row_start, mut row_end, mut col_start, mut col_end) = window;
+
+        (row_start, col_start) = self.recv(row_start, col_start);
+        (row_end, col_end) = self.recv(row_end, col_end);
+
+        if row_start > row_end {
+            (row_start, row_end) = (row_end, row_start);
+        }
+        if col_start > col_end {
+            (col_start, col_end) = (col_end, col_start);
+        }
+
+        (row_start, row_end, col_start, col_end)
+    }
 }

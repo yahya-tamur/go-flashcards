@@ -1,14 +1,24 @@
-Remaining Goals
----------------
-
-  - timeline:
-    - ok, maybe it won't be done in the summer.
-
+Current:
+----------------
   !- app performance, especially with:
     - spam marks / place stone:
       - do some bs  on frontend + send only one command on DragEnd or whatever
-      - slider: ?? maybe same with svg viewport?
-      - typing comments
+    
+---------------------
+In progress notes: 
+  - only redraw stones or marks if those have changed. (instead of context.data)
+  - also do blackterritory, white territory with rectangle?
+
+  - ok, ok, but the app is still very unresponsive. just moving mouse around or clicking
+    nodes on tree is too slow.
+    - seems to depend on laptop plugged in vs. not, but it shouldn' be slow even when not
+      plugged in.
+
+
+Remaining Goals
+---------------
+  - timeline:
+    - ok, maybe it won't be done in the summer.
 
     - maybe stop taking in all new data at all times
       - maybe a lot of front end state should no longer be tied to data.game. ...

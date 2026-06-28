@@ -107,108 +107,127 @@ export default (props) => {
 
         <ButtonGroup variant="contained" size="small">
           <Tooltip title="delete exercise">
-            <IconButton
-              size="small"
-              disabled={context.editingPhase === "Initialize"}
-              onClick={async () => {
-                invoke("delete_exercise")
-                  .then(() => invoke("get_data"))
-                  .then((data) => {
-                    if (data.table.length === 1 && data.table[0].length === 1) {
-                      context.setEditingPhase("Initialize");
-                    } else {
-                      context.setEditingPhase("MakeTree");
-                    }
-                    context.setData(data);
-                    context.setCursor(
-                      data.color === "Black" ? "White" : "Black",
-                    );
-                  });
-              }}
-            >
-              <ClearIcon color="error" />
-            </IconButton>
+            <span>
+              <IconButton
+                size="small"
+                disabled={context.editingPhase === "Initialize"}
+                onClick={async () => {
+                  invoke("delete_exercise")
+                    .then(() => invoke("get_data"))
+                    .then((data) => {
+                      if (
+                        data.table.length === 1 &&
+                        data.table[0].length === 1
+                      ) {
+                        context.setEditingPhase("Initialize");
+                      } else {
+                        context.setEditingPhase("MakeTree");
+                      }
+                      context.setData(data);
+                      context.setCursor(
+                        data.color === "Black" ? "White" : "Black",
+                      );
+                    });
+                }}
+              >
+                <ClearIcon color="error" />
+              </IconButton>
+            </span>
           </Tooltip>
           <Tooltip title="insert new exercise">
-            <IconButton
-              disabled={context.editingPhase === "Initialize"}
-              onClick={async () => {
-                invoke("new_exercise", { insert: true })
-                  .then(() => invoke("get_data"))
-                  .then((data) => {
-                    context.setData(data);
-                    context.setCursor("Black");
-                    context.setEditingPhase("Initialize");
-                  });
-              }}
-            >
-              <KeyboardArrowDownOutlinedIcon />
-            </IconButton>
+            <span>
+              {" "}
+              <IconButton
+                disabled={context.editingPhase === "Initialize"}
+                onClick={async () => {
+                  invoke("new_exercise", { insert: true })
+                    .then(() => invoke("get_data"))
+                    .then((data) => {
+                      context.setData(data);
+                      context.setCursor("Black");
+                      context.setEditingPhase("Initialize");
+                    });
+                }}
+              >
+                <KeyboardArrowDownOutlinedIcon />
+              </IconButton>
+            </span>
           </Tooltip>
 
           <Tooltip title="new exercise">
-            <IconButton
-              disabled={context.editingPhase === "Initialize"}
-              onClick={async () => {
-                invoke("new_exercise", { insert: false })
-                  .then(() => invoke("get_data"))
-                  .then((data) => {
-                    context.setData(data);
-                    context.setCursor("Black");
-                    context.setEditingPhase("Initialize");
-                  });
-              }}
-            >
-              <KeyboardArrowRightOutlinedIcon />
-            </IconButton>
+            <span>
+              {" "}
+              <IconButton
+                disabled={context.editingPhase === "Initialize"}
+                onClick={async () => {
+                  invoke("new_exercise", { insert: false })
+                    .then(() => invoke("get_data"))
+                    .then((data) => {
+                      context.setData(data);
+                      context.setCursor("Black");
+                      context.setEditingPhase("Initialize");
+                    });
+                }}
+              >
+                <KeyboardArrowRightOutlinedIcon />
+              </IconButton>
+            </span>
           </Tooltip>
         </ButtonGroup>
 
         <ButtonGroup size="small">
           <Tooltip title="import one from sgf">
-            <IconButton
-              variant="contained"
-              onClick={async () => {
-                invoke("import_sgf")
-                  .then(() => invoke("get_data"))
-                  .then((data) => {
-                    if (data.table.length === 1 && data.table[0].length === 1) {
-                      context.setEditingPhase("Initialize");
-                    } else {
-                      context.setEditingPhase("MakeTree");
-                    }
-                    context.setData(data);
-                    context.setCursor(
-                      data.color === "Black" ? "White" : "Black",
-                    );
-                  })
-                  .catch((e) => {
-                    console.log(e);
-                  });
-              }}
-            >
-              <DownloadIcon />
-            </IconButton>
+            <span>
+              <IconButton
+                variant="contained"
+                onClick={async () => {
+                  invoke("import_sgf")
+                    .then(() => invoke("get_data"))
+                    .then((data) => {
+                      if (
+                        data.table.length === 1 &&
+                        data.table[0].length === 1
+                      ) {
+                        context.setEditingPhase("Initialize");
+                      } else {
+                        context.setEditingPhase("MakeTree");
+                      }
+                      context.setData(data);
+                      context.setCursor(
+                        data.color === "Black" ? "White" : "Black",
+                      );
+                    })
+                    .catch((e) => {
+                      console.log(e);
+                    });
+                }}
+              >
+                <DownloadIcon />
+              </IconButton>
+            </span>
           </Tooltip>
 
           <Tooltip title="export all to sgf">
-            <IconButton
-              label="export"
-              variant="contained"
-              onClick={async () => {
-                invoke("export_sgf")
-                  .then(() => {
-                    setDialogContent("Exported to sgf, under app_data/sgf.");
-                    setSavedMsgOpen(true);
-                    console.log(context.data);
-                  })
-                  .catch((e) => {
-                    console.log(e);
-                  });
-              }}
-            >
-              <FileUploadIcon />
-            </IconButton>
+            <span>
+              {" "}
+              <IconButton
+                label="export"
+                variant="contained"
+                onClick={async () => {
+                  invoke("export_sgf")
+                    .then(() => {
+                      setDialogContent("Exported to sgf, under app_data/sgf.");
+                      setSavedMsgOpen(true);
+                      console.log(context.data);
+                    })
+                    .catch((e) => {
+                      console.log(e);
+                    });
+                }}
+              >
+                <FileUploadIcon />
+              </IconButton>
+            </span>
           </Tooltip>
         </ButtonGroup>
         <Button

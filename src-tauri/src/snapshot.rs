@@ -34,6 +34,7 @@ pub struct Snapshot {
     pub current_location: usize,
     pub max_location: usize,
     pub window: (usize, usize, usize, usize),
+    pub min_window: Option<(usize, usize, usize, usize)>,
 }
 
 impl MoveTree {
@@ -42,18 +43,6 @@ impl MoveTree {
     pub fn snapshot(&self, loc: (usize, usize)) -> Snapshot {
         let (row, col) = self.tree_loc;
         let current_move = self.current();
-
-        let (mut row_start, mut row_end, mut col_start, mut col_end) = self.problem.window;
-
-        (row_start, col_start) = self.send(row_start, col_start);
-        (row_end, col_end) = self.send(row_end, col_end);
-
-        if row_start > row_end {
-            (row_start, row_end) = (row_end, row_start);
-        }
-        if col_start > col_end {
-            (col_start, col_end) = (col_end, col_start);
-        }
 
         let table = self
             .problem
@@ -82,7 +71,8 @@ impl MoveTree {
             variant: current_move.variant,
             current_location: loc.0,
             max_location: loc.1,
-            window: (row_start, row_end, col_start, col_end),
+            window: self.send_window(self.problem.window),
+            min_window: self.min_window().map(|w| self.send_window(w)),
         }
     }
 

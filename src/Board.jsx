@@ -48,6 +48,15 @@ export default (props) => {
   const partial = 70; // dots for partial board.
   const partial_border = 0; // border from partial edges
 
+  useEffect(() => {
+    if (
+      context.data !== null &&
+      !context.window.every((val, index) => context.data.window[index] === val)
+    ) {
+      context.setWindow(context.data.window);
+    }
+  }, [context.data]);
+
   const get_coord = (e) => {
     if (
       board_svg.current === null ||
@@ -71,7 +80,7 @@ export default (props) => {
     i = (i - margin) / square_size;
     j = (j - margin) / square_size;
 
-    let [left, right, top, bottom] = context.data.window;
+    let [left, right, top, bottom] = context.window;
 
     // correction for partial boards
     i += left + (left > 0 ? -partial_border / square_size : 0);
@@ -260,7 +269,7 @@ export default (props) => {
     ) {
       return return_val;
     }
-    let [left, right, top, bottom] = context.data?.window ?? [0, 18, 0, 18];
+    let [left, right, top, bottom] = context.window;
 
     createSVGElement(
       "rect",
@@ -302,7 +311,7 @@ export default (props) => {
         }
       }
     }
-  }, [labelmask, context.data, context.cursor, ghost]);
+  }, [labelmask, context.data, context.cursor, ghost, context.window]);
 
   useEffect(() => {
     let return_val = () => {
@@ -312,31 +321,13 @@ export default (props) => {
     };
 
     if (
-      labelmask.current === null ||
+      gridcontainer.current === null ||
       context.data === null ||
       context.data === undefined
     ) {
       return return_val;
     }
-    let [left, right, top, bottom] = context.data?.window ?? [0, 18, 0, 18];
-
-    // Offset viewBox.
-
-    //maybe add bigger margin for edges or letters on every side
-    setViewBoxLeft(square_size * left + (left > 0 ? -partial_border : 0));
-    setViewBoxTop(square_size * top + (top > 0 ? -partial_border : 0));
-    setViewBoxWidth(
-      2 * margin +
-        (right - left) * square_size +
-        (left > 0 ? partial_border : 0) +
-        (right < 18 ? partial_border : 0),
-    );
-    setViewBoxHeight(
-      2 * margin +
-        (bottom - top) * square_size +
-        (top > 0 ? partial_border : 0) +
-        (bottom < 18 ? partial_border : 0),
-    );
+    let [left, right, top, bottom] = context.window;
 
     let stroke_width = 5;
 
@@ -482,7 +473,7 @@ export default (props) => {
     }
 
     return return_val;
-  }, [gridcontainer, context.data]);
+  }, [gridcontainer, context.window]);
 
   // draws circles
   useEffect(() => {
@@ -499,7 +490,7 @@ export default (props) => {
     ) {
       return return_val;
     }
-    let [left, right, top, bottom] = context.data.window;
+    let [left, right, top, bottom] = context.window;
 
     for (let i = left; i <= right; i++) {
       for (let j = top; j <= bottom; j++) {
@@ -557,7 +548,7 @@ export default (props) => {
     }
 
     return return_val;
-  }, [context.data, stonecontainer]);
+  }, [context.data, stonecontainer, context.window]);
 
   // creates ghost
 
@@ -618,6 +609,28 @@ export default (props) => {
     if (paper.current === null) {
       return;
     }
+
+    let [left, right, top, bottom] = context.window;
+
+    // Offset viewBox.
+
+    //maybe add bigger margin for edges or letters on every side
+    setViewBoxLeft(square_size * left + (left > 0 ? -partial_border : 0));
+    setViewBoxTop(square_size * top + (top > 0 ? -partial_border : 0));
+    let vbwidth =
+      2 * margin +
+      (right - left) * square_size +
+      (left > 0 ? partial_border : 0) +
+      (right < 18 ? partial_border : 0);
+    let vbheight =
+      2 * margin +
+      (bottom - top) * square_size +
+      (top > 0 ? partial_border : 0) +
+      (bottom < 18 ? partial_border : 0);
+
+    setViewBoxHeight(vbheight);
+    setViewBoxWidth(vbwidth);
+
     const observer = new ResizeObserver(() => {
       if (paper.current === null) {
         return;
@@ -631,19 +644,18 @@ export default (props) => {
         let [width, height] = current_size;
 
         let ratio = Math.min(
-          (height - 2 * 20) / viewBoxHeight,
-          (width - 2 * 20) / viewBoxWidth,
+          (height - 2 * 20) / vbheight,
+          (width - 2 * 20) / vbwidth,
         );
-        let new_board_size = Math.min(...current_size) - 40;
-        setBoardBoxHeight(`${viewBoxHeight * ratio}px`);
-        setBoardBoxWidth(`${viewBoxWidth * ratio}px`);
+        setBoardBoxHeight(`${vbheight * ratio}px`);
+        setBoardBoxWidth(`${vbwidth * ratio}px`);
       }
     });
     observer.observe(paper.current);
     return () => {
       observer.disconnect();
     };
-  }, [paper, viewBoxHeight, viewBoxWidth]);
+  }, [paper, context.window]);
 
   const [mouseDown, setMouseDown] = useState(false);
 

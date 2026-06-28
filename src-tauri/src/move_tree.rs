@@ -258,26 +258,10 @@ impl MoveTree {
     }
 
     pub fn set_window(&mut self, window: (usize, usize, usize, usize)) {
-        let (mut row_start, mut row_end, mut col_start, mut col_end) = window;
-
-        (row_start, col_start) = self.recv(row_start, col_start);
-        (row_end, col_end) = self.recv(row_end, col_end);
-
-        if row_start > row_end {
-            (row_start, row_end) = (row_end, row_start);
-        }
-        if col_start > col_end {
-            (col_start, col_end) = (col_end, col_start);
-        }
+        let (row_start, row_end, col_start, col_end) = self.recv_window(window);
 
         let out_of_bounds = |r, c| r > row_end || r < row_start || c < col_start || c > col_end;
-
         self.problem.window = (row_start, row_end, col_start, col_end);
-
-        println!(
-            "{}: {:?} {} {} {} {}",
-            self.orientation, self.problem.window, row_start, row_end, col_start, col_end
-        );
 
         for i in 0..21 {
             for j in 0..21 {
@@ -289,48 +273,43 @@ impl MoveTree {
         }
     }
 
-    pub fn try_set_window(&mut self, window: (usize, usize, usize, usize)) {
-        let (mut row_start, mut row_end, mut col_start, mut col_end) = window;
-
-        (row_start, col_start) = self.recv(row_start, col_start);
-        (row_end, col_end) = self.recv(row_end, col_end);
-
-        if row_start > row_end {
-            (row_start, row_end) = (row_end, row_start);
-        }
-        if col_start > col_end {
-            (col_start, col_end) = (col_end, col_start);
-        }
-
-        let out_of_bounds = |r, c| r > row_end || r < row_start || c < col_start || c > col_end;
+    pub fn min_window(&self) -> Option<(usize, usize, usize, usize)> {
+        let (mut min_row, mut max_row, mut min_col, mut max_col) = (19, 1, 19, 1);
 
         for &(i, j) in self.problem.initial_black.iter() {
-            if out_of_bounds(i, j) {
-                return;
-            }
+            min_row = min_row.min(i);
+            max_row = max_row.max(i);
+            min_col = min_col.min(j);
+            max_col = max_col.max(j);
         }
         for &(i, j) in self.problem.initial_white.iter() {
-            if out_of_bounds(i, j) {
-                return;
-            }
+            min_row = min_row.min(i);
+            max_row = max_row.max(i);
+            min_col = min_col.min(j);
+            max_col = max_col.max(j);
         }
 
         for line in self.problem.table.iter() {
             for mov in line.iter().flatten() {
                 if let Some((i, j)) = mov.loc {
-                    if out_of_bounds(i, j) {
-                        return;
-                    }
+                    min_row = min_row.min(i);
+                    max_row = max_row.max(i);
+                    min_col = min_col.min(j);
+                    max_col = max_col.max(j);
                 }
                 for &(i, j, ref _mark) in mov.marks.iter() {
-                    if out_of_bounds(i, j) {
-                        return;
-                    }
+                    min_row = min_row.min(i);
+                    max_row = max_row.max(i);
+                    min_col = min_col.min(j);
+                    max_col = max_col.max(j);
                 }
             }
         }
-
-        self.set_window(window);
+        if min_row <= max_row {
+            Some((min_row, max_row, min_col, max_col))
+        } else {
+            None
+        }
     }
 
     fn signature(&self) -> u64 {
