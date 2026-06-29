@@ -21,7 +21,6 @@ export default (props) => {
   let context = useContext(AppContext);
   const [comment, setComment] = useState("");
   useEffect(() => {
-    console.log(context.data?.comment ?? "no data");
     if (context.data?.comment ?? null !== null) {
       setComment(context.data.comment);
     }

@@ -136,6 +136,54 @@ export default (props) => {
 
   const [clickable, setClickable] = useState(true);
 
+  const [dragSet, setDragSet] = useState((() => []));
+
+  const dragEnd = () => {
+    if (dragSet.length === 0) {
+      return;
+    }
+      if (
+      context.cursor === "Black" ||
+      context.cursor === "White" ||
+      context.cursor === "Delete"
+    ) {
+        invoke("place_stone", {
+          locs: dragSet.map(JSON.parse),
+          color: { Black: "Black", White: "White" }[context.cursor],
+        })
+          .then(() => invoke("get_data"))
+          .then((data) => {
+              context.setData(data);
+              setDragSet([]);
+          })
+          .catch((e) => {
+            console.log(e);
+          })
+          .finally(() => setClickable(true));
+
+        } else {
+
+      invoke("set_mark", {
+        locs: dragSet.map(JSON.parse),
+        mark:
+          context.cursor === "DeleteMark"
+            ? undefined
+            : context.cursor === "Label"
+              ? { Label: context.nextLabel }
+              : context.cursor,
+      })
+        .then(() => invoke("get_data"))
+        .then((data) => {
+              context.setData(data);
+              setDragSet([]);
+          })
+        .catch((e) => {
+          console.log(e);
+        })
+        .finally(() => setClickable(true));
+      }
+  };
+
   const click = (w) => {
     if (!clickable) {
       return;
@@ -150,24 +198,12 @@ export default (props) => {
         (context.phase === "Editing" || context.studyPhase === "Edit") &&
         context.editingPhase === "Initialize"
       ) {
-        invoke("place_stone", {
-          i: w[0],
-          j: w[1],
-          color: { Black: "Black", White: "White" }[context.cursor],
-        })
-          .then(() => invoke("get_data"))
-          .then((data) => {
-            if (
-              context.data.game.stones[w[0]][w[1]] !==
-              data.game.stones[w[0]][w[1]]
-            ) {
-              context.setData(data);
-            }
-          })
-          .catch((e) => {
-            console.log(e);
-          })
-          .finally(() => setClickable(true));
+        context.data.game.stones[w[0]][w[1]] = context.cursor === "Delete" ? null : context.cursor;
+        let ws = JSON.stringify(w);
+        if (!dragSet.includes(ws)) {
+          setDragSet(oldSet => [...oldSet, ws]);
+        }
+        setClickable(true);
       } else {
         invoke("play", {
           loc: [w[0], w[1]],
@@ -230,28 +266,19 @@ export default (props) => {
           .finally(() => setClickable(true));
       }
     } else {
-      invoke("set_mark", {
-        i: w[0],
-        j: w[1],
-        mark:
-          context.cursor === "DeleteMark"
-            ? undefined
+
+      context.data.game.marks[w[0]][w[1]] = context.cursor === "DeleteMark"
+            ? null
             : context.cursor === "Label"
               ? { Label: context.nextLabel }
-              : context.cursor,
-      })
-        .then(() => invoke("get_data"))
-        .then((data) => {
-          if (
-            context.data.game.marks[w[0]][w[1]] !== data.game.marks[w[0]][w[1]]
-          ) {
-            context.setData(data);
-          }
-        })
-        .catch((e) => {
-          console.log(e);
-        })
-        .finally(() => setClickable(true));
+              : context.cursor;
+
+        let ws = JSON.stringify(w);
+        if (!dragSet.includes(ws)) {
+          setDragSet(oldSet => [...oldSet, ws]);
+        }
+        setClickable(true);
+
     }
   };
 
@@ -311,7 +338,7 @@ export default (props) => {
         }
       }
     }
-  }, [labelmask, context.data, context.cursor, ghost, context.window]);
+  }, [labelmask, context.data, context.cursor, ghost, context.window, dragSet]);
 
   useEffect(() => {
     let return_val = () => {
@@ -548,7 +575,7 @@ export default (props) => {
     }
 
     return return_val;
-  }, [context.data, stonecontainer, context.window]);
+  }, [context.data, stonecontainer, context.window, dragSet]);
 
   // creates ghost
 
@@ -721,6 +748,7 @@ export default (props) => {
           }}
           onMouseUp={() => {
             setMouseDown(false);
+            dragEnd();
           }}
           onMouseMove={async (e) => {
             const w = get_coord(e);
@@ -761,10 +789,12 @@ export default (props) => {
               return;
             }
             click(w);
+            dragEnd();
           }}
           onMouseLeave={() => {
             setGhost(null);
             setMouseDown(false);
+            dragEnd();
           }}
         >
           <defs>

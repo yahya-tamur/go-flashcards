@@ -1,35 +1,31 @@
-Current:
+Current Status
+------------------
+  - ok, maybe it won't be done in the summer.
+
+Current Item in progress
 ----------------
   !- app performance, especially with:
     - spam marks / place stone:
       - do some bs  on frontend + send only one command on DragEnd or whatever
     
----------------------
-In progress notes: 
-  - only redraw stones or marks if those have changed. (instead of context.data)
-  - also do blackterritory, white territory with rectangle?
+Notes
+--------------
+  - use drag rectangles for black territory, white territory, delete mark
+    - will need actual buttons
+    - will need ghost icons.
 
-  - ok, ok, but the app is still very unresponsive. just moving mouse around or clicking
-    nodes on tree is too slow.
-    - seems to depend on laptop plugged in vs. not, but it shouldn' be slow even when not
-      plugged in.
+  - small rethink of menu layout:
+    - less tall tree view with smaller stones
+    - redo label logic + separate button from text input.
+      - just if label was a capital letter, increment it.
+        - unless there's already >= 2 of that letter.
 
+   - apply vite suggestions for smaller bundle
 
 Remaining Goals
 ---------------
-  - timeline:
-    - ok, maybe it won't be done in the summer.
-
-    - maybe stop taking in all new data at all times
-      - maybe a lot of front end state should no longer be tied to data.game. ...
-    - apply vite suggestions for smaller bundle
-  - consider snapshot ~> location.
-
-  - multiple spaces in file names?
 
   (-) Actually make a good flashcard set and use this to study.
-
-  - comment box is bad and should be shared between edit and study
 
   - UI Overhaul
       - check tablet for design ideas
@@ -39,7 +35,6 @@ Remaining Goals
 
         -- This should be like 95%
 
-      - less tall tree view with smaller stones
       - captures? no?
       
       - Histogram
@@ -53,17 +48,25 @@ Remaining Goals
         - popups on save?
         - popups on correct / incorrect?
         - next button? 
-
-      - more options in export to sgf
       
       - number spinner is too wide
 
-    - phone app
-      - phone ui
-      - android file situation
+  - phone app
+    - phone ui
+    - android file situation
 
-  - black territory, white territory marks
-    - input with drag?
+  - Customizable algorithm
+    - new bucket for mistakes in last 3?
+    - add to config
+    - add total number correct, and shorten history?
+      - ex. once you get a question right 5 times, it's
+        as correct as it'll ever be.
+      - boxes for <10 times correct, <50 times correct, <0infty times correct,
+
+
+
+Small things that come to mind:
+-----------------
   - sometimes show next moves on board (color based on variant, who plays first?)
 
   - all the lines look too thick for 1080p?
@@ -72,37 +75,52 @@ Remaining Goals
 
   - buttons to type marks in comments?
 
-  
+  - copy comment from root node, not current node on collapse
+    
   - Add to config:
     - custom art per flashcard set.
         - expose config to frontend =>
           - put number in stone button in maketree?
     - history length
-    - customize algorithm behavior
-      - new bucket for mistakes in last 3?
+      
     - sources: multiple, shared.
+    - show comments : none, all, first
+
+  - more options in export to sgf
+
+  - ? only redraw stones or marks if those have changed. (instead of context.data)
+
+  - ? multiple spaces in file names?
+
+  - ? reconsider snapshot ~> location.
+
+  
+Small things, but do not do for now
+------------
+
+- adding config per source file.
+- sgf parse followup
+
+- play moves automatically
+  - frontend only? noop mode (cursor?).
+
+- timer?
+- sounds?
+  - better (higher res, copyright ok) art too.
 
 
+Finalizing
+-------------
+  - app is still very unresponsive. just moving mouse around or clicking
+    nodes on tree is too slow.
+    - seems to depend on laptop plugged in vs. not, but it shouldn' be slow even when not
+      plugged in.
 
-- Ongoing
   - go over code quality.
     - front end may be especially messy
     - Look over console.log's. Use it maybe but consistent, only for useful things
     - consistent error handling, esp. in the backend. Result vs. panic
 
-- Consider.
-
-  - adding config per source file.
-  - sgf parse followup
-
-  - play moves automatically
-    - frontend only? noop mode (cursor?).
-
-  - timer?
-  - sounds?
-    - better (higher res, copyright ok) art too.
-
-- Finalizing
 
   - updater plugin
   - initialize app data with example usage?

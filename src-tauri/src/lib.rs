@@ -43,11 +43,10 @@ async fn apply_to_move_tree<'a, A>(
 #[tauri::command]
 async fn place_stone(
     state: tauri::State<'_, Mutex<AppData>>,
-    i: usize,
-    j: usize,
+    locs: Vec<(usize, usize)>,
     color: Option<Color>,
 ) -> Result<(), String> {
-    apply_to_move_tree(state, |move_tree, _| move_tree.place_stone(i, j, color)).await;
+    apply_to_move_tree(state, |move_tree, _| move_tree.place_stone(locs, color)).await;
     Ok(())
 }
 
@@ -149,11 +148,10 @@ async fn comment(state: tauri::State<'_, Mutex<AppData>>, comment: String) -> Re
 async fn set_mark(
     state: tauri::State<'_, Mutex<AppData>>,
     mark: Option<Mark>,
-    i: usize,
-    j: usize,
+    locs: Vec<(usize, usize)>,
 ) -> Result<(), String> {
     apply_to_move_tree(state, |move_tree, _| {
-        move_tree.set_mark(mark, i, j);
+        move_tree.set_mark(mark, locs);
     })
     .await;
 
