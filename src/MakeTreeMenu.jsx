@@ -75,11 +75,11 @@ export default (props) => {
             let [a, b] = e.target.value;
             if (a !== context.window[0] || b !== context.window[1]) {
               context.setWindow((window) => {
-                    let new_window = [...window];
-                    new_window[0] = a;
-                    new_window[1] = b;
-                    return new_window;
-                });
+                let new_window = [...window];
+                new_window[0] = a;
+                new_window[1] = b;
+                return new_window;
+              });
             }
           }}
           onChangeCommitted={async (event, newValue) => {
@@ -90,16 +90,16 @@ export default (props) => {
             if (context.data.min_window !== null) {
               if (context.data.min_window[0] < context.window[0]) {
                 context.setWindow((window) => {
-                    let new_window = [...window];
-                    new_window[0] = context.data.min_window[0];
-                    return new_window;
+                  let new_window = [...window];
+                  new_window[0] = context.data.min_window[0];
+                  return new_window;
                 });
               }
               if (context.data.min_window[1] > context.window[1]) {
                 context.setWindow((window) => {
-                    let new_window = [...window];
-                    new_window[1] = context.data.min_window[1];
-                    return new_window;
+                  let new_window = [...window];
+                  new_window[1] = context.data.min_window[1];
+                  return new_window;
                 });
               }
             }
@@ -139,11 +139,11 @@ export default (props) => {
             let [a, b] = e.target.value;
             if (a !== context.window[2] || b !== context.window[3]) {
               context.setWindow((window) => {
-                    let new_window = [...window];
-                    new_window[2] = a;
-                    new_window[3] = b;
-                    return new_window;
-                });
+                let new_window = [...window];
+                new_window[2] = a;
+                new_window[3] = b;
+                return new_window;
+              });
             }
           }}
           onChangeCommitted={async (event, newValue) => {
@@ -154,16 +154,16 @@ export default (props) => {
             if (context.data.min_window !== null) {
               if (context.data.min_window[2] < context.window[2]) {
                 context.setWindow((window) => {
-                    let new_window = [...window];
-                    new_window[2] = context.data.min_window[2];
-                    return new_window;
+                  let new_window = [...window];
+                  new_window[2] = context.data.min_window[2];
+                  return new_window;
                 });
               }
               if (context.data.min_window[3] > context.window[3]) {
                 context.setWindow((window) => {
-                    let new_window = [...window];
-                    new_window[3] = context.data.min_window[3];
-                    return new_window;
+                  let new_window = [...window];
+                  new_window[3] = context.data.min_window[3];
+                  return new_window;
                 });
               }
             }

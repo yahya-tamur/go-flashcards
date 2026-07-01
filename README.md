@@ -10,6 +10,14 @@ Current Item in progress
     
 Notes
 --------------
+  - great board mouse logic. I think
+
+  - actually send signal.
+  - board rerenders a lot again? check that
+  - click mode ghost??
+
+
+
   - use drag rectangles for black territory, white territory, delete mark
     - will need actual buttons
     - will need ghost icons.

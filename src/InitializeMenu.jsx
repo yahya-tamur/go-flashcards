@@ -10,6 +10,8 @@ import triangle_icon from "./assets/triangle.svg";
 import square_icon from "./assets/square.svg";
 import circle_icon from "./assets/circle.svg";
 import cross_icon from "./assets/cross.svg";
+import black_territory_icon from "./assets/black_territory.svg";
+import white_territory_icon from "./assets/white_territory.svg";
 import delete_mark_icon from "./assets/delete_mark.svg";
 
 import "./App.css";
@@ -160,6 +162,18 @@ export default (props) => {
           </ToggleButton>
           <ToggleButton value="White">
             <img src={white_image} style={{ height: "30px", width: "30px" }} />
+          </ToggleButton>
+          <ToggleButton value="BlackTerritory">
+            <img
+              src={black_territory_icon}
+              style={{ height: "30px", width: "30px" }}
+            />
+          </ToggleButton>
+          <ToggleButton value="WhiteTerritory">
+            <img
+              src={white_territory_icon}
+              style={{ height: "30px", width: "30px" }}
+            />
           </ToggleButton>
           <ToggleButton value="Delete">
             <ClearIcon color="error" sx={{ height: "30px", width: "30px" }} />
