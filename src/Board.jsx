@@ -127,7 +127,7 @@ export default (props) => {
       if ((i - si) * (i - si) + (j - sj) * (j - sj) > 0.25) {
         return null;
       }
-      if (context.data.game.stones[si][sj] === context.cursor) {
+      if (context.data.game.stones[si][sj] !== null) {
         return null;
       }
     } else if (get_mode() === "DragPlace") {
@@ -166,15 +166,14 @@ export default (props) => {
   const [viewBoxTop, setViewBoxTop] = useState(0);
 
   const dragEnd = (w) => {
-    console.log("A", get_mode());
     if (get_mode() === "Click") {
-      console.log("AAA", w);
       invoke("play", {
         loc: [w[0], w[1]],
         color: context.cursor,
       })
         .then(() => invoke("get_data"))
         .then((data) => {
+          setGhost(null);
           if (
             context.data.game.stones[w[0]][w[1]] ===
             data.game.stones[w[0]][w[1]]
@@ -221,7 +220,6 @@ export default (props) => {
                 break;
             }
           }
-          setGhost(null);
         })
         .catch((e) => {
           console.log(e);
@@ -236,14 +234,12 @@ export default (props) => {
         context.cursor === "White" ||
         context.cursor === "Delete"
       ) {
-        console.log(dragSet);
         invoke("place_stone", {
           locs: dragSet,
           color: { Black: "Black", White: "White" }[context.cursor],
         })
           .then(() => invoke("get_data"))
           .then((data) => {
-            console.log("drag end; signal to backend sent.");
             context.setData(data);
             setDragSet([]);
           })
@@ -251,7 +247,7 @@ export default (props) => {
             console.log(e);
           });
       } else {
-        invoke("set_mark", {
+        invoke("set_marks", {
           locs: dragSet,
           mark:
             context.cursor === "DeleteMark"
@@ -262,17 +258,39 @@ export default (props) => {
         })
           .then(() => invoke("get_data"))
           .then((data) => {
-            console.log("drag end; signal to backend sent.");
             context.setData(data);
-            setDragSet([]);
           })
           .catch((e) => {
             console.log(e);
+          })
+          .finally(() => {
+            setDragSet([]);
           });
       }
     } else if (get_mode() === "DragRectangle") {
-      console.log("drag end", dragStart, w);
-      setDragStart(null);
+      if (dragStart === null) {
+        return;
+      }
+      invoke("set_marks_window", {
+        window: [dragStart[0], w[0], dragStart[1], w[1]],
+        mark:
+          context.cursor === "DeleteMark"
+            ? undefined
+            : context.cursor === "Label"
+              ? { Label: context.nextLabel }
+              : context.cursor,
+      })
+        .then(() => invoke("get_data"))
+        .then((data) => {
+          context.setData(data);
+        })
+        .catch((e) => {
+          console.log(e);
+        })
+        .finally(() => {
+          setDragStart(null);
+          setGhost(null);
+        });
       return;
     }
   };
@@ -613,7 +631,6 @@ export default (props) => {
     if (ghost === null || ghostcontainer.current === null) {
       return;
     }
-    console.log(ghost);
     let [row_start, row_end, col_start, col_end] =
       dragStart !== null &&
       (context.cursor === "BlackTerritory" ||
@@ -632,6 +649,7 @@ export default (props) => {
         let label_color =
           context.data.game.stones[row][col] === "Black" ? "white" : "black";
         let filter = label_color === "black" ? "" : "url(#invert-color)";
+        let opacity = "0.6";
         if (
           context.cursor === "BlackTerritory" ||
           context.cursor === "WhiteTerritory" ||
@@ -639,6 +657,7 @@ export default (props) => {
           context.cursor === "Delete"
         ) {
           filter = "";
+          opacity = "0.8";
         }
         if (context.cursor !== "Label") {
           createSVGElement(
@@ -650,6 +669,7 @@ export default (props) => {
               height: square_size,
               href: cursor_icons[context.cursor],
               filter: filter,
+              opacity: opacity,
             },
             ghostcontainer.current,
           );
@@ -663,6 +683,7 @@ export default (props) => {
               height: square_size,
               "text-anchor": "middle",
               "dominant-baseline": "central",
+              opacity: opacity,
             },
             ghostcontainer.current,
           );
@@ -800,6 +821,7 @@ export default (props) => {
             const w = get_coord(e);
             if (get_mode() === "DragPlace") {
               setDragging(true);
+              setGhost(null);
               if (w !== null) {
                 drag(w);
               }
@@ -830,12 +852,10 @@ export default (props) => {
           }}
           onMouseMove={async (e) => {
             const w = get_coord(e);
+            console.log("AA");
             if (w === null) {
               if (ghost !== null) {
                 setGhost(null);
-              }
-              if (get_mode() === "DragRectangle") {
-                setDragStart(null);
               }
               return;
             }
@@ -847,9 +867,10 @@ export default (props) => {
                 w[1] === ghost[1]
               )
             ) {
-              setGhost(w);
               if (get_mode() === "DragPlace" && dragging) {
                 drag(w);
+              } else {
+                setGhost(w);
               }
             }
           }}
@@ -917,7 +938,7 @@ export default (props) => {
             filter="url(#flatten-alpha)"
           />
           <g ref={stonecontainer} />
-          <g ref={ghostcontainer} opacity="0.6" />
+          <g ref={ghostcontainer} />
         </svg>
       }
     </Paper>

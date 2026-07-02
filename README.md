@@ -4,38 +4,7 @@ Current Status
 
 Current Item in progress
 ----------------
-  !- app performance, especially with:
-    - spam marks / place stone:
-      - do some bs  on frontend + send only one command on DragEnd or whatever
-    
-Notes
---------------
-  - great board mouse logic. I think
-
-  - actually send signal.
-  - board rerenders a lot again? check that
-  - click mode ghost??
-
-
-
-  - use drag rectangles for black territory, white territory, delete mark
-    - will need actual buttons
-    - will need ghost icons.
-
-  - small rethink of menu layout:
-    - less tall tree view with smaller stones
-    - redo label logic + separate button from text input.
-      - just if label was a capital letter, increment it.
-        - unless there's already >= 2 of that letter.
-
-   - apply vite suggestions for smaller bundle
-
-Remaining Goals
----------------
-
-  (-) Actually make a good flashcard set and use this to study.
-
-  - UI Overhaul
+    - UI Overhaul
       - check tablet for design ideas
         -> Study: Guess, View (mobile, desktop)
         -> Edit: Initialize, MakeTree (mobile, desktop) - tooltips on buttons
@@ -58,6 +27,20 @@ Remaining Goals
         - next button? 
       
       - number spinner is too wide
+Notes
+--------------
+  - small rethink of menu layout:
+    - less tall tree view with smaller stones
+    - redo label logic + separate button from text input.
+      - just if label was a capital letter, increment it.
+        - unless there's already >= 2 of that letter.
+
+  
+
+Remaining Goals
+---------------
+
+  (-) Actually make a good flashcard set and use this to study.
 
   - phone app
     - phone ui
@@ -75,6 +58,8 @@ Remaining Goals
 
 Small things that come to mind:
 -----------------
+   - apply vite suggestions for smaller bundle
+
   - sometimes show next moves on board (color based on variant, who plays first?)
 
   - all the lines look too thick for 1080p?
@@ -128,7 +113,6 @@ Finalizing
     - front end may be especially messy
     - Look over console.log's. Use it maybe but consistent, only for useful things
     - consistent error handling, esp. in the backend. Result vs. panic
-
 
   - updater plugin
   - initialize app data with example usage?

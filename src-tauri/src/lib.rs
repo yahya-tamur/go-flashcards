@@ -145,16 +145,29 @@ async fn comment(state: tauri::State<'_, Mutex<AppData>>, comment: String) -> Re
 }
 
 #[tauri::command]
-async fn set_mark(
+async fn set_marks(
     state: tauri::State<'_, Mutex<AppData>>,
     mark: Option<Mark>,
     locs: Vec<(usize, usize)>,
 ) -> Result<(), String> {
     apply_to_move_tree(state, |move_tree, _| {
-        move_tree.set_mark(mark, locs);
+        move_tree.set_marks(mark, locs);
     })
     .await;
 
+    Ok(())
+}
+
+#[tauri::command]
+async fn set_marks_window(
+    state: tauri::State<'_, Mutex<AppData>>,
+    mark: Option<Mark>,
+    window: (usize, usize, usize, usize),
+) -> Result<(), String> {
+    apply_to_move_tree(state, |move_tree, _| {
+        move_tree.set_marks_window(mark, window);
+    })
+    .await;
     Ok(())
 }
 
@@ -415,7 +428,8 @@ pub fn run() {
             answer,
             get_history,
             stop_editing,
-            set_mark,
+            set_marks,
+            set_marks_window,
             import_sgf,
             export_sgf,
         ])
