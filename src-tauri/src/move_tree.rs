@@ -244,12 +244,13 @@ impl MoveTree {
 
         let (r, c) = self.tree_loc;
 
+        let comment = self.problem.table[0][0].as_ref().unwrap().comment.clone();
         let branch = self.problem.table[r].split_off(c);
         let mov = branch.into_iter().next().unwrap().unwrap();
 
         self.problem.table = vec![vec![Some(Move {
             loc: None,
-            comment: mov.comment.clone(),
+            comment,
             color: Color::White,
             variant: Variant::None,
             marks: mov.marks,

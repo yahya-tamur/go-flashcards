@@ -2,20 +2,22 @@
 // with minimal changes
 // Accessed on 5/4/2026
 
-import * as React from "react";
-import PropTypes from "prop-types";
-import { NumberField as BaseNumberField } from "@base-ui/react/number-field";
-import Box from "@mui/material/Box";
-import Button from "@mui/material/Button";
-import FormControl from "@mui/material/FormControl";
-import FormLabel from "@mui/material/FormLabel";
-import AddIcon from "@mui/icons-material/Add";
-import RemoveIcon from "@mui/icons-material/Remove";
-import OutlinedInput from "@mui/material/OutlinedInput";
-import OpenInFullIcon from "@mui/icons-material/OpenInFull";
+const React = (await import("react")).default;
+const PropTypes = (await import("prop-types")).default;
+const BaseNumberField = {
+  ...(await import("@base-ui/react/number-field")).NumberField,
+};
+const Box = (await import("@mui/material/Box")).default;
+const Button = (await import("@mui/material/Button")).default;
+const FormControl = (await import("@mui/material/FormControl")).default;
+const FormLabel = (await import("@mui/material/FormLabel")).default;
+const AddIcon = (await import("@mui/icons-material/Add")).default;
+const RemoveIcon = (await import("@mui/icons-material/Remove")).default;
+const OutlinedInput = (await import("@mui/material/OutlinedInput")).default;
+const OpenInFullIcon = (await import("@mui/icons-material/OpenInFull")).default;
 
-import { inputBaseClasses } from "@mui/material/InputBase";
-import InputAdornment from "@mui/material/InputAdornment";
+const { inputBaseClasses } = await import("@mui/material/InputBase");
+const InputAdornment = (await import("@mui/material/InputAdornment")).default;
 
 function NumberSpinner({
   id: idProp,

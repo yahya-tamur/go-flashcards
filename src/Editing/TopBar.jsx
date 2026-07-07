@@ -1,41 +1,46 @@
-import { useEffect, useState, useRef, useContext } from "react";
-import board_image from "../assets/oak.jpg";
-import black_image from "../assets/black_night.png";
-import white_image from "../assets/white_anime.png";
-import { invoke } from "@tauri-apps/api/core";
-import { createSVGElement } from "../utils";
+const { useEffect, useState, useRef, useContext } = await import("react");
+const board_image = (await import("../assets/oak.jpg")).default;
+const black_image = (await import("../assets/black_night.png")).default;
+const white_image = (await import("../assets/white_anime.png")).default;
+const { invoke } = await import("@tauri-apps/api/core");
+const { createSVGElement } = await import("../utils");
 
 import "../App.css";
 
-import Button from "@mui/material/Button";
-import ButtonGroup from "@mui/material/ButtonGroup";
-import Paper from "@mui/material/Paper";
-import Box from "@mui/material/Box";
-import TextField from "@mui/material/TextField";
-import Slider from "@mui/material/Slider";
+const Button = (await import("@mui/material/Button")).default;
+const ButtonGroup = (await import("@mui/material/ButtonGroup")).default;
+const Paper = (await import("@mui/material/Paper")).default;
+const Box = (await import("@mui/material/Box")).default;
+const TextField = (await import("@mui/material/TextField")).default;
+const Slider = (await import("@mui/material/Slider")).default;
 
-import Dialog from "@mui/material/Dialog";
-import DialogActions from "@mui/material/DialogActions";
-import DialogContent from "@mui/material/DialogContent";
-import DialogContentText from "@mui/material/DialogContentText";
-import DialogTitle from "@mui/material/DialogTitle";
-import Tooltip from "@mui/material/Tooltip";
+const Dialog = (await import("@mui/material/Dialog")).default;
+const DialogActions = (await import("@mui/material/DialogActions")).default;
+const DialogContent = (await import("@mui/material/DialogContent")).default;
+const DialogContentText = (await import("@mui/material/DialogContentText"))
+  .default;
+const DialogTitle = (await import("@mui/material/DialogTitle")).default;
+const Tooltip = (await import("@mui/material/Tooltip")).default;
 
-import ClearIcon from "@mui/icons-material/Clear";
-import FileUploadIcon from "@mui/icons-material/FileUpload";
-import DownloadIcon from "@mui/icons-material/Download";
+const ClearIcon = (await import("@mui/icons-material/Clear")).default;
+const FileUploadIcon = (await import("@mui/icons-material/FileUpload")).default;
+const DownloadIcon = (await import("@mui/icons-material/Download")).default;
 
-import KeyboardArrowDownOutlinedIcon from "@mui/icons-material/KeyboardArrowDownOutlined";
-import KeyboardArrowRightOutlinedIcon from "@mui/icons-material/KeyboardArrowRightOutlined";
+const KeyboardArrowDownOutlinedIcon = (
+  await import("@mui/icons-material/KeyboardArrowDownOutlined")
+).default;
+const KeyboardArrowRightOutlinedIcon = (
+  await import("@mui/icons-material/KeyboardArrowRightOutlined")
+).default;
 
-import { ask } from "@tauri-apps/plugin-dialog";
+const { ask } = await import("@tauri-apps/plugin-dialog");
 
-import NumberSpinner from "../components/NumberSpinner";
+const NumberSpinner = (await import("../components/NumberSpinner")).default;
 
-import AppContext from "../AppContext";
+const AppContext = (await import("../AppContext")).default;
 
-import { Avatar, Icon, IconButton, SvgIcon } from "@mui/material";
-import { createSvgIcon } from "@mui/material/utils";
+const { Avatar, Icon, IconButton, SvgIcon } = await import("@mui/material");
+const { createSvgIcon } = await import("@mui/material/utils");
 
 export default (props) => {
   let context = useContext(AppContext);
@@ -105,11 +110,12 @@ export default (props) => {
           }}
         />
 
-        <ButtonGroup variant="contained" size="small">
+        <ButtonGroup variant="outlined" size="small" color="gray">
           <Tooltip title="delete exercise">
             <span>
-              <IconButton
+              <Button
                 size="small"
+                sx={{ height: "40px" }}
                 disabled={context.editingPhase === "Initialize"}
                 onClick={async () => {
                   invoke("delete_exercise")
@@ -131,13 +137,13 @@ export default (props) => {
                 }}
               >
                 <ClearIcon color="error" />
-              </IconButton>
+              </Button>
             </span>
           </Tooltip>
           <Tooltip title="insert new exercise">
             <span>
-              {" "}
-              <IconButton
+              <Button
+                sx={{ height: "40px" }}
                 disabled={context.editingPhase === "Initialize"}
                 onClick={async () => {
                   invoke("new_exercise", { insert: true })
@@ -150,14 +156,14 @@ export default (props) => {
                 }}
               >
                 <KeyboardArrowDownOutlinedIcon />
-              </IconButton>
+              </Button>
             </span>
           </Tooltip>
 
           <Tooltip title="new exercise">
             <span>
-              {" "}
-              <IconButton
+              <Button
+                sx={{ height: "40px" }}
                 disabled={context.editingPhase === "Initialize"}
                 onClick={async () => {
                   invoke("new_exercise", { insert: false })
@@ -170,7 +176,7 @@ export default (props) => {
                 }}
               >
                 <KeyboardArrowRightOutlinedIcon />
-              </IconButton>
+              </Button>
             </span>
           </Tooltip>
         </ButtonGroup>
@@ -218,7 +224,6 @@ export default (props) => {
                     .then(() => {
                       setDialogContent("Exported to sgf, under app_data/sgf.");
                       setSavedMsgOpen(true);
-                      console.log(context.data);
                     })
                     .catch((e) => {
                       console.log(e);

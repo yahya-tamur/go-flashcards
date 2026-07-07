@@ -4,10 +4,10 @@ import { invoke } from "@tauri-apps/api/core";
 
 import "./App.css";
 
-import AppContext from "./AppContext";
-import MainScreen from "./Main/Screen";
-import EditingScreen from "./Editing/Screen";
-import StudyScreen from "./Study/Screen";
+const AppContext = (await import("./AppContext")).default;
+const MainScreen = (await import("./Main/Screen")).default;
+const EditingScreen = (await import("./Editing/Screen")).default;
+const StudyScreen = (await import("./Study/Screen")).default;
 
 import Box from "@mui/material/Box";
 import { ThemeProvider, createTheme } from "@mui/material/styles";

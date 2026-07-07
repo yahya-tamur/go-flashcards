@@ -12,6 +12,12 @@
       "dark": "#ba000d",
       "contrastText": "#000"
     },
+    "gray": {
+      "light": "#999999",
+      "main": "#999999",
+      "dark": "#999999",
+      "contrastText": "#000"
+    },
     "other": {
       "light": "#ffffff",
       "main": "#ffffff",

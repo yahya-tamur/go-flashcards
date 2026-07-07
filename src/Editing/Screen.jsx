@@ -1,16 +1,16 @@
-import { useState, useEffect, useContext } from "react";
+const { useState, useEffect, useContext } = await import("react");
 
-import { invoke } from "@tauri-apps/api/core";
+const { invoke } = await import("@tauri-apps/api/core");
 
-import Board from "../Board";
-import Tree from "../Tree";
-import InitializeMenu from "../InitializeMenu";
-import MakeTreeMenu from "../MakeTreeMenu";
-import CommentBox from "../CommentBox";
-import TopBar from "./TopBar";
-import "../App.css";
-import AppContext from "../AppContext";
-import Box from "@mui/material/Box";
+const Board = (await import("../Board")).default;
+const Tree = (await import("../Tree")).default;
+const InitializeMenu = (await import("../InitializeMenu")).default;
+const MakeTreeMenu = (await import("../MakeTreeMenu")).default;
+const CommentBox = (await import("../CommentBox")).default;
+const TopBar = (await import("./TopBar")).default;
+await import("../App.css");
+const AppContext = (await import("../AppContext")).default;
+const Box = (await import("@mui/material/Box")).default;
 
 export default () => {
   let context = useContext(AppContext);
@@ -33,44 +33,48 @@ export default () => {
   }, []);
 
   return (
-    <main style={{ display: "flex", flexDirection: "row" }}>
-      <Box
-        sx={{
-          height: "100vh",
-          flexBasis: "60%",
-          minWidth: 0,
-          flexDirection: "col",
-        }}
-      >
-        <Box sx={{ height: "80px" }}>
-          <TopBar />
-        </Box>
-        <Box sx={{ height: "calc(100vh - 80px)" }}>
-          <Board />
-        </Box>
+    <main style={{ display: "flex", flexDirection: "column" }}>
+      <Box sx={{ height: "60px" }}>
+        <TopBar />
       </Box>
       <Box
         sx={{
+          height: "calc(100vh - 60px)",
           display: "flex",
-          flexBasis: "40%",
-          flexDirection: "column",
-          minWidth: 0,
-          maxHeight: "100vh",
-          overflow: "hidden",
+          flexDirection: "row",
         }}
       >
-        <Box sx={{ flexBasis: "40%", minHeight: 0 }}>
-          <Tree />
+        <Box
+          sx={{
+            flexBasis: "60%",
+            minWidth: "0",
+          }}
+        >
+          <Board />
         </Box>
-        <Box sx={{ flexBasis: "30%", minHeight: 0 }}>
-          {context.editingPhase === "Initialize" ? (
-            <InitializeMenu />
-          ) : (
-            <MakeTreeMenu />
-          )}
-        </Box>
-        <Box sx={{ flexBasis: "30%", minHeight: 0 }}>
-          <CommentBox />
+        <Box
+          sx={{
+            display: "flex",
+            flexBasis: "40%",
+            flexDirection: "column",
+            minWidth: 0,
+            maxHeight: "100vh",
+            overflow: "hidden",
+          }}
+        >
+          <Box sx={{ flexBasis: "35%", minHeight: 0 }}>
+            <Tree />
+          </Box>
+          <Box sx={{ flexBasis: "50%", minHeight: 0 }}>
+            {context.editingPhase === "Initialize" ? (
+              <InitializeMenu />
+            ) : (
+              <MakeTreeMenu />
+            )}
+          </Box>
+          <Box sx={{ flexBasis: "15%", minHeight: 0 }}>
+            <CommentBox />
+          </Box>
         </Box>
       </Box>
     </main>

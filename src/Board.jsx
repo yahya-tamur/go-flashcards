@@ -58,6 +58,9 @@ export default (props) => {
   const [dragStart, setDragStart] = useState(null);
   const [dragging, setDragging] = useState(false);
 
+  const [boardBoxWidth, setBoardBoxWidth] = useState(0);
+  const [boardBoxHeight, setBoardBoxHeight] = useState(0);
+
   useEffect(() => {
     if (
       context.data !== null &&
@@ -388,11 +391,7 @@ export default (props) => {
       }
     };
 
-    if (
-      gridcontainer.current === null ||
-      context.data === null ||
-      context.data === undefined
-    ) {
+    if (gridcontainer.current === null || boardBoxWidth === null) {
       return return_val;
     }
     let [left, right, top, bottom] = context.window;
@@ -412,31 +411,33 @@ export default (props) => {
     let vline_start = margin + square_size * top + (top > 0 ? -partial : 0);
     let vline_end = margin + square_size * bottom + (bottom < 18 ? partial : 0);
 
+    const width = 1;
     for (let i = left; i <= right; i++) {
       createSVGElement(
-        "line",
+        "path",
         {
-          x1: margin + square_size * i,
-          y1: vline_start,
-          x2: margin + square_size * i,
-          y2: vline_end,
+          d: `M${margin + square_size * i} ${vline_start} ${margin + square_size * i} ${vline_end}`,
           stroke: "black",
-          "stroke-width": "5",
+          "stroke-width": `${width}px`,
+          "vector-effect": "non-scaling-stroke",
+          "shape-rendering": "crispEdges",
         },
+
         gridcontainer.current,
       );
     }
 
     for (let j = top; j <= bottom; j++) {
+      //<path d="M10 0 V100" stroke="black" stroke-width="1" vector-effect="non-scaling-stroke" />
+
       createSVGElement(
-        "line",
+        "path",
         {
-          x1: hline_start,
-          y1: margin + square_size * j,
-          x2: hline_end,
-          y2: margin + square_size * j,
+          d: `M${hline_start} ${margin + square_size * j} ${hline_end} ${margin + square_size * j}`,
           stroke: "black",
-          "stroke-width": "5",
+          "stroke-width": `${width}px`,
+          "vector-effect": "non-scaling-stroke",
+          "shape-rendering": "crispEdges",
         },
         gridcontainer.current,
       );
@@ -541,7 +542,7 @@ export default (props) => {
     }
 
     return return_val;
-  }, [gridcontainer, context.window]);
+  }, [gridcontainer, context.window, boardBoxWidth]);
 
   // draws circles
   useEffect(() => {
@@ -704,9 +705,6 @@ export default (props) => {
 
   let size_ref = useRef([null, null]); // there's a relevant stackexchange for this
 
-  const [boardBoxWidth, setBoardBoxWidth] = useState(0);
-  const [boardBoxHeight, setBoardBoxHeight] = useState(0);
-
   // fits board in app. This was easier than pure css.
   useEffect(() => {
     if (paper.current === null) {
@@ -742,7 +740,7 @@ export default (props) => {
         paper.current.offsetWidth,
         paper.current.offsetHeight,
       ];
-      if (current_size !== size_ref) {
+      if (current_size[0] !== size_ref[0] || current_size[1] !== size_ref[1]) {
         size_ref = current_size;
         let [width, height] = current_size;
 
@@ -852,7 +850,6 @@ export default (props) => {
           }}
           onMouseMove={async (e) => {
             const w = get_coord(e);
-            console.log("AA");
             if (w === null) {
               if (ghost !== null) {
                 setGhost(null);

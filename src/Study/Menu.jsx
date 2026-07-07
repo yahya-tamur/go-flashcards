@@ -1,33 +1,35 @@
-import { useEffect, useState, useRef, useContext } from "react";
-import board_image from "../assets/oak.jpg";
-import black_image from "../assets/black_night.png";
-import white_image from "../assets/white_anime.png";
-import { invoke } from "@tauri-apps/api/core";
-import { createSVGElement } from "../utils";
+const { useEffect, useState, useRef, useContext } = await import("react");
+const board_image = (await import("../assets/oak.jpg")).default;
+const black_image = (await import("../assets/black_night.png")).default;
+const white_image = (await import("../assets/white_anime.png")).default;
+const { invoke } = await import("@tauri-apps/api/core");
+const { createSVGElement } = await import("../utils");
 
-import "../App.css";
+await import("../App.css");
 
-import Button from "@mui/material/Button";
-import Paper from "@mui/material/Paper";
-import Box from "@mui/material/Box";
-import InitializeMenu from "../InitializeMenu";
-import MakeTreeMenu from "../MakeTreeMenu";
-import TextField from "@mui/material/TextField";
-import Slider from "@mui/material/Slider";
-import Dialog from "@mui/material/Dialog";
-import DialogActions from "@mui/material/DialogActions";
-import DialogContent from "@mui/material/DialogContent";
-import DialogContentText from "@mui/material/DialogContentText";
-import DialogTitle from "@mui/material/DialogTitle";
+const Button = (await import("@mui/material/Button")).default;
+const Paper = (await import("@mui/material/Paper")).default;
+const Box = (await import("@mui/material/Box")).default;
+const InitializeMenu = (await import("../InitializeMenu")).default;
+const MakeTreeMenu = (await import("../MakeTreeMenu")).default;
+const TextField = (await import("@mui/material/TextField")).default;
+const Slider = (await import("@mui/material/Slider")).default;
+const Dialog = (await import("@mui/material/Dialog")).default;
+const DialogActions = (await import("@mui/material/DialogActions")).default;
+const DialogContent = (await import("@mui/material/DialogContent")).default;
+const DialogContentText = (await import("@mui/material/DialogContentText"))
+  .default;
+const DialogTitle = (await import("@mui/material/DialogTitle")).default;
 
-import ToggleButton from "@mui/material/ToggleButton";
-import ToggleButtonGroup from "@mui/material/ToggleButtonGroup";
-import NumberSpinner from "../components/NumberSpinner";
+const ToggleButton = (await import("@mui/material/ToggleButton")).default;
+const ToggleButtonGroup = (await import("@mui/material/ToggleButtonGroup"))
+  .default;
+const NumberSpinner = (await import("../components/NumberSpinner")).default;
 
-import AppContext from "../AppContext";
+const AppContext = (await import("../AppContext")).default;
 
-import CheckIcon from "@mui/icons-material/Check";
-import ClearIcon from "@mui/icons-material/Clear";
+const CheckIcon = (await import("@mui/icons-material/Check")).default;
+const ClearIcon = (await import("@mui/icons-material/Clear")).default;
 
 export default (props) => {
   let context = useContext(AppContext);

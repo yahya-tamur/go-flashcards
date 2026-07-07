@@ -1,36 +1,37 @@
-import { useEffect, useState, useRef, useContext } from "react";
-import board_image from "../assets/oak.jpg";
-import black_image from "../assets/black_night.png";
-import white_image from "../assets/white_anime.png";
-import { invoke } from "@tauri-apps/api/core";
-import { createSVGElement } from "../utils";
+const { useEffect, useState, useRef, useContext } = await import("react");
+const board_image = (await import("../assets/oak.jpg")).default;
+const black_image = (await import("../assets/black_night.png")).default;
+const white_image = (await import("../assets/white_anime.png")).default;
+const { invoke } = await import("@tauri-apps/api/core");
+const { createSVGElement } = await import("../utils");
 
-import AppContext from "../AppContext";
+const AppContext = (await import("../AppContext")).default;
 import "../App.css";
 
-import Button from "@mui/material/Button";
-import Paper from "@mui/material/Paper";
-import Box from "@mui/material/Box";
-import List from "@mui/material/List";
-import ListItem from "@mui/material/ListItem";
-import ListItemButton from "@mui/material/ListItemButton";
-import ListItemIcon from "@mui/material/ListItemIcon";
-import ListItemText from "@mui/material/ListItemText";
-import Divider from "@mui/material/Divider";
-import InboxIcon from "@mui/icons-material/Inbox";
-import DraftsIcon from "@mui/icons-material/Drafts";
-import InputBase from "@mui/material/InputBase";
-import IconButton from "@mui/material/IconButton";
-import ClearIcon from "@mui/icons-material/Clear";
-import TextField from "@mui/material/TextField";
-import SearchIcon from "@mui/icons-material/Search";
-import DirectionsIcon from "@mui/icons-material/Directions";
+const Button = (await import("@mui/material/Button")).default;
+const Paper = (await import("@mui/material/Paper")).default;
+const Box = (await import("@mui/material/Box")).default;
+const List = (await import("@mui/material/List")).default;
+const ListItem = (await import("@mui/material/ListItem")).default;
+const ListItemButton = (await import("@mui/material/ListItemButton")).default;
+const ListItemIcon = (await import("@mui/material/ListItemIcon")).default;
+const ListItemText = (await import("@mui/material/ListItemText")).default;
+const Divider = (await import("@mui/material/Divider")).default;
+const InboxIcon = (await import("@mui/icons-material/Inbox")).default;
+const DraftsIcon = (await import("@mui/icons-material/Drafts")).default;
+const InputBase = (await import("@mui/material/InputBase")).default;
+const IconButton = (await import("@mui/material/IconButton")).default;
+const ClearIcon = (await import("@mui/icons-material/Clear")).default;
+const TextField = (await import("@mui/material/TextField")).default;
+const SearchIcon = (await import("@mui/icons-material/Search")).default;
+const DirectionsIcon = (await import("@mui/icons-material/Directions")).default;
 
-import Dialog from "@mui/material/Dialog";
-import DialogActions from "@mui/material/DialogActions";
-import DialogContent from "@mui/material/DialogContent";
-import DialogContentText from "@mui/material/DialogContentText";
-import DialogTitle from "@mui/material/DialogTitle";
+const Dialog = (await import("@mui/material/Dialog")).default;
+const DialogActions = (await import("@mui/material/DialogActions")).default;
+const DialogContent = (await import("@mui/material/DialogContent")).default;
+const DialogContentText = (await import("@mui/material/DialogContentText"))
+  .default;
+const DialogTitle = (await import("@mui/material/DialogTitle")).default;
 
 export default (props) => {
   const context = useContext(AppContext);
@@ -145,10 +146,6 @@ export default (props) => {
                   value={newExercise}
                   onChange={(e) => {
                     setNewExercise(e.target.value);
-                    console.log(
-                      exercise_name_invalid,
-                      exercise_name_invalid(newExercise),
-                    );
                   }}
                   variant="outlined"
                   size="small"

@@ -124,7 +124,7 @@ export default (props) => {
                 }
               })
               .catch((e) => {
-                console.log("error");
+                console.log(e);
               });
           }}
           step={1}
@@ -188,7 +188,7 @@ export default (props) => {
                 }
               })
               .catch((e) => {
-                console.log("error");
+                console.log(e);
               });
           }}
           step={1}
@@ -347,7 +347,6 @@ export default (props) => {
                   e.stopPropagation();
                   context.setNextLabel(e.target.value);
                   context.setCursor("Label");
-                  console.log(context.cursor);
                 }}
               ></TextField>
             </ToggleButton>

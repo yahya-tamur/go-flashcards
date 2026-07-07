@@ -23,10 +23,10 @@ export default (props) => {
   const [tableHeight, setTableHeight] = useState(100);
 
   const theme = useTheme();
-  const square_size = 35;
-  const hl_radius = 25;
-  const variant_square_diff = 3;
-  const gap_size = 50;
+  const square_size = 30;
+  const hl_radius = 21;
+  const variant_square_diff = 1;
+  const gap_size = 40;
   const margin = 20;
 
   useEffect(() => {
@@ -81,7 +81,6 @@ export default (props) => {
           .then(() => invoke("get_data"))
           .then((data) => {
             context.setData(data);
-            console.log(data.game.marks);
             context.setCursor(data.color === "Black" ? "White" : "Black");
           })
           .catch((e) => {

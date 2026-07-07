@@ -1,27 +1,27 @@
-import { useEffect, useState, useRef, useContext } from "react";
-import board_image from "../assets/oak.jpg";
-import black_image from "../assets/black_night.png";
-import white_image from "../assets/white_anime.png";
-import { invoke } from "@tauri-apps/api/core";
-import { createSVGElement } from "../utils";
+const { useEffect, useState, useRef, useContext } = await import("react");
+const board_image = (await import("../assets/oak.jpg")).default;
+const black_image = (await import("../assets/black_night.png")).default;
+const white_image = (await import("../assets/white_anime.png")).default;
+const { invoke } = await import("@tauri-apps/api/core");
+const { createSVGElement } = await import("../utils");
 
-import { Decoration, EditorView } from "@codemirror/view";
-import { StateField, StateEffect } from "@codemirror/state";
-import { toml } from "@codemirror/legacy-modes/mode/toml";
-import { StreamLanguage } from "@codemirror/language";
+const { Decoration, EditorView } = await import("@codemirror/view");
+const { StateField, StateEffect } = await import("@codemirror/state");
+const { toml } = await import("@codemirror/legacy-modes/mode/toml");
+const { StreamLanguage } = await import("@codemirror/language");
 
-import { vscodeDark as editorTheme } from "@uiw/codemirror-theme-vscode";
+const editorTheme = (await import("@uiw/codemirror-theme-vscode")).vscodeDark;
 
-import CodeMirror from "@uiw/react-codemirror";
+const CodeMirror = (await import("@uiw/react-codemirror")).default;
 
-import "../App.css";
+await import("../App.css");
 
-import Box from "@mui/material/Box";
-import Paper from "@mui/material/Paper";
-import Button from "@mui/material/Button";
+const Box = (await import("@mui/material/Box")).default;
+const Paper = (await import("@mui/material/Paper")).default;
+const Button = (await import("@mui/material/Button")).default;
 
-import AppContext from "../AppContext";
-import { border } from "@mui/system";
+const AppContext = (await import("../AppContext")).default;
+const { border } = await import("@mui/system");
 
 const addHighlight = StateEffect.define({
   map: ({ from, to }, change) => ({
@@ -80,13 +80,11 @@ export default (props) => {
     invoke("set_config_str", { config: props.initialConfig }).catch((err) => {
       if (err !== error) {
         let [_, left, right] = err;
-        console.log(err, code);
         if (left == right) {
           left = Math.max(0, left - 2);
           right = Math.min(code.length, right + 2);
         }
         if (left < right) {
-          console.log("highlighting", left, right);
           editorRef.current?.view?.dispatch({
             effects: addHighlight.of({ from: left, to: right }),
           });
@@ -183,13 +181,11 @@ export default (props) => {
                 })
                 .catch((err) => {
                   let [_, left, right] = err;
-                  console.log(err, code);
                   if (left == right) {
                     left = Math.max(0, left - 2);
                     right = Math.min(code.length, right + 2);
                   }
                   if (left < right) {
-                    console.log("highlighting", left, right);
                     editorRef.current?.view?.dispatch({
                       effects: addHighlight.of({ from: left, to: right }),
                     });

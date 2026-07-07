@@ -35,7 +35,6 @@ Notes
       - just if label was a capital letter, increment it.
         - unless there's already >= 2 of that letter.
 
-  
 
 Remaining Goals
 ---------------
@@ -58,18 +57,12 @@ Remaining Goals
 
 Small things that come to mind:
 -----------------
-   - apply vite suggestions for smaller bundle
-
   - sometimes show next moves on board (color based on variant, who plays first?)
-
-  - all the lines look too thick for 1080p?
 
   - In comments, moves marked like {S1} also get transformed.
 
   - buttons to type marks in comments?
 
-  - copy comment from root node, not current node on collapse
-    
   - Add to config:
     - custom art per flashcard set.
         - expose config to frontend =>
