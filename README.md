@@ -61,6 +61,7 @@ Small things that come to mind:
   - MoveTree shouldn't keep a Problem. !!!
   - 'add exercise' in config need overhaul again
   - redo label logic.
+  - why does drawing a lot of marks redraw stones sometimes?
 
 
   - sometimes show next moves on board (color based on variant, who plays first?)
