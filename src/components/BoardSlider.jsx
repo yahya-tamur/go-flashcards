@@ -1,9 +1,10 @@
 const { useEffect, useState, useRef, useContext } = await import("react");
+
 const { invoke } = await import("@tauri-apps/api/core");
 
-await import("../App.css");
-
 const Slider = (await import("@mui/material/Slider")).default;
+
+await import("../App.css");
 
 const AppContext = (await import("../AppContext")).default;
 

@@ -1,6 +1,8 @@
 from pathlib import Path
 from collections import defaultdict
 import re
+import os
+from time import perf_counter_ns
 
 if (Path.cwd().name != "go-flashcards"):
     print("Script must be called from the go-flashcards folder!")
@@ -23,7 +25,10 @@ def get_tag(tag, name):
 
     return (l + r, tag)
 
+print("\nSorting imports.\n")
+
 for path in Path("./src/").rglob("*"):
+    start = perf_counter_ns()
     if path.suffix not in [".js", ".jsx"]:
         continue
 
@@ -31,11 +36,24 @@ for path in Path("./src/").rglob("*"):
         file = file.read()
         lines = file.splitlines()
         i = 0
-        # does not catch line comments
+
+        preamble = ""
+
+        while i < len(lines):
+            if 'await import(' in lines[i]:
+                break
+            preamble += "\n" + lines[i]
+            i += 1
+
         import_lines = defaultdict(set)
 
-        for i, line in enumerate(lines):
+        while i < len(lines):
+            line = lines[i]
+
             if 'await import(' in line:
+                while (';' not in line):
+                    i += 1
+                    line += lines[i].lstrip()
                 match = re.search("""await import\("(.*)"\)""", line)
                 if match is None:
                     print("regex failed. line:")
@@ -45,25 +63,37 @@ for path in Path("./src/").rglob("*"):
                 if (w := imp.rfind('/')) != -1:
                     tag, name = (imp[:w], imp[w:])
 
-                import_lines[get_tag(tag, name)].add((name, i))
+                import_lines[get_tag(tag, name)].add((name, line))
 
-            elif not (len(lines[i]) == 0 or line[:2] == "//"):
+            elif not (len(lines[i]) == 0):
                 break
+            
+            i += 1
 
         end_of_imports = i
 
         new_imports = []
         for k in sorted(import_lines.keys()):
-            for _, i in sorted(import_lines[k]):
-                new_imports.append(lines[i])
+            if (len(import_lines[k]) == 0):
+                print("Noooo!")
+                exit() 
+            for _, line in sorted(import_lines[k]):
+                new_imports.append(line)
             new_imports.append('')
         
-        new_file = '\n'.join(new_imports) + "\n\n" + "\n".join(lines[end_of_imports:])
+        new_file = preamble + \
+            '\n'.join(new_imports) + "\n\n" + \
+            "\n".join(lines[end_of_imports:])
 
+    l, r = "\033[0;30m", "\033[0m"
+    if new_file != file:
+        with open(path, 'w') as file:
+            file.write(new_file)
+        #l, r = "", "" 
 
-        print()
-        print()
-        print()
-        print(path)
-        print('='*200)
-        print(new_file[:1000])
+    print(f"{l}{path}{r} {(perf_counter_ns() - start) // 1_000_000}ms {'(unchanged)' if new_file != file else ''}")
+
+print("\nRunning prettier.\n")
+
+os.system("npx prettier ./src -w")
+

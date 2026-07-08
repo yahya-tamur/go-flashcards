@@ -2,16 +2,19 @@ const { useState, useEffect, useContext } = await import("react");
 
 const { invoke } = await import("@tauri-apps/api/core");
 
-const Board = (await import("../Board")).default;
-const Tree = (await import("../Tree")).default;
-const CommentBox = (await import("../CommentBox")).default;
-const TopBar = (await import("./TopBar")).default;
-const Menu = (await import("./Menu")).default;
-await import("../App.css");
-const AppContext = (await import("../AppContext")).default;
 const Box = (await import("@mui/material/Box")).default;
-const Paper = (await import("@mui/material/Paper")).default;
 const Button = (await import("@mui/material/Button")).default;
+const Paper = (await import("@mui/material/Paper")).default;
+
+await import("../App.css");
+
+const AppContext = (await import("../AppContext")).default;
+const Board = (await import("../Board")).default;
+const CommentBox = (await import("../CommentBox")).default;
+const Tree = (await import("../Tree")).default;
+
+const Menu = (await import("./Menu")).default;
+const TopBar = (await import("./TopBar")).default;
 
 export default () => {
   let context = useContext(AppContext);
@@ -29,6 +32,16 @@ export default () => {
       });
   }, []);
 
+  return (
+    <Box>
+      <TopBar></TopBar>
+      <Menu></Menu>
+      <Tree></Tree>
+      <CommentBox></CommentBox>
+      <Board></Board>
+    </Box>
+  );
+  /*
   return (
     <main style={{ display: "flex", flexDirection: "row" }}>
       <Box
@@ -78,5 +91,5 @@ export default () => {
         </Box>
       </Box>
     </main>
-  );
+  );*/
 };

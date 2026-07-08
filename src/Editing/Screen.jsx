@@ -2,15 +2,18 @@ const { useState, useEffect, useContext } = await import("react");
 
 const { invoke } = await import("@tauri-apps/api/core");
 
+const Box = (await import("@mui/material/Box")).default;
+
+await import("../App.css");
+
+const AppContext = (await import("../AppContext")).default;
 const Board = (await import("../Board")).default;
-const Tree = (await import("../Tree")).default;
+const CommentBox = (await import("../CommentBox")).default;
 const InitializeMenu = (await import("../InitializeMenu")).default;
 const MakeTreeMenu = (await import("../MakeTreeMenu")).default;
-const CommentBox = (await import("../CommentBox")).default;
+const Tree = (await import("../Tree")).default;
+
 const TopBar = (await import("./TopBar")).default;
-await import("../App.css");
-const AppContext = (await import("../AppContext")).default;
-const Box = (await import("@mui/material/Box")).default;
 
 export default () => {
   let context = useContext(AppContext);

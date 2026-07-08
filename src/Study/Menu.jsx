@@ -1,35 +1,37 @@
 const { useEffect, useState, useRef, useContext } = await import("react");
-const board_image = (await import("../assets/oak.jpg")).default;
-const black_image = (await import("../assets/black_night.png")).default;
-const white_image = (await import("../assets/white_anime.png")).default;
+
 const { invoke } = await import("@tauri-apps/api/core");
-const { createSVGElement } = await import("../utils");
 
-await import("../App.css");
+const CheckIcon = (await import("@mui/icons-material/Check")).default;
+const ClearIcon = (await import("@mui/icons-material/Clear")).default;
 
-const Button = (await import("@mui/material/Button")).default;
-const Paper = (await import("@mui/material/Paper")).default;
 const Box = (await import("@mui/material/Box")).default;
-const InitializeMenu = (await import("../InitializeMenu")).default;
-const MakeTreeMenu = (await import("../MakeTreeMenu")).default;
-const TextField = (await import("@mui/material/TextField")).default;
-const Slider = (await import("@mui/material/Slider")).default;
+const Button = (await import("@mui/material/Button")).default;
 const Dialog = (await import("@mui/material/Dialog")).default;
 const DialogActions = (await import("@mui/material/DialogActions")).default;
 const DialogContent = (await import("@mui/material/DialogContent")).default;
 const DialogContentText = (await import("@mui/material/DialogContentText"))
   .default;
 const DialogTitle = (await import("@mui/material/DialogTitle")).default;
-
+const Paper = (await import("@mui/material/Paper")).default;
+const Slider = (await import("@mui/material/Slider")).default;
+const TextField = (await import("@mui/material/TextField")).default;
 const ToggleButton = (await import("@mui/material/ToggleButton")).default;
 const ToggleButtonGroup = (await import("@mui/material/ToggleButtonGroup"))
   .default;
-const NumberSpinner = (await import("../components/NumberSpinner")).default;
+
+await import("../App.css");
 
 const AppContext = (await import("../AppContext")).default;
+const InitializeMenu = (await import("../InitializeMenu")).default;
+const MakeTreeMenu = (await import("../MakeTreeMenu")).default;
+const { createSVGElement } = await import("../utils");
 
-const CheckIcon = (await import("@mui/icons-material/Check")).default;
-const ClearIcon = (await import("@mui/icons-material/Clear")).default;
+const black_image = (await import("../assets/black_night.png")).default;
+const board_image = (await import("../assets/oak.jpg")).default;
+const white_image = (await import("../assets/white_anime.png")).default;
+
+const NumberSpinner = (await import("../components/NumberSpinner")).default;
 
 export default (props) => {
   let context = useContext(AppContext);

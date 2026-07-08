@@ -1,37 +1,40 @@
 const { useEffect, useState, useRef, useContext } = await import("react");
-const board_image = (await import("../assets/oak.jpg")).default;
-const black_image = (await import("../assets/black_night.png")).default;
-const white_image = (await import("../assets/white_anime.png")).default;
+
 const { invoke } = await import("@tauri-apps/api/core");
-const { createSVGElement } = await import("../utils");
 
-const AppContext = (await import("../AppContext")).default;
-await import("../App.css");
-
-const Button = (await import("@mui/material/Button")).default;
-const Paper = (await import("@mui/material/Paper")).default;
-const Box = (await import("@mui/material/Box")).default;
-const List = (await import("@mui/material/List")).default;
-const ListItem = (await import("@mui/material/ListItem")).default;
-const ListItemButton = (await import("@mui/material/ListItemButton")).default;
-const ListItemIcon = (await import("@mui/material/ListItemIcon")).default;
-const ListItemText = (await import("@mui/material/ListItemText")).default;
-const Divider = (await import("@mui/material/Divider")).default;
-const InboxIcon = (await import("@mui/icons-material/Inbox")).default;
-const DraftsIcon = (await import("@mui/icons-material/Drafts")).default;
-const InputBase = (await import("@mui/material/InputBase")).default;
-const IconButton = (await import("@mui/material/IconButton")).default;
 const ClearIcon = (await import("@mui/icons-material/Clear")).default;
-const TextField = (await import("@mui/material/TextField")).default;
-const SearchIcon = (await import("@mui/icons-material/Search")).default;
 const DirectionsIcon = (await import("@mui/icons-material/Directions")).default;
+const DraftsIcon = (await import("@mui/icons-material/Drafts")).default;
+const InboxIcon = (await import("@mui/icons-material/Inbox")).default;
+const SearchIcon = (await import("@mui/icons-material/Search")).default;
 
+const Box = (await import("@mui/material/Box")).default;
+const Button = (await import("@mui/material/Button")).default;
 const Dialog = (await import("@mui/material/Dialog")).default;
 const DialogActions = (await import("@mui/material/DialogActions")).default;
 const DialogContent = (await import("@mui/material/DialogContent")).default;
 const DialogContentText = (await import("@mui/material/DialogContentText"))
   .default;
 const DialogTitle = (await import("@mui/material/DialogTitle")).default;
+const Divider = (await import("@mui/material/Divider")).default;
+const IconButton = (await import("@mui/material/IconButton")).default;
+const InputBase = (await import("@mui/material/InputBase")).default;
+const List = (await import("@mui/material/List")).default;
+const ListItem = (await import("@mui/material/ListItem")).default;
+const ListItemButton = (await import("@mui/material/ListItemButton")).default;
+const ListItemIcon = (await import("@mui/material/ListItemIcon")).default;
+const ListItemText = (await import("@mui/material/ListItemText")).default;
+const Paper = (await import("@mui/material/Paper")).default;
+const TextField = (await import("@mui/material/TextField")).default;
+
+await import("../App.css");
+
+const AppContext = (await import("../AppContext")).default;
+const { createSVGElement } = await import("../utils");
+
+const black_image = (await import("../assets/black_night.png")).default;
+const board_image = (await import("../assets/oak.jpg")).default;
+const white_image = (await import("../assets/white_anime.png")).default;
 
 export default (props) => {
   const context = useContext(AppContext);

@@ -1,10 +1,13 @@
 const { useEffect, useState, useRef, useContext } = await import("react");
+
 const { invoke } = await import("@tauri-apps/api/core");
-const EditConfig = (await import("./EditConfig.jsx")).default;
-const Menu = (await import("./Menu.jsx")).default;
-await import("../App.css");
 
 const Box = (await import("@mui/material/Box")).default;
+
+await import("../App.css");
+
+const EditConfig = (await import("./EditConfig.jsx")).default;
+const Menu = (await import("./Menu.jsx")).default;
 
 export default () => {
   const [exercises, setExercises] = useState([]);

@@ -1,24 +1,25 @@
 const { useEffect, useState, useRef, useContext } = await import("react");
-const board_image = (await import("./assets/oak.jpg")).default;
-const black_image = (await import("./assets/black_night.png")).default;
-const white_image = (await import("./assets/white_anime.png")).default;
-const mui_clear = (await import("./assets/mui_clear.svg")).default;
+
 const { invoke } = await import("@tauri-apps/api/core");
+
+const Paper = (await import("@mui/material/Paper")).default;
+
+const AppContext = (await import("./AppContext")).default;
 const { createSVGElement } = await import("./utils");
 
-const triangle_icon = await import("./assets/triangle.svg");
-const square_icon = (await import("./assets/square.svg")).default;
+const black_image = (await import("./assets/black_night.png")).default;
+const black_territory_icon = (await import("./assets/black_territory.svg"))
+  .default;
 const circle_icon = (await import("./assets/circle.svg")).default;
 const cross_icon = (await import("./assets/cross.svg")).default;
 const delete_mark_icon = (await import("./assets/delete_mark.svg")).default;
-const black_territory_icon = (await import("./assets/black_territory.svg"))
-  .default;
+const mui_clear = (await import("./assets/mui_clear.svg")).default;
+const board_image = (await import("./assets/oak.jpg")).default;
+const square_icon = (await import("./assets/square.svg")).default;
+const triangle_icon = await import("./assets/triangle.svg").default;
+const white_image = (await import("./assets/white_anime.png")).default;
 const white_territory_icon = (await import("./assets/white_territory.svg"))
   .default;
-
-const AppContext = (await import("./AppContext")).default;
-
-const Paper = (await import("@mui/material/Paper")).default;
 
 export default (props) => {
   const mark_icons = {

@@ -1,9 +1,7 @@
-// Copied (as suggested) from https://mui.com/material-ui/react-number-field/
-// with minimal changes
-// Accessed on 5/4/2026
+// Copied (as suggested) from https://mui.com/material-ui/react-number-field/// with minimal changes// Accessed on 5/4/2026const React = (await import("react")).default;
 
-const React = (await import("react")).default;
 const PropTypes = (await import("prop-types")).default;
+
 const BaseNumberField = {
   ...(await import("@base-ui/react/number-field")).NumberField,
 };

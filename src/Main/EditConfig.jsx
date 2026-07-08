@@ -1,27 +1,30 @@
 const { useEffect, useState, useRef, useContext } = await import("react");
-const board_image = (await import("../assets/oak.jpg")).default;
-const black_image = (await import("../assets/black_night.png")).default;
-const white_image = (await import("../assets/white_anime.png")).default;
-const { invoke } = await import("@tauri-apps/api/core");
-const { createSVGElement } = await import("../utils");
 
-const { Decoration, EditorView } = await import("@codemirror/view");
-const { StateField, StateEffect } = await import("@codemirror/state");
-const { toml } = await import("@codemirror/legacy-modes/mode/toml");
+const { invoke } = await import("@tauri-apps/api/core");
+
 const { StreamLanguage } = await import("@codemirror/language");
+const { StateField, StateEffect } = await import("@codemirror/state");
+const { Decoration, EditorView } = await import("@codemirror/view");
+
+const { toml } = await import("@codemirror/legacy-modes/mode/toml");
+
+const { border } = await import("@mui/system");
+
+const Box = (await import("@mui/material/Box")).default;
+const Button = (await import("@mui/material/Button")).default;
+const Paper = (await import("@mui/material/Paper")).default;
 
 const editorTheme = (await import("@uiw/codemirror-theme-vscode")).vscodeDark;
-
 const CodeMirror = (await import("@uiw/react-codemirror")).default;
 
 await import("../App.css");
 
-const Box = (await import("@mui/material/Box")).default;
-const Paper = (await import("@mui/material/Paper")).default;
-const Button = (await import("@mui/material/Button")).default;
-
 const AppContext = (await import("../AppContext")).default;
-const { border } = await import("@mui/system");
+const { createSVGElement } = await import("../utils");
+
+const black_image = (await import("../assets/black_night.png")).default;
+const board_image = (await import("../assets/oak.jpg")).default;
+const white_image = (await import("../assets/white_anime.png")).default;
 
 const addHighlight = StateEffect.define({
   map: ({ from, to }, change) => ({
