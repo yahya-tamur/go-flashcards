@@ -1,18 +1,20 @@
-import { useState, useEffect } from "react";
+const { useState, useEffect } = await import("react");
 
-import { invoke } from "@tauri-apps/api/core";
+const { invoke } = await import("@tauri-apps/api/core");
 
-import "./App.css";
+await import("./App.css");
 
 const AppContext = (await import("./AppContext")).default;
 const MainScreen = (await import("./Main/Screen")).default;
 const EditingScreen = (await import("./Editing/Screen")).default;
 const StudyScreen = (await import("./Study/Screen")).default;
 
-import Box from "@mui/material/Box";
-import { ThemeProvider, createTheme } from "@mui/material/styles";
-import CssBaseline from "@mui/material/CssBaseline";
-import theme_import from "./assets/theme.json" with { type: "json" };
+const Box = (await import("@mui/material/Box")).default;
+const { ThemeProvider, createTheme } = await import("@mui/material/styles");
+const CssBaseline = (await import("@mui/material/CssBaseline")).default;
+const theme_import = (
+  await import("./assets/theme.json", { with: { type: "json" } })
+).default;
 
 let theme = createTheme(theme_import);
 

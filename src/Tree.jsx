@@ -1,18 +1,18 @@
-import { useEffect, useState, useRef, useContext } from "react";
-import board_image from "./assets/persimmon.jpg";
-import black_image from "./assets/black_night.png";
-import white_image from "./assets/white_anime.png";
-import { invoke } from "@tauri-apps/api/core";
-import { createSVGElement } from "./utils";
+const { useEffect, useState, useRef, useContext } = await import("react");
+const board_image = (await import("./assets/persimmon.jpg")).default;
+const black_image = (await import("./assets/black_night.png")).default;
+const white_image = (await import("./assets/white_anime.png")).default;
+const { invoke } = await import("@tauri-apps/api/core");
+const { createSVGElement } = await import("./utils");
 
-import "./App.css";
+await import("./App.css");
 
-import Button from "@mui/material/Button";
-import Box from "@mui/material/Box";
-import Paper from "@mui/material/Paper";
-import { useTheme } from "@mui/material/styles";
+const Button = (await import("@mui/material/Button")).default;
+const Box = (await import("@mui/material/Box")).default;
+const Paper = (await import("@mui/material/Paper")).default;
+const { useTheme } = await import("@mui/material/styles");
 
-import AppContext from "./AppContext";
+const AppContext = (await import("./AppContext")).default;
 
 export default (props) => {
   let context = useContext(AppContext);

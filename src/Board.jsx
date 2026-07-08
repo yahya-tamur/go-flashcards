@@ -1,22 +1,24 @@
-import { useEffect, useState, useRef, useContext } from "react";
-import board_image from "./assets/oak.jpg";
-import black_image from "./assets/black_night.png";
-import white_image from "./assets/white_anime.png";
-import mui_clear from "./assets/mui_clear.svg";
-import { invoke } from "@tauri-apps/api/core";
-import { createSVGElement } from "./utils";
+const { useEffect, useState, useRef, useContext } = await import("react");
+const board_image = (await import("./assets/oak.jpg")).default;
+const black_image = (await import("./assets/black_night.png")).default;
+const white_image = (await import("./assets/white_anime.png")).default;
+const mui_clear = (await import("./assets/mui_clear.svg")).default;
+const { invoke } = await import("@tauri-apps/api/core");
+const { createSVGElement } = await import("./utils");
 
-import triangle_icon from "./assets/triangle.svg";
-import square_icon from "./assets/square.svg";
-import circle_icon from "./assets/circle.svg";
-import cross_icon from "./assets/cross.svg";
-import delete_mark_icon from "./assets/delete_mark.svg";
-import black_territory_icon from "./assets/black_territory.svg";
-import white_territory_icon from "./assets/white_territory.svg";
+const triangle_icon = await import("./assets/triangle.svg");
+const square_icon = (await import("./assets/square.svg")).default;
+const circle_icon = (await import("./assets/circle.svg")).default;
+const cross_icon = (await import("./assets/cross.svg")).default;
+const delete_mark_icon = (await import("./assets/delete_mark.svg")).default;
+const black_territory_icon = (await import("./assets/black_territory.svg"))
+  .default;
+const white_territory_icon = (await import("./assets/white_territory.svg"))
+  .default;
 
-import AppContext from "./AppContext";
+const AppContext = (await import("./AppContext")).default;
 
-import Paper from "@mui/material/Paper";
+const Paper = (await import("@mui/material/Paper")).default;
 
 export default (props) => {
   const mark_icons = {
@@ -396,7 +398,7 @@ export default (props) => {
     }
     let [left, right, top, bottom] = context.window;
 
-    let stroke_width = 5;
+    let stroke_width = 0;
 
     let hline_start =
       margin +

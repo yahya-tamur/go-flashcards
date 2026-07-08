@@ -1,3 +1,3 @@
-import { createContext } from "react";
+const { createContext } = await import("react");
 
 export default createContext({});

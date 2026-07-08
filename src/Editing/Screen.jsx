@@ -31,7 +31,6 @@ export default () => {
         console.log(e);
       });
   }, []);
-
   return (
     <main style={{ display: "flex", flexDirection: "column" }}>
       <Box sx={{ height: "60px" }}>

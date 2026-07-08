@@ -1,21 +1,18 @@
-import { useEffect, useState, useRef, useContext } from "react";
+const { useEffect, useState, useRef, useContext } = await import("react");
 
-import { invoke } from "@tauri-apps/api/core";
-import { createSVGElement } from "./utils";
+const { invoke } = await import("@tauri-apps/api/core");
+const { createSVGElement } = await import("./utils");
 
-import "./App.css";
+await import("./App.css");
 
-import Button from "@mui/material/Button";
-import Paper from "@mui/material/Paper";
-import Box from "@mui/material/Box";
-import TextField from "@mui/material/TextField";
-import Slider from "@mui/material/Slider";
-import ClearIcon from "@mui/icons-material/Clear";
+const Button = (await import("@mui/material/Button")).default;
+const Paper = (await import("@mui/material/Paper")).default;
+const Box = (await import("@mui/material/Box")).default;
+const TextField = (await import("@mui/material/TextField")).default;
+const Slider = (await import("@mui/material/Slider")).default;
+const ClearIcon = (await import("@mui/icons-material/Clear")).default;
 
-import AppContext from "./AppContext";
-
-import { Avatar, Icon, IconButton, SvgIcon } from "@mui/material";
-import { createSvgIcon } from "@mui/material/utils";
+const AppContext = (await import("./AppContext")).default;
 
 export default (props) => {
   let context = useContext(AppContext);

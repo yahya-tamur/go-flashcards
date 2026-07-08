@@ -1,38 +1,42 @@
-import { useEffect, useState, useRef, useContext } from "react";
-import board_image from "./assets/oak.jpg";
-import black_image from "./assets/black_night.png";
-import white_image from "./assets/white_anime.png";
-import { invoke } from "@tauri-apps/api/core";
-import { createSVGElement } from "./utils";
+const { useEffect, useState, useRef, useContext } = await import("react");
+const board_image = (await import("./assets/oak.jpg")).default;
+const black_image = (await import("./assets/black_night.png")).default;
+const white_image = (await import("./assets/white_anime.png")).default;
+const { invoke } = await import("@tauri-apps/api/core");
+const { createSVGElement } = await import("./utils");
 
-import "./App.css";
+await import("./App.css");
 
-import Button from "@mui/material/Button";
-import Paper from "@mui/material/Paper";
-import Box from "@mui/material/Box";
-import TextField from "@mui/material/TextField";
-import Slider from "@mui/material/Slider";
-import Dialog from "@mui/material/Dialog";
-import DialogActions from "@mui/material/DialogActions";
-import DialogContent from "@mui/material/DialogContent";
-import DialogContentText from "@mui/material/DialogContentText";
-import DialogTitle from "@mui/material/DialogTitle";
+const Button = (await import("@mui/material/Button")).default;
+const Paper = (await import("@mui/material/Paper")).default;
+const Box = (await import("@mui/material/Box")).default;
+const TextField = (await import("@mui/material/TextField")).default;
+const Slider = (await import("@mui/material/Slider")).default;
+const Dialog = (await import("@mui/material/Dialog")).default;
+const DialogActions = (await import("@mui/material/DialogActions")).default;
+const DialogContent = (await import("@mui/material/DialogContent")).default;
+const DialogContentText = (await import("@mui/material/DialogContentText"))
+  .default;
+const DialogTitle = (await import("@mui/material/DialogTitle")).default;
 
-import ToggleButton from "@mui/material/ToggleButton";
-import ToggleButtonGroup from "@mui/material/ToggleButtonGroup";
-import NumberSpinner from "./components/NumberSpinner";
+const ToggleButton = (await import("@mui/material/ToggleButton")).default;
+const ToggleButtonGroup = (await import("@mui/material/ToggleButtonGroup"))
+  .default;
+const NumberSpinner = (await import("./components/NumberSpinner")).default;
 
-import AppContext from "./AppContext";
+const AppContext = (await import("./AppContext")).default;
 
-import CheckIcon from "@mui/icons-material/Check";
-import ClearIcon from "@mui/icons-material/Clear";
+const CheckIcon = (await import("@mui/icons-material/Check")).default;
+const ClearIcon = (await import("@mui/icons-material/Clear")).default;
 
-import triangle_icon from "./assets/triangle.svg";
-import square_icon from "./assets/square.svg";
-import circle_icon from "./assets/circle.svg";
-import cross_icon from "./assets/cross.svg";
-import delete_mark_icon from "./assets/delete_mark.svg";
-import { withTheme } from "@emotion/react";
+const triangle_icon = (await import("./assets/triangle.svg")).default;
+const square_icon = (await import("./assets/square.svg")).default;
+const circle_icon = (await import("./assets/circle.svg")).default;
+const cross_icon = (await import("./assets/cross.svg")).default;
+const delete_mark_icon = (await import("./assets/delete_mark.svg")).default;
+
+const BoardSlider = (await import("./components/BoardSlider")).default;
+const { withTheme } = await import("@emotion/react");
 
 export default (props) => {
   let context = useContext(AppContext);
@@ -132,70 +136,8 @@ export default (props) => {
           max={18}
           sx={{ margin: "5px 30px", width: "calc(100% - 60px)" }}
         />
-        <Slider
-          value={context.window.slice(2, 4)}
-          marks
-          onChange={(e) => {
-            let [a, b] = e.target.value;
-            if (a !== context.window[2] || b !== context.window[3]) {
-              context.setWindow((window) => {
-                let new_window = [...window];
-                new_window[2] = a;
-                new_window[3] = b;
-                return new_window;
-              });
-            }
-          }}
-          onChangeCommitted={async (event, newValue) => {
-            if (context.data === null || context.data === undefined) {
-              return;
-            }
-
-            if (context.data.min_window !== null) {
-              if (context.data.min_window[2] < context.window[2]) {
-                context.setWindow((window) => {
-                  let new_window = [...window];
-                  new_window[2] = context.data.min_window[2];
-                  return new_window;
-                });
-              }
-              if (context.data.min_window[3] > context.window[3]) {
-                context.setWindow((window) => {
-                  let new_window = [...window];
-                  new_window[3] = context.data.min_window[3];
-                  return new_window;
-                });
-              }
-            }
-
-            if (
-              context.window.every(
-                (value, index) => context.data.window[index] === value,
-              )
-            ) {
-              return;
-            }
-            await invoke("set_window", {
-              window: context.window,
-            })
-              .then(() => invoke("get_data"))
-              .then((data) => {
-                if (
-                  data.window[2] !== context.window[2] ||
-                  data.window[3] !== context.window[3]
-                ) {
-                  context.setData(data);
-                }
-              })
-              .catch((e) => {
-                console.log(e);
-              });
-          }}
-          step={1}
-          min={0}
-          max={18}
-          sx={{ margin: "5px 30px 0px 30px", width: "calc(100% - 60px)" }}
-        />
+        <BoardSlider side={"row"} force={false} />
+        <BoardSlider side={"column"} force={false} />
       </Box>
       <Box
         sx={{

@@ -5,7 +5,7 @@ const white_image = (await import("../assets/white_anime.png")).default;
 const { invoke } = await import("@tauri-apps/api/core");
 const { createSVGElement } = await import("../utils");
 
-import "../App.css";
+await import("../App.css");
 
 const Button = (await import("@mui/material/Button")).default;
 const ButtonGroup = (await import("@mui/material/ButtonGroup")).default;
@@ -92,7 +92,7 @@ export default (props) => {
         </Button>
         <NumberSpinner
           label="Exercise"
-          disabled={context.editingPhase === "Initialize"}
+          //disabled={context.editingPhase === "Initialize"}
           size="small"
           value={(context.data?.current_location ?? 0) + 1}
           min={1}
@@ -116,7 +116,7 @@ export default (props) => {
               <Button
                 size="small"
                 sx={{ height: "40px" }}
-                disabled={context.editingPhase === "Initialize"}
+                //disabled={context.editingPhase === "Initialize"}
                 onClick={async () => {
                   invoke("delete_exercise")
                     .then(() => invoke("get_data"))
@@ -144,7 +144,7 @@ export default (props) => {
             <span>
               <Button
                 sx={{ height: "40px" }}
-                disabled={context.editingPhase === "Initialize"}
+                //disabled={context.editingPhase === "Initialize"}
                 onClick={async () => {
                   invoke("new_exercise", { insert: true })
                     .then(() => invoke("get_data"))
@@ -164,7 +164,7 @@ export default (props) => {
             <span>
               <Button
                 sx={{ height: "40px" }}
-                disabled={context.editingPhase === "Initialize"}
+                //disabled={context.editingPhase === "Initialize"}
                 onClick={async () => {
                   invoke("new_exercise", { insert: false })
                     .then(() => invoke("get_data"))
@@ -237,7 +237,7 @@ export default (props) => {
         </ButtonGroup>
         <Button
           size="small"
-          disabled={context.editingPhase === "Initialize"}
+          //   disabled={context.editingPhase === "Initialize"}
           variant="contained"
           sx={{ height: "40px" }}
           onClick={async () => {

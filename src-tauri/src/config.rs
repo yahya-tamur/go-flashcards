@@ -43,11 +43,8 @@ struct ConfigFile {
     #[serde(rename = "flashcard_set", default)]
     study_sets: IndexMap<String, StudyConfig>,
 
-    #[serde(flatten)]
-    default_config: ActiveConfig,
-
-    #[serde(flatten)]
-    set_config: FlashcardSetConfig,
+    #[serde(rename = "default")]
+    default_config: DefaultConfig,
 }
 
 #[derive(Deserialize, Debug)]
@@ -59,6 +56,17 @@ struct EditingConfig {
 
     #[serde(flatten)]
     config: ActiveConfigPatch,
+}
+
+#[derive(Deserialize, Debug)]
+#[serde(deny_unknown_fields)]
+#[serde(rename_all = "snake_case")]
+struct DefaultConfig {
+    #[serde(flatten)]
+    set_config: FlashcardSetConfig,
+
+    #[serde(flatten)]
+    config: ActiveConfig,
 }
 
 #[derive(Deserialize, Debug)]
@@ -93,7 +101,7 @@ pub async fn load_editing(app_data: &Path, name: &str) -> ActiveConfig {
     let input = fs::load_config(app_data).await.unwrap();
     let config: ConfigFile = toml::from_str(&input).unwrap();
 
-    let mut active_config = config.default_config.clone();
+    let mut active_config = config.default_config.config.clone();
 
     if let Some(editing_config) = config.editing_config {
         active_config = active_config << editing_config.config;
@@ -111,8 +119,8 @@ pub async fn load_study(
     let input = fs::load_config(app_data).await.unwrap();
     let config: ConfigFile = toml::from_str(&input).unwrap();
 
-    let mut set_config = config.set_config.clone();
-    let mut active_config = config.default_config.clone();
+    let mut set_config = config.default_config.set_config.clone();
+    let mut active_config = config.default_config.config.clone();
 
     let study_config = config.study_sets.get(name).unwrap();
 

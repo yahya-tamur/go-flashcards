@@ -6,7 +6,7 @@ const { invoke } = await import("@tauri-apps/api/core");
 const { createSVGElement } = await import("../utils");
 
 const AppContext = (await import("../AppContext")).default;
-import "../App.css";
+await import("../App.css");
 
 const Button = (await import("@mui/material/Button")).default;
 const Paper = (await import("@mui/material/Paper")).default;
