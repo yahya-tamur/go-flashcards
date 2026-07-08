@@ -29,12 +29,13 @@ Current Item in progress
       - number spinner is too wide
 Notes
 --------------
-  - small rethink of menu layout:
-    - less tall tree view with smaller stones
-    - redo label logic + separate button from text input.
-      - just if label was a capital letter, increment it.
-        - unless there's already >= 2 of that letter.
-
+  [ ] Main Desktop
+  [ ] Edit Desktop
+  [ ] Study Desktop
+  
+  [ ] Main Mobile
+  [ ] Edit Mobile
+  [ ] Study Mobile
 
 Remaining Goals
 ---------------
@@ -57,6 +58,11 @@ Remaining Goals
 
 Small things that come to mind:
 -----------------
+  - MoveTree shouldn't keep a Problem. !!!
+  - 'add exercise' in config need overhaul again
+
+  - redo label logic.
+
   - sometimes show next moves on board (color based on variant, who plays first?)
 
   - In comments, moves marked like {S1} also get transformed.

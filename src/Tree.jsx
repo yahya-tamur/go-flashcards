@@ -147,7 +147,7 @@ export default (props) => {
         r: 3,
         stroke: "none",
         strokeWidth: "0",
-        fill: "grey",
+        fill: theme.palette.primary.light,
       },
       treecontainer.current,
     );
@@ -160,7 +160,7 @@ export default (props) => {
           y1: margin + gap_size * r1 + square_size / 2,
           x2: margin + gap_size * c2 + square_size / 2,
           y2: margin + gap_size * r2 + square_size / 2,
-          stroke: "grey",
+          stroke: theme.palette.primary.light,
           "stroke-width": 2,
         },
         treecontainer.current,
@@ -196,7 +196,7 @@ export default (props) => {
         "path",
         {
           d: `M ${x2},${y2} C ${x2},${y2} ${x1 - square_size},${y1 - square_size} ${x1},${y1}`,
-          stroke: "grey",
+          stroke: theme.palette.primary.light,
           "stroke-width": 2,
           fill: "none",
         },

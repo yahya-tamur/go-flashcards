@@ -31,7 +31,7 @@ export default () => {
 
   return (
     <main style={{ display: "flex", flexDirection: "row" }}>
-      <Box sx={{ height: "100vh", flexBasis: "60%", minWidth: 0 }}>
+      <Box sx={{ height: "100vh", width: "max(60%, calc(100% - 200px))" }}>
         {initialConfig === null ? (
           <Box />
         ) : (
@@ -45,9 +45,8 @@ export default () => {
       <Box
         sx={{
           display: "flex",
-          flexBasis: "40%",
           flexDirection: "column",
-          minWidth: 0,
+          width: "min(40%, 200px)",
           maxHeight: "100vh",
           overflow: "hidden",
         }}

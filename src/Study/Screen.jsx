@@ -33,16 +33,6 @@ export default () => {
   }, []);
 
   return (
-    <Box>
-      <TopBar></TopBar>
-      <Menu></Menu>
-      <Tree></Tree>
-      <CommentBox></CommentBox>
-      <Board></Board>
-    </Box>
-  );
-  /*
-  return (
     <main style={{ display: "flex", flexDirection: "row" }}>
       <Box
         sx={{
@@ -91,5 +81,5 @@ export default () => {
         </Box>
       </Box>
     </main>
-  );*/
+  );
 };

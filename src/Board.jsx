@@ -10,13 +10,13 @@ const { createSVGElement } = await import("./utils");
 const black_image = (await import("./assets/black_night.png")).default;
 const black_territory_icon = (await import("./assets/black_territory.svg"))
   .default;
+const board_image = (await import("./assets/board.jpeg")).default;
 const circle_icon = (await import("./assets/circle.svg")).default;
 const cross_icon = (await import("./assets/cross.svg")).default;
 const delete_mark_icon = (await import("./assets/delete_mark.svg")).default;
 const mui_clear = (await import("./assets/mui_clear.svg")).default;
-const board_image = (await import("./assets/oak.jpg")).default;
 const square_icon = (await import("./assets/square.svg")).default;
-const triangle_icon = await import("./assets/triangle.svg").default;
+const triangle_icon = (await import("./assets/triangle.svg")).default;
 const white_image = (await import("./assets/white_anime.png")).default;
 const white_territory_icon = (await import("./assets/white_territory.svg"))
   .default;
@@ -583,7 +583,7 @@ export default (props) => {
         }
         let label_color = w === "Black" ? "white" : "black";
 
-        if (context.data.game.marks[i][j] ?? null !== null) {
+        if ((context.data.game.marks[i][j] ?? null) !== null) {
           if (context.data.game.marks[i][j].Label !== undefined) {
             let text = createSVGElement(
               "text",

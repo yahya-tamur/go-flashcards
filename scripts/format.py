@@ -44,6 +44,8 @@ for path in Path("./src/").rglob("*"):
                 break
             preamble += "\n" + lines[i]
             i += 1
+        if preamble:
+            preamble += "\n"
 
         import_lines = defaultdict(set)
 
@@ -94,6 +96,10 @@ for path in Path("./src/").rglob("*"):
     print(f"{l}{path}{r} {(perf_counter_ns() - start) // 1_000_000}ms {'(unchanged)' if new_file != file else ''}")
 
 print("\nRunning prettier.\n")
-
 os.system("npx prettier ./src -w")
 
+print("\nRunning cargo format.\n")
+os.system("cd src-tauri && cargo fmt")
+
+print("\nRunning cargo clippy.\n")
+os.system("cd src-tauri && cargo clippy")

@@ -19,7 +19,7 @@ export default (props) => {
   let context = useContext(AppContext);
   const [comment, setComment] = useState("");
   useEffect(() => {
-    if (context.data?.comment ?? null !== null) {
+    if ((context.data?.comment ?? null) !== null) {
       setComment(context.data.comment);
     }
   }, [context.data]);

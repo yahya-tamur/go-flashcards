@@ -100,7 +100,7 @@ impl EditingData {
     }
 
     pub async fn save(&mut self, path: &Path) {
-        let saved_copy = self.move_tree.clone();
+        let mut saved_copy = self.move_tree.clone();
         self.exercises[self.current_exercise] = saved_copy.save();
         fs::save_exercises(path, &self.exercises, &self.file)
             .await

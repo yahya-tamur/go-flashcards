@@ -125,7 +125,7 @@ async fn delete_exercise(state: tauri::State<'_, Mutex<AppData>>) -> Result<(), 
 
 #[tauri::command]
 async fn finish_setup(state: tauri::State<'_, Mutex<AppData>>, color: Color) -> Result<(), String> {
-    apply_to_move_tree(state, |move_tree, _| move_tree.finish_setup(color)).await;
+    apply_to_move_tree(state, |move_tree, _| move_tree.finish_setup(Some(color))).await;
     Ok(())
 }
 

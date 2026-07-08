@@ -2,6 +2,7 @@ const { useEffect, useState, useRef, useContext } = await import("react");
 
 const { invoke } = await import("@tauri-apps/api/core");
 
+const AddIcon = (await import("@mui/icons-material/Add")).default;
 const ClearIcon = (await import("@mui/icons-material/Clear")).default;
 const DirectionsIcon = (await import("@mui/icons-material/Directions")).default;
 const DraftsIcon = (await import("@mui/icons-material/Drafts")).default;
@@ -132,21 +133,23 @@ export default (props) => {
             >
               <ListItem
                 secondaryAction={
-                  <Button
+                  <IconButton
                     disabled={
                       props.exercises.some((a) => a === newExercise) ||
                       exercise_name_invalid(newExercise) ||
                       newExercise.length == 0
                     }
+                    edge="end"
                     type="submit"
                     variant="contained"
                   >
-                    New
-                  </Button>
+                    <AddIcon />
+                  </IconButton>
                 }
               >
                 <TextField
                   value={newExercise}
+                  sx={{ width: "100%" }}
                   onChange={(e) => {
                     setNewExercise(e.target.value);
                   }}

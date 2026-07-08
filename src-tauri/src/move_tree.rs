@@ -55,7 +55,10 @@ impl MoveTree {
         }
     }
 
-    pub fn save(&self) -> Problem {
+    pub fn save(&mut self) -> Problem {
+        if self.problem.table.len() == 1 && self.problem.table[0].len() == 1 {
+            self.finish_setup(None);
+        }
         let mut problem = self.problem.clone();
         for r in 0..problem.table.len() {
             for c in 0..problem.table[r].len() {
@@ -69,7 +72,7 @@ impl MoveTree {
         problem
     }
 
-    pub fn finish_setup(&mut self, color: Color) {
+    pub fn finish_setup(&mut self, color: Option<Color>) {
         self.problem.initial_black.clear();
         self.problem.initial_white.clear();
 
@@ -83,7 +86,9 @@ impl MoveTree {
             }
         }
 
-        self.problem.table[0][0].as_mut().unwrap().color = self.send_recv_color(color);
+        if let Some(color) = color {
+            self.problem.table[0][0].as_mut().unwrap().color = self.send_recv_color(color);
+        }
     }
 
     // this should just not be called when not initializing.

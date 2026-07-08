@@ -32,6 +32,9 @@ const white_territory_icon = (await import("./assets/white_territory.svg"))
   .default;
 
 const BoardSlider = (await import("./components/BoardSlider")).default;
+const DragLabelGroup = (await import("./components/DragLabelGroup")).default;
+const PlaceStoneGroup = (await import("./components/PlaceStoneGroup")).default;
+const RectLabelGroup = (await import("./components/RectLabelGroup")).default;
 
 export default (props) => {
   let context = useContext(AppContext);
@@ -47,7 +50,8 @@ export default (props) => {
         display: "flex",
         flexDirection: "column",
         overflow: "scroll",
-        justifyContent: "space-around",
+        justifyContent: "start",
+        gap: "20px",
       }}
       elevation={7}
     >
@@ -60,8 +64,32 @@ export default (props) => {
           flexDirection: "row",
         }}
       >
-        <BoardSlider side={"row"} force={false} />
-        <BoardSlider side={"column"} force={false} />
+        <BoardSlider side={"row"} force={true} />
+        <BoardSlider side={"column"} force={true} />
+      </Box>
+      <Box
+        sx={{
+          width: "100%",
+          maxWidth: "100%",
+          display: "flex",
+          justifyContent: "space-around",
+          alignItems: "center",
+        }}
+      >
+        <TextField
+          sx={{ width: "60px" }}
+          size="small"
+          variant="standard"
+          value={context.nextLabel}
+          onChange={(e) => {
+            context.setNextLabel(e.target.value);
+            context.setCursor("Label");
+          }}
+          onFocus={(e) => {
+            context.setCursor("Label");
+          }}
+        ></TextField>
+        <DragLabelGroup />
       </Box>
       <Box
         sx={{
@@ -71,84 +99,8 @@ export default (props) => {
           justifyContent: "space-around",
         }}
       >
-        <ToggleButtonGroup
-          value={context.cursor}
-          exclusive
-          size="small"
-          onChange={(e, newValue) => {
-            context.setCursor(newValue);
-          }}
-        >
-          <ToggleButton value="Black">
-            <img src={black_image} style={{ height: "30px", width: "30px" }} />
-          </ToggleButton>
-          <ToggleButton value="White">
-            <img src={white_image} style={{ height: "30px", width: "30px" }} />
-          </ToggleButton>
-          <ToggleButton value="BlackTerritory">
-            <img
-              src={black_territory_icon}
-              style={{ height: "30px", width: "30px" }}
-            />
-          </ToggleButton>
-          <ToggleButton value="WhiteTerritory">
-            <img
-              src={white_territory_icon}
-              style={{ height: "30px", width: "30px" }}
-            />
-          </ToggleButton>
-          <ToggleButton value="Delete">
-            <ClearIcon color="error" sx={{ height: "30px", width: "30px" }} />
-          </ToggleButton>
-        </ToggleButtonGroup>
-
-        <ToggleButtonGroup
-          value={context.cursor}
-          exclusive
-          size="small"
-          onChange={(e, newValue) => {
-            if (newValue === null) {
-              context.setCursor("Black");
-            } else {
-              context.setCursor(newValue);
-            }
-          }}
-        >
-          <ToggleButton value="Triangle">
-            <img
-              src={triangle_icon}
-              style={{ height: "30px", width: "30px" }}
-            />
-          </ToggleButton>
-          <ToggleButton value="Square">
-            <img src={square_icon} style={{ height: "30px", width: "30px" }} />
-          </ToggleButton>
-          <ToggleButton value="Circle">
-            <img src={circle_icon} style={{ height: "30px", width: "30px" }} />
-          </ToggleButton>
-          <ToggleButton value="Cross">
-            <img src={cross_icon} style={{ height: "30px", width: "30px" }} />
-          </ToggleButton>
-          <ToggleButton value="DeleteMark">
-            <img
-              src={delete_mark_icon}
-              style={{ height: "30px", width: "30px" }}
-            />
-          </ToggleButton>
-          <ToggleButton value={"Label"}>
-            <TextField
-              sx={{ width: "60px" }}
-              size="small"
-              variant="standard"
-              value={context.nextLabel}
-              onChange={(e) => {
-                e.stopPropagation();
-                context.setNextLabel(e.target.value);
-                context.setCursor("Label");
-              }}
-            ></TextField>
-          </ToggleButton>
-        </ToggleButtonGroup>
+        <PlaceStoneGroup />
+        <RectLabelGroup />
       </Box>
 
       <Box
@@ -160,7 +112,8 @@ export default (props) => {
         }}
       >
         <Button
-          variant="contained"
+          variant="outlined"
+          color="button"
           disabled={context.cursor !== "Black" && context.cursor !== "White"}
           onClick={async () => {
             invoke("finish_setup", {
@@ -176,8 +129,6 @@ export default (props) => {
           Start
         </Button>
       </Box>
-
-      <Box></Box>
     </Paper>
   );
 };

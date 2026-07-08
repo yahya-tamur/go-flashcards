@@ -80,7 +80,8 @@ export default (props) => {
         }}
       >
         <Button
-          variant="contained"
+          variant="outlined"
+          color="button"
           sx={{ height: "40px" }}
           onClick={async () => {
             invoke("main_menu").then(() => {
@@ -114,72 +115,66 @@ export default (props) => {
 
         <ButtonGroup variant="outlined" size="small" color="gray">
           <Tooltip title="delete exercise">
-            <span>
-              <Button
-                size="small"
-                sx={{ height: "40px" }}
-                //disabled={context.editingPhase === "Initialize"}
-                onClick={async () => {
-                  invoke("delete_exercise")
-                    .then(() => invoke("get_data"))
-                    .then((data) => {
-                      if (
-                        data.table.length === 1 &&
-                        data.table[0].length === 1
-                      ) {
-                        context.setEditingPhase("Initialize");
-                      } else {
-                        context.setEditingPhase("MakeTree");
-                      }
-                      context.setData(data);
-                      context.setCursor(
-                        data.color === "Black" ? "White" : "Black",
-                      );
-                    });
-                }}
-              >
-                <ClearIcon color="error" />
-              </Button>
-            </span>
+            <Button
+              size="small"
+              variant="outlined"
+              color="button"
+              sx={{ height: "40px" }}
+              onClick={async () => {
+                invoke("delete_exercise")
+                  .then(() => invoke("get_data"))
+                  .then((data) => {
+                    if (data.table.length === 1 && data.table[0].length === 1) {
+                      context.setEditingPhase("Initialize");
+                    } else {
+                      context.setEditingPhase("MakeTree");
+                    }
+                    context.setData(data);
+                    context.setCursor(
+                      data.color === "Black" ? "White" : "Black",
+                    );
+                  });
+              }}
+            >
+              <ClearIcon color="error" />
+            </Button>
           </Tooltip>
           <Tooltip title="insert new exercise">
-            <span>
-              <Button
-                sx={{ height: "40px" }}
-                //disabled={context.editingPhase === "Initialize"}
-                onClick={async () => {
-                  invoke("new_exercise", { insert: true })
-                    .then(() => invoke("get_data"))
-                    .then((data) => {
-                      context.setData(data);
-                      context.setCursor("Black");
-                      context.setEditingPhase("Initialize");
-                    });
-                }}
-              >
-                <KeyboardArrowDownOutlinedIcon />
-              </Button>
-            </span>
+            <Button
+              variant="outlined"
+              color="button"
+              sx={{ height: "40px" }}
+              onClick={async () => {
+                invoke("new_exercise", { insert: true })
+                  .then(() => invoke("get_data"))
+                  .then((data) => {
+                    context.setData(data);
+                    context.setCursor("Black");
+                    context.setEditingPhase("Initialize");
+                  });
+              }}
+            >
+              <KeyboardArrowDownOutlinedIcon />
+            </Button>
           </Tooltip>
 
           <Tooltip title="new exercise">
-            <span>
-              <Button
-                sx={{ height: "40px" }}
-                //disabled={context.editingPhase === "Initialize"}
-                onClick={async () => {
-                  invoke("new_exercise", { insert: false })
-                    .then(() => invoke("get_data"))
-                    .then((data) => {
-                      context.setData(data);
-                      context.setCursor("Black");
-                      context.setEditingPhase("Initialize");
-                    });
-                }}
-              >
-                <KeyboardArrowRightOutlinedIcon />
-              </Button>
-            </span>
+            <Button
+              variant="outlined"
+              color="button"
+              sx={{ height: "40px" }}
+              onClick={async () => {
+                invoke("new_exercise", { insert: false })
+                  .then(() => invoke("get_data"))
+                  .then((data) => {
+                    context.setData(data);
+                    context.setCursor("Black");
+                    context.setEditingPhase("Initialize");
+                  });
+              }}
+            >
+              <KeyboardArrowRightOutlinedIcon />
+            </Button>
           </Tooltip>
         </ButtonGroup>
 
@@ -239,8 +234,8 @@ export default (props) => {
         </ButtonGroup>
         <Button
           size="small"
-          //   disabled={context.editingPhase === "Initialize"}
-          variant="contained"
+          variant="outlined"
+          color="button"
           sx={{ height: "40px" }}
           onClick={async () => {
             invoke("save_exercises").then(() => {

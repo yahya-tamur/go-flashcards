@@ -37,7 +37,10 @@ const triangle_icon = (await import("./assets/triangle.svg")).default;
 const white_image = (await import("./assets/white_anime.png")).default;
 
 const BoardSlider = (await import("./components/BoardSlider")).default;
+const DragLabelGroup = (await import("./components/DragLabelGroup")).default;
 const NumberSpinner = (await import("./components/NumberSpinner")).default;
+const PlaceStoneGroup = (await import("./components/PlaceStoneGroup")).default;
+const RectLabelGroup = (await import("./components/RectLabelGroup")).default;
 
 export default (props) => {
   let context = useContext(AppContext);
@@ -60,83 +63,20 @@ export default (props) => {
         display: "flex",
         flexDirection: "column",
         overflow: "scroll",
-        justifyContent: "space-around",
+        justifyContent: "start",
+        gap: "20px",
       }}
       elevation={7}
     >
       <Box
         sx={{
+          flex: "0 1 auto",
           width: "100%",
           maxWidth: "100%",
           display: "flex",
           flexDirection: "row",
-          justifyContent: "space-around",
         }}
       >
-        <Slider
-          value={context.window.slice(0, 2)}
-          marks
-          onChange={(e) => {
-            let [a, b] = e.target.value;
-            if (a !== context.window[0] || b !== context.window[1]) {
-              context.setWindow((window) => {
-                let new_window = [...window];
-                new_window[0] = a;
-                new_window[1] = b;
-                return new_window;
-              });
-            }
-          }}
-          onChangeCommitted={async (event, newValue) => {
-            if (context.data === null || context.data === undefined) {
-              return;
-            }
-
-            if (context.data.min_window !== null) {
-              if (context.data.min_window[0] < context.window[0]) {
-                context.setWindow((window) => {
-                  let new_window = [...window];
-                  new_window[0] = context.data.min_window[0];
-                  return new_window;
-                });
-              }
-              if (context.data.min_window[1] > context.window[1]) {
-                context.setWindow((window) => {
-                  let new_window = [...window];
-                  new_window[1] = context.data.min_window[1];
-                  return new_window;
-                });
-              }
-            }
-
-            if (
-              context.window.every(
-                (value, index) => context.data.window[index] === value,
-              )
-            ) {
-              return;
-            }
-            await invoke("set_window", {
-              window: context.window,
-            })
-              .then(() => invoke("get_data"))
-              .then((data) => {
-                if (
-                  data.window[0] !== context.window[0] ||
-                  data.window[1] !== context.window[1]
-                ) {
-                  context.setData(data);
-                }
-              })
-              .catch((e) => {
-                console.log(e);
-              });
-          }}
-          step={1}
-          min={0}
-          max={18}
-          sx={{ margin: "5px 30px", width: "calc(100% - 60px)" }}
-        />
         <BoardSlider side={"row"} force={false} />
         <BoardSlider side={"column"} force={false} />
       </Box>
@@ -145,25 +85,60 @@ export default (props) => {
           width: "100%",
           maxWidth: "100%",
           display: "flex",
-          flexDirection: "row",
           justifyContent: "space-around",
+          alignItems: "center",
         }}
       >
-        <Button
-          onClick={async () => {
-            invoke("collapse_tree")
-              .then(() => invoke("get_data"))
-              .then((data) => {
-                context.setData(data);
-                context.setEditingPhase("Initialize");
-                context.setCursor("Black");
-              });
+        <TextField
+          sx={{ width: "60px" }}
+          size="small"
+          variant="standard"
+          value={context.nextLabel}
+          onChange={(e) => {
+            context.setNextLabel(e.target.value);
+            context.setCursor("Label");
           }}
-          variant="contained"
+          onFocus={(e) => {
+            context.setCursor("Label");
+          }}
+        ></TextField>
+        <DragLabelGroup />
+      </Box>
+      <Box
+        sx={{
+          width: "100%",
+          maxWidth: "100%",
+          display: "flex",
+          justifyContent: "space-evenly",
+          alignItems: "center",
+        }}
+      >
+        <ToggleButtonGroup
+          value={context.cursor}
+          exclusive
+          size="small"
+          onChange={(e, newValue) => {
+            if (newValue === null) {
+              context.setCursor(
+                context.data.color === "Black" ? "White" : "Black",
+              );
+            } else {
+              context.setCursor(newValue);
+            }
+          }}
         >
-          Re-Initialize
-        </Button>
+          <ToggleButton
+            value={context.data.color === "Black" ? "White" : "Black"}
+          >
+            <img
+              src={context.data.color === "Black" ? white_image : black_image}
+              style={{ height: "25px", width: "25px" }}
+            />
+          </ToggleButton>
+        </ToggleButtonGroup>
+
         <Button
+          sx={{ height: "40px" }}
           onClick={async () => {
             invoke("play", {
               color: context.cursor,
@@ -174,7 +149,8 @@ export default (props) => {
                 context.setCursor(data.color === "Black" ? "White" : "Black");
               });
           }}
-          variant="contained"
+          color="button"
+          variant="outlined"
         >
           Pass
         </Button>
@@ -202,123 +178,52 @@ export default (props) => {
             <ClearIcon />
           </ToggleButton>
         </ToggleButtonGroup>
+
+        <RectLabelGroup />
       </Box>
+
       <Box
         sx={{
           width: "100%",
           maxWidth: "100%",
           display: "flex",
           flexDirection: "row",
+          justifyContent: "space-evenly",
         }}
       >
-        <Box
-          sx={{
-            width: "100%",
-            maxWidth: "100%",
-            height: "40px",
-            display: "flex",
-            flexDirection: "row",
-            justifyContent: "space-around",
+        <Button
+          onClick={async () => {
+            invoke("collapse_tree")
+              .then(() => invoke("get_data"))
+              .then((data) => {
+                context.setData(data);
+                context.setEditingPhase("Initialize");
+                context.setCursor("Black");
+              });
+          }}
+          color="button"
+          variant="outlined"
+        >
+          Collapse Tree
+        </Button>
+        <Button
+          color="button"
+          variant="outlined"
+          sx={{ height: "100%" }}
+          disabled={
+            (context.data?.row ?? 0) == 0 && (context.data?.col ?? 0) == 0
+          }
+          onClick={async () => {
+            invoke("delete_branch")
+              .then(() => invoke("get_data"))
+              .then((data) => {
+                context.setCursor(data.color === "Black" ? "White" : "Black");
+                context.setData(data);
+              });
           }}
         >
-          <Button
-            variant="contained"
-            sx={{ height: "100%" }}
-            disabled={
-              (context.data?.row ?? 0) == 0 && (context.data?.col ?? 0) == 0
-            }
-            onClick={async () => {
-              invoke("delete_branch")
-                .then(() => invoke("get_data"))
-                .then((data) => {
-                  context.setCursor(data.color === "Black" ? "White" : "Black");
-                  context.setData(data);
-                });
-            }}
-          >
-            Delete
-          </Button>
-
-          <ToggleButtonGroup
-            value={context.cursor}
-            exclusive
-            size="small"
-            onChange={(e, newValue) => {
-              if (newValue === null) {
-                context.setCursor(
-                  context.data.color === "Black" ? "White" : "Black",
-                );
-              } else {
-                context.setCursor(newValue);
-              }
-            }}
-          >
-            <ToggleButton value="Triangle">
-              <img
-                src={triangle_icon}
-                style={{ height: "30px", width: "30px" }}
-              />
-            </ToggleButton>
-            <ToggleButton value="Square">
-              <img
-                src={square_icon}
-                style={{ height: "30px", width: "30px" }}
-              />
-            </ToggleButton>
-            <ToggleButton value="Circle">
-              <img
-                src={circle_icon}
-                style={{ height: "30px", width: "30px" }}
-              />
-            </ToggleButton>
-            <ToggleButton value="Cross">
-              <img src={cross_icon} style={{ height: "30px", width: "30px" }} />
-            </ToggleButton>
-            <ToggleButton value="DeleteMark">
-              <img
-                src={delete_mark_icon}
-                style={{ height: "30px", width: "30px" }}
-              />
-            </ToggleButton>
-            <ToggleButton value={"Label"}>
-              <TextField
-                sx={{ width: "60px" }}
-                size="small"
-                variant="standard"
-                value={context.nextLabel}
-                onChange={(e) => {
-                  e.stopPropagation();
-                  context.setNextLabel(e.target.value);
-                  context.setCursor("Label");
-                }}
-              ></TextField>
-            </ToggleButton>
-          </ToggleButtonGroup>
-
-          <ToggleButtonGroup
-            value={context.cursor}
-            exclusive
-            size="small"
-            onChange={(e, newValue) => {
-              if (newValue === null) {
-                context.setCursor(
-                  context.data.color === "Black" ? "White" : "Black",
-                );
-              } else {
-                context.setCursor(newValue);
-              }
-            }}
-          >
-            <ToggleButton
-              value={context.data.color === "Black" ? "White" : "Black"}
-            >
-              <img
-                src={context.data.color === "Black" ? white_image : black_image}
-                style={{ height: "30px", width: "30px" }}
-              />
-            </ToggleButton>
-          </ToggleButtonGroup>
-        </Box>
+          Delete Branch
+        </Button>
       </Box>
     </Paper>
   );

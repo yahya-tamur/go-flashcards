@@ -8,13 +8,12 @@ await import("../App.css");
 
 const AppContext = (await import("../AppContext")).default;
 
-console.log(AppContext);
 // side: "row" or "column"
 // force: true or false
-export default ({ side, commit, ...props }) => {
+export default ({ side, force, ...props }) => {
   let context = useContext(AppContext);
 
-  const [l, r, ll, rr] = side === "row" ? [0, 1, 2, 3] : [2, 3, 0, 1];
+  const [l, r] = side === "row" ? [0, 1] : [2, 3];
 
   return (
     <Slider
@@ -36,41 +35,28 @@ export default ({ side, commit, ...props }) => {
           return;
         }
 
+        let new_window = [...context.window];
         if (!force && context.data.min_window !== null) {
           if (context.data.min_window[l] < context.window[l]) {
-            context.setWindow((window) => {
-              let new_window = [...window];
-              new_window[l] = context.data.min_window[l];
-              return new_window;
-            });
+            new_window[l] = context.data.min_window[l];
           }
           if (context.data.min_window[r] > context.window[r]) {
-            context.setWindow((window) => {
-              let new_window = [...window];
-              new_window[r] = context.data.min_window[r];
-              return new_window;
-            });
+            new_window[r] = context.data.min_window[r];
           }
         }
-
         if (
-          context.window.every(
+          new_window.every(
             (value, index) => context.data.window[index] === value,
           )
         ) {
           return;
         }
         await invoke("set_window", {
-          window: context.window,
+          window: new_window,
         })
           .then(() => invoke("get_data"))
           .then((data) => {
-            if (
-              data.window[l] !== context.window[l] ||
-              data.window[r] !== context.window[r]
-            ) {
-              context.setData(data);
-            }
+            context.setData(data);
           })
           .catch((e) => {
             console.log(e);
