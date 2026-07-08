@@ -103,3 +103,7 @@ os.system("cd src-tauri && cargo fmt")
 
 print("\nRunning cargo clippy.\n")
 os.system("cd src-tauri && cargo clippy")
+
+# maybe only run if no clippy errors
+print("\nRunning git status.\n")
+os.system("git status")

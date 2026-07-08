@@ -29,8 +29,8 @@ Current Item in progress
       - number spinner is too wide
 Notes
 --------------
-  [ ] Main Desktop
-  [ ] Edit Desktop
+  [#] Main Desktop
+  [#] Edit Desktop
   [ ] Study Desktop
   
   [ ] Main Mobile
@@ -60,8 +60,8 @@ Small things that come to mind:
 -----------------
   - MoveTree shouldn't keep a Problem. !!!
   - 'add exercise' in config need overhaul again
-
   - redo label logic.
+
 
   - sometimes show next moves on board (color based on variant, who plays first?)
 
