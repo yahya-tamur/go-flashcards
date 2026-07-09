@@ -95,7 +95,6 @@ export default (props) => {
         </Button>
         <NumberSpinner
           label="Exercise"
-          //disabled={context.editingPhase === "Initialize"}
           size="small"
           value={(context.data?.current_location ?? 0) + 1}
           min={1}
@@ -178,11 +177,13 @@ export default (props) => {
           </Tooltip>
         </ButtonGroup>
 
-        <ButtonGroup size="small">
+        <ButtonGroup>
           <Tooltip title="import one from sgf">
             <span>
-              <IconButton
-                variant="contained"
+              <Button
+                sx={{ height: "40px" }}
+                variant="outlined"
+                color="button"
                 onClick={async () => {
                   invoke("import_sgf")
                     .then(() => invoke("get_data"))
@@ -206,16 +207,18 @@ export default (props) => {
                 }}
               >
                 <DownloadIcon />
-              </IconButton>
+              </Button>
             </span>
           </Tooltip>
 
           <Tooltip title="export all to sgf">
             <span>
               {" "}
-              <IconButton
+              <Button
+                sx={{ height: "40px" }}
+                variant="outlined"
+                color="button"
                 label="export"
-                variant="contained"
                 onClick={async () => {
                   invoke("export_sgf")
                     .then(() => {
@@ -228,7 +231,7 @@ export default (props) => {
                 }}
               >
                 <FileUploadIcon />
-              </IconButton>
+              </Button>
             </span>
           </Tooltip>
         </ButtonGroup>

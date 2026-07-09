@@ -64,7 +64,7 @@ export default () => {
             overflow: "hidden",
           }}
         >
-          <Box sx={{ flexBasis: "35%", minHeight: 0 }}>
+          <Box sx={{ flexBasis: "30%", minHeight: 0 }}>
             <Tree />
           </Box>
           <Box sx={{ flexBasis: "50%", minHeight: 0 }}>
@@ -74,7 +74,7 @@ export default () => {
               <MakeTreeMenu />
             )}
           </Box>
-          <Box sx={{ flexBasis: "15%", minHeight: 0 }}>
+          <Box sx={{ flexBasis: "40%", minHeight: 0 }}>
             <CommentBox />
           </Box>
         </Box>

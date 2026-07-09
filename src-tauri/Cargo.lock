@@ -3183,7 +3183,6 @@ dependencies = [
 [[package]]
 name = "sgf-parse"
 version = "4.2.8"
-source = "git+https://github.com/julianandrews/sgf-parse.git?rev=e9289575ddf3c079b405878799a889aa0da95b4e#e9289575ddf3c079b405878799a889aa0da95b4e"
 
 [[package]]
 name = "sha2"

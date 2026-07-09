@@ -115,6 +115,7 @@ export default (props) => {
       >
         <ToggleButtonGroup
           value={context.cursor}
+          color="toggle"
           exclusive
           size="small"
           onChange={(e, newValue) => {
@@ -156,6 +157,7 @@ export default (props) => {
         </Button>
 
         <ToggleButtonGroup
+          color="toggle"
           value={variant}
           exclusive
           size="small"

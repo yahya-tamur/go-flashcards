@@ -4,10 +4,6 @@ const { invoke } = await import("@tauri-apps/api/core");
 
 const AddIcon = (await import("@mui/icons-material/Add")).default;
 const ClearIcon = (await import("@mui/icons-material/Clear")).default;
-const DirectionsIcon = (await import("@mui/icons-material/Directions")).default;
-const DraftsIcon = (await import("@mui/icons-material/Drafts")).default;
-const InboxIcon = (await import("@mui/icons-material/Inbox")).default;
-const SearchIcon = (await import("@mui/icons-material/Search")).default;
 
 const Box = (await import("@mui/material/Box")).default;
 const Button = (await import("@mui/material/Button")).default;
@@ -16,16 +12,13 @@ const DialogActions = (await import("@mui/material/DialogActions")).default;
 const DialogContent = (await import("@mui/material/DialogContent")).default;
 const DialogContentText = (await import("@mui/material/DialogContentText"))
   .default;
-const DialogTitle = (await import("@mui/material/DialogTitle")).default;
-const Divider = (await import("@mui/material/Divider")).default;
 const IconButton = (await import("@mui/material/IconButton")).default;
-const InputBase = (await import("@mui/material/InputBase")).default;
 const List = (await import("@mui/material/List")).default;
 const ListItem = (await import("@mui/material/ListItem")).default;
 const ListItemButton = (await import("@mui/material/ListItemButton")).default;
-const ListItemIcon = (await import("@mui/material/ListItemIcon")).default;
 const ListItemText = (await import("@mui/material/ListItemText")).default;
 const Paper = (await import("@mui/material/Paper")).default;
+const SwipeableDrawer = (await import("@mui/material/SwipeableDrawer")).default;
 const TextField = (await import("@mui/material/TextField")).default;
 
 await import("../App.css");
@@ -44,6 +37,9 @@ export default (props) => {
 
   // "main", "exercises", "study"
   const [menu, setMenu] = useState("main");
+
+  const [editOpen, setEditOpen] = useState(false);
+  const [studyOpen, setStudyOpen] = useState(false);
 
   const [newExercise, setNewExercise] = useState("");
 
@@ -64,31 +60,50 @@ export default (props) => {
       }}
       elevation={7}
     >
-      {menu === "main" ? (
-        <>
-          <Button
-            variant="contained"
-            disableRipple
-            sx={{ margin: "20px" }}
-            onClick={() => {
-              setMenu("exercises");
-            }}
-          >
-            Edit
-          </Button>
-          <Button
-            disableRipple
-            variant="contained"
-            sx={{ margin: "20px" }}
-            onClick={() => {
-              setMenu("study");
-            }}
-          >
-            Study
-          </Button>
-        </>
-      ) : menu === "exercises" ? (
-        <>
+      <Button
+        variant="contained"
+        sx={{ margin: "20px" }}
+        onClick={() => {
+          setEditOpen(true);
+        }}
+      >
+        Edit
+      </Button>
+      <Button
+        variant="contained"
+        sx={{ margin: "20px" }}
+        onClick={() => {
+          setStudyOpen(true);
+        }}
+      >
+        Study
+      </Button>
+      <SwipeableDrawer
+        open={editOpen}
+        anchor="right"
+        variant="persistent"
+        onClose={() => {
+          setStudyOpen(false);
+        }}
+        onOpen={() => {
+          setStudyOpen(true);
+        }}
+        sx={{
+          width: props.drawerWidth,
+          "& .MuiDrawer-paper": {
+            width: props.drawerWidth,
+          },
+        }}
+      >
+        <Paper
+          elevation={4}
+          sx={{
+            height: "100%",
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+          }}
+        >
           <List sx={{ overflow: "scroll" }}>
             {props.exercises.map((e, i) => (
               <ListItem
@@ -161,18 +176,42 @@ export default (props) => {
           </List>
           <Button
             variant="contained"
-            disableRipple
-            sx={{ margin: "20px" }}
+            sx={{ margin: "20px", width: "calc(100% - 40px)" }}
             onClick={() => {
-              setMenu("main");
+              setEditOpen(false);
             }}
           >
             Back
           </Button>
-        </>
-      ) : (
-        <>
-          <List sx={{ overflow: "scroll" }}>
+        </Paper>
+      </SwipeableDrawer>
+      <SwipeableDrawer
+        open={studyOpen}
+        variant="persistent"
+        onClose={() => {
+          setStudyOpen(false);
+        }}
+        onOpen={() => {
+          setStudyOpen(true);
+        }}
+        sx={{
+          width: props.drawerWidth,
+          "& .MuiDrawer-paper": {
+            width: props.drawerWidth,
+          },
+        }}
+        anchor="right"
+      >
+        <Paper
+          elevation={4}
+          sx={{
+            height: "100%",
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+          }}
+        >
+          <List sx={{ overflow: "scroll", width: "100%" }}>
             {props.studies.map((e, i) => (
               <ListItem key={i} disablePadding>
                 <ListItemButton
@@ -192,16 +231,15 @@ export default (props) => {
           </List>
           <Button
             variant="contained"
-            disableRipple
-            sx={{ margin: "20px" }}
+            sx={{ margin: "20px", width: "calc(100% - 40px)" }}
             onClick={() => {
-              setMenu("main");
+              setStudyOpen(false);
             }}
           >
             Back
           </Button>
-        </>
-      )}
+        </Paper>
+      </SwipeableDrawer>
 
       <Dialog
         open={deleteDialogOpen}

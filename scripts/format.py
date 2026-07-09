@@ -37,13 +37,14 @@ for path in Path("./src/").rglob("*"):
         lines = file.splitlines()
         i = 0
 
-        preamble = ""
+        preamble = []
 
         while i < len(lines):
             if 'await import(' in lines[i]:
                 break
-            preamble += "\n" + lines[i]
+            preamble.append(lines[i])
             i += 1
+        preamble = "\n".join(preamble)
         if preamble:
             preamble += "\n"
 
@@ -55,7 +56,7 @@ for path in Path("./src/").rglob("*"):
             if 'await import(' in line:
                 while (';' not in line):
                     i += 1
-                    line += lines[i].lstrip()
+                    line += "\n" + lines[i]
                 match = re.search("""await import\("(.*)"\)""", line)
                 if match is None:
                     print("regex failed. line:")
@@ -84,16 +85,21 @@ for path in Path("./src/").rglob("*"):
             new_imports.append('')
         
         new_file = preamble + \
-            '\n'.join(new_imports) + "\n\n" + \
-            "\n".join(lines[end_of_imports:])
+            '\n'.join(new_imports) + \
+            ("\n" if end_of_imports < len(lines) else "") + \
+            "\n".join(lines[end_of_imports:]) + \
+            ("\n" if end_of_imports < len(lines) else "")
+
 
     l, r = "\033[0;30m", "\033[0m"
+    change = "(unchanged)"
     if new_file != file:
         with open(path, 'w') as file:
             file.write(new_file)
-        #l, r = "", "" 
+        l, r = "", ""
+        change = ""
 
-    print(f"{l}{path}{r} {(perf_counter_ns() - start) // 1_000_000}ms {'(unchanged)' if new_file != file else ''}")
+    print(f"{l}{path}{r} {(perf_counter_ns() - start) // 1_000_000}ms {change}")
 
 print("\nRunning prettier.\n")
 os.system("npx prettier ./src -w")
@@ -102,8 +108,9 @@ print("\nRunning cargo format.\n")
 os.system("cd src-tauri && cargo fmt")
 
 print("\nRunning cargo clippy.\n")
-os.system("cd src-tauri && cargo clippy")
+i = os.system("cd src-tauri && cargo clippy")
 
-# maybe only run if no clippy errors
-print("\nRunning git status.\n")
-os.system("git status")
+# maybe only run if no clippy errorrs
+if (i == 0):
+    print("\nRunning git status.\n")
+    os.system("git status")

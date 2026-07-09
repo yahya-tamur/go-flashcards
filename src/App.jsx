@@ -24,15 +24,17 @@ let theme = createTheme(theme_import);
 
 theme = createTheme(theme, {
   components: {
-    MuiToggleButton: {
+    MuiToggleButtonGroup: {
       styleOverrides: {
         root: {
+          backgroundColor: theme.palette.toggle.light,
+          /*"&:hover": "none",
           "&.Mui-selected": {
-            backgroundColor: theme.palette.primary.main,
+            backgroundColor: theme.palette.primary.dark,
           },
           "&.Mui-selected:hover": {
-            backgroundColor: theme.palette.primary.main,
-          },
+            backgroundColor: theme.palette.primary.dark,
+          },*/
         },
       },
     },

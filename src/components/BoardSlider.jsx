@@ -49,6 +49,11 @@ export default ({ side, force, ...props }) => {
             (value, index) => context.data.window[index] === value,
           )
         ) {
+          if (
+            !new_window.every((value, index) => context.window[index] === value)
+          ) {
+            context.setWindow(new_window);
+          }
           return;
         }
         await invoke("set_window", {

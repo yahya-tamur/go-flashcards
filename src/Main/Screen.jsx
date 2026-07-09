@@ -52,6 +52,7 @@ export default () => {
         }}
       >
         <Menu
+          drawerWidth={"min(40%, 200px)"}
           exercises={exercises}
           setExercises={setExercises}
           studies={studies}

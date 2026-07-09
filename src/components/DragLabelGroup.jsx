@@ -39,6 +39,7 @@ export default (props) => {
   return (
     <Box>
       <ToggleButtonGroup
+        color="toggle"
         value={context.cursor}
         exclusive
         size="small"

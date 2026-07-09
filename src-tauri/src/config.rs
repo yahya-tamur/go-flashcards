@@ -1,9 +1,10 @@
 use indexmap::IndexMap;
+use regex::Regex;
 use std::{
     collections::{HashMap, HashSet},
     path::Path,
 };
-use toml::Spanned;
+use toml::{Spanned, Value};
 
 use struct_patch::Patch;
 
@@ -207,8 +208,6 @@ pub async fn validate(app_data: &Path, input: Option<&str>) -> Result<(), (Strin
     Ok(())
 }
 
-use regex::Regex;
-
 pub async fn add_exercise(app_data: &Path, name: &str) -> bool {
     let bare_key_re = Regex::new(r#"^[A-Za-z0-9_\-]*$"#).unwrap();
 
@@ -226,18 +225,46 @@ pub async fn add_exercise(app_data: &Path, name: &str) -> bool {
     let new_set = format!("[flashcard_set.{}]\nsources = [{}]", name, qname);
 
     let old_config = fs::load_config(app_data).await.unwrap();
-    let mut i = 0;
 
-    if !old_config.is_empty() && old_config[old_config.len() - 1..old_config.len()] == *"\n" {
+    let Ok(parsed_toml) =
+        toml::from_str::<IndexMap<Spanned<String>, IndexMap<Spanned<String>, Value>>>(&old_config)
+    else {
+        return false;
+    };
+
+    let start_of_last_flashcard_set = match parsed_toml.get("flashcard_set") {
+        None => 0,
+        Some(map) => map
+            .keys()
+            .map(|spanned_value| spanned_value.span().end)
+            .max()
+            .unwrap_or(0),
+    };
+
+    let any_table_re = Regex::new(r"(?m)^[^\S\n]*\[.*$").unwrap();
+
+    // insert right before next [table]
+    let n: usize = any_table_re
+        .find_at(&old_config, start_of_last_flashcard_set)
+        .map_or(old_config.len(), |m| m.start());
+
+    let mut i = 0;
+    if !old_config.is_empty() && old_config[n - 1..n] == *"\n" {
         i += 1;
-        if old_config.len() > 1 && old_config[old_config.len() - 2..old_config.len() - 1] == *"\n" {
+        if old_config.len() > 1 && old_config[n - 2..n - 1] == *"\n" {
             i += 1;
         }
     }
 
     fs::save_config(
         app_data,
-        &format!("{}{}{}", old_config, "\n".repeat(2 - i), new_set),
+        &format!(
+            "{}{}{}\n\n{}",
+            &old_config[..n],
+            "\n".repeat(2 - i),
+            new_set,
+            &old_config[n..]
+        ),
     )
     .await
     .unwrap();

@@ -47,6 +47,7 @@ export default (props) => {
   const ghostcontainer = useRef(null);
   const gridcontainer = useRef(null);
   const stonecontainer = useRef(null);
+  const markcontainer = useRef(null);
   const labelmask = useRef(null);
   const paper = useRef(null);
 
@@ -57,7 +58,10 @@ export default (props) => {
   const partial = 70; // dots for partial board.
   const partial_border = 0; // border from partial edges
 
-  const [dragSet, setDragSet] = useState(() => []);
+  // separate to avoid unnecessary updates
+  const [stoneDragSet, setStoneDragSet] = useState(() => []);
+  const [markDragSet, setMarkDragSet] = useState(() => []);
+
   const [dragStart, setDragStart] = useState(null);
   const [dragging, setDragging] = useState(false);
 
@@ -137,9 +141,6 @@ export default (props) => {
         return null;
       }
     } else if (get_mode() === "DragPlace") {
-      if ((i - si) * (i - si) + (j - sj) * (j - sj) > 0.25) {
-        return null;
-      }
       if (context.cursor === "Delete") {
         if (context.data.game.stones[si][sj] === null) {
           return null;
@@ -232,7 +233,7 @@ export default (props) => {
           setGhost(null);
         });
     } else if (get_mode() === "DragPlace") {
-      if (dragSet.length === 0) {
+      if (stoneDragSet.length === 0 && markDragSet.length === 0) {
         return;
       }
       if (
@@ -241,20 +242,20 @@ export default (props) => {
         context.cursor === "Delete"
       ) {
         invoke("place_stone", {
-          locs: dragSet,
+          locs: stoneDragSet,
           color: { Black: "Black", White: "White" }[context.cursor],
         })
           .then(() => invoke("get_data"))
           .then((data) => {
             context.setData(data);
-            setDragSet([]);
+            setStoneDragSet([]);
           })
           .catch((e) => {
             console.log(e);
           });
       } else {
         invoke("set_marks", {
-          locs: dragSet,
+          locs: markDragSet,
           mark:
             context.cursor === "DeleteMark"
               ? undefined
@@ -265,12 +266,13 @@ export default (props) => {
           .then(() => invoke("get_data"))
           .then((data) => {
             context.setData(data);
+            setMarkDragSet([]);
           })
           .catch((e) => {
             console.log(e);
           })
           .finally(() => {
-            setDragSet([]);
+            setMarkDragSet([]);
           });
       }
     } else if (get_mode() === "DragRectangle") {
@@ -310,6 +312,10 @@ export default (props) => {
       ) {
         context.data.game.stones[w[0]][w[1]] =
           context.cursor === "Delete" ? null : context.cursor;
+
+        if (!stoneDragSet.some((z) => w[0] === z[0] && w[1] === z[1])) {
+          setStoneDragSet((oldSet) => [...oldSet, w]);
+        }
       } else {
         context.data.game.marks[w[0]][w[1]] =
           context.cursor === "DeleteMark"
@@ -317,9 +323,10 @@ export default (props) => {
             : context.cursor === "Label"
               ? { Label: context.nextLabel }
               : context.cursor;
-      }
-      if (!dragSet.some((z) => w[0] === z[0] && w[1] === z[1])) {
-        setDragSet((oldSet) => [...oldSet, w]);
+
+        if (!markDragSet.some((z) => w[0] === z[0] && w[1] === z[1])) {
+          setMarkDragSet((oldSet) => [...oldSet, w]);
+        }
       }
     }
   };
@@ -385,7 +392,14 @@ export default (props) => {
         }
       }
     }
-  }, [labelmask, context.data, context.cursor, ghost, context.window, dragSet]);
+  }, [
+    labelmask,
+    context.data,
+    context.cursor,
+    ghost,
+    context.window,
+    markDragSet,
+  ]);
 
   useEffect(() => {
     let return_val = () => {
@@ -581,6 +595,30 @@ export default (props) => {
             stonecontainer.current,
           );
         }
+      }
+    }
+
+    return return_val;
+  }, [context.data, stonecontainer, context.window, stoneDragSet]);
+
+  useEffect(() => {
+    let return_val = () => {
+      if (markcontainer.current) {
+        markcontainer.current.replaceChildren();
+      }
+    };
+    if (
+      markcontainer.current === null ||
+      context.data === null ||
+      context.data === undefined
+    ) {
+      return return_val;
+    }
+    let [left, right, top, bottom] = context.window;
+
+    for (let i = left; i <= right; i++) {
+      for (let j = top; j <= bottom; j++) {
+        const w = context.data.game.stones[i][j];
         let label_color = w === "Black" ? "white" : "black";
 
         if ((context.data.game.marks[i][j] ?? null) !== null) {
@@ -595,7 +633,7 @@ export default (props) => {
                 "text-anchor": "middle",
                 "dominant-baseline": "central",
               },
-              stonecontainer.current,
+              markcontainer.current,
             );
             text.style.fill = label_color;
             text.style.webkitUserSelect = "none";
@@ -619,7 +657,7 @@ export default (props) => {
                 href: mark_icons[context.data.game.marks[i][j]],
                 filter: filter,
               },
-              stonecontainer.current,
+              markcontainer.current,
             );
           }
         }
@@ -627,8 +665,7 @@ export default (props) => {
     }
 
     return return_val;
-  }, [context.data, stonecontainer, context.window, dragSet]);
-
+  }, [context.data, markcontainer, context.window, markDragSet]);
   // creates ghost
 
   useEffect(() => {
@@ -885,7 +922,15 @@ export default (props) => {
               setDragStart(w);
               dragEnd(w);
             } else if (get_mode() === "DragPlace") {
-              setDragSet([w]);
+              if (
+                context.cursor === "Black" ||
+                context.cursor === "White" ||
+                context.cursor === "Delete"
+              ) {
+                setStoneDragSet([w]);
+              } else {
+                setMarkDragSet([w]);
+              }
               dragEnd(null);
             }
           }}
@@ -938,6 +983,7 @@ export default (props) => {
             filter="url(#flatten-alpha)"
           />
           <g ref={stonecontainer} />
+          <g ref={markcontainer} />
           <g ref={ghostcontainer} />
         </svg>
       }

@@ -30,6 +30,12 @@
       "dark": "#ffffff",
       "contrastText": "#fff"
     },
+    "toggle": {
+      "light": "#3b362a",
+      "main": "#95cf95",
+      "dark": "#999999",
+      "contrastText": "#000"
+    },
     "mode": "dark"
   }
 }

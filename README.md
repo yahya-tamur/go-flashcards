@@ -4,31 +4,8 @@ Current Status
 
 Current Item in progress
 ----------------
-    - UI Overhaul
-      - check tablet for design ideas
-        -> Study: Guess, View (mobile, desktop)
-        -> Edit: Initialize, MakeTree (mobile, desktop) - tooltips on buttons
-        -> MainMenu (mobile)
+  UI overhaul
 
-        -- This should be like 95%
-
-      - captures? no?
-      
-      - Histogram
-        - custom svg like board, table.
-        - see tablet:
-          - [  |  |  | ] graph on mobile. Maybe on desktop too.
-      
-      - tactility:
-        - exit without saving? popup on edit
-          - same on config
-        - popups on save?
-        - popups on correct / incorrect?
-        - next button? 
-      
-      - number spinner is too wide
-Notes
---------------
   [#] Main Desktop
   [#] Edit Desktop
   [ ] Study Desktop
@@ -36,6 +13,13 @@ Notes
   [ ] Main Mobile
   [ ] Edit Mobile
   [ ] Study Mobile
+      
+      - Histogram
+        - custom svg like board, table.
+        - see tablet:
+          - [  |  |  | ] graph on mobile. Maybe on desktop too.
+Notes
+--------------
 
 Remaining Goals
 ---------------
@@ -43,7 +27,6 @@ Remaining Goals
   (-) Actually make a good flashcard set and use this to study.
 
   - phone app
-    - phone ui
     - android file situation
 
   - Customizable algorithm
@@ -58,17 +41,20 @@ Remaining Goals
 
 Small things that come to mind:
 -----------------
-  - MoveTree shouldn't keep a Problem. !!!
-  - 'add exercise' in config need overhaul again
-  - redo label logic.
-  - why does drawing a lot of marks redraw stones sometimes?
 
+  - tactility:
+    - exit without saving? popup on edit
+      - same on config
+    - popups on save?
+    - popups on correct / incorrect?
+  
+  - I don't like the number spinner.
 
-  - sometimes show next moves on board (color based on variant, who plays first?)
+  - sometimes show next moves on board (color based on variant, who plays first)
+    - option to not see tree?
 
   - In comments, moves marked like {S1} also get transformed.
 
-  - buttons to type marks in comments?
 
   - Add to config:
     - custom art per flashcard set.
@@ -80,6 +66,11 @@ Small things that come to mind:
     - show comments : none, all, first
 
   - more options in export to sgf
+
+  - do all buttons have tooltips?
+
+  - ? redo label logic?
+  - ? ui for captures?
 
   - ? only redraw stones or marks if those have changed. (instead of context.data)
 

@@ -98,6 +98,26 @@ export default (props) => {
     });
   }, [props.configSignal]);
 
+  useEffect(() => {
+    if (editorRef === null) {
+      return;
+    }
+    window.addHighlight = (left, right) => {
+      editorRef.current?.view?.dispatch({
+        effects: addHighlight.of({ from: left, to: right }),
+      });
+    };
+    window.removeHighlight = () => {
+      editorRef.current?.view?.dispatch({
+        effects: removeHighlight.of(),
+      });
+    };
+    return () => {
+      delete window.addHighlight;
+      delete window.removeHighlight;
+    };
+  }, [editorRef]);
+
   return (
     <>
       <Paper
