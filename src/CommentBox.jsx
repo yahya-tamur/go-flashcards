@@ -58,15 +58,12 @@ export default (props) => {
     }
 
     const observer = new ResizeObserver(() => {
-      console.log(areaRef.current, areaRef.current.offsetHeight);
       let textAreaHeight = areaRef.current.offsetHeight - 33;
       // just in case
       textAreaHeight -= 1;
       let heightPerRow = 23;
 
-      let a = Math.max(1, Math.floor(textAreaHeight / heightPerRow));
-      console.log(a);
-      setRows(a);
+      setRows(Math.max(1, Math.floor(textAreaHeight / heightPerRow)));
     });
 
     observer.observe(areaRef.current);

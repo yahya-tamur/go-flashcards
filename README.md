@@ -2,7 +2,7 @@ Current Status
 ------------------
   - ok, maybe it won't be done in the summer.
 
-Current Item in progress
+Current Large Goal in progress
 ----------------
   UI overhaul
 
@@ -20,12 +20,30 @@ Current Item in progress
           - [  |  |  | ] graph on mobile. Maybe on desktop too.
 Notes
 --------------
+  - redo board to comply with React
+    - delete createSvg util, do shapes.map
+    - shapes.key important!!
+      - actually double check this for lists etc. as well
+
+  - Actually compile for phone!
+    - file situation
+    - perf?
+
+  - histogram!
+
+  - things that popped up while studying:
+    - reset label when moving exercises
+      - util
+    - increment number labels too
+    - new exercise: preserve window
+    - lots of errors while studying
 
 Remaining Goals
 ---------------
 
   (-) Actually make a good flashcard set and use this to study.
 
+  - rename this file roadmap or todo or something and link it from readme if you want
   - phone app
     - android file situation
 
@@ -37,11 +55,10 @@ Remaining Goals
         as correct as it'll ever be.
       - boxes for <10 times correct, <50 times correct, <0infty times correct,
 
-
-
 Small things that come to mind:
 -----------------
 
+  - 'file system error' alert
   - tactility:
     - exit without saving? popup on edit
       - same on config
@@ -54,6 +71,7 @@ Small things that come to mind:
     - option to not see tree?
 
   - In comments, moves marked like {S1} also get transformed.
+    - or, comments like {Black}
 
 
   - Add to config:
@@ -69,10 +87,11 @@ Small things that come to mind:
 
   - do all buttons have tooltips?
 
+  - ? rename exercise
+  - ! copy paste position???
+
   - ? redo label logic?
   - ? ui for captures?
-
-  - ? only redraw stones or marks if those have changed. (instead of context.data)
 
   - ? multiple spaces in file names?
 

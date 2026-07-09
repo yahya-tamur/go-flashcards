@@ -107,6 +107,11 @@ export default (props) => {
               .then(() => invoke("get_data"))
               .then((data) => {
                 context.setData(data);
+                if (data.table.length === 1 && data.table[0].length === 1) {
+                  context.setEditingPhase("Initialize");
+                } else {
+                  context.setEditingPhase("MakeTree");
+                }
                 context.setCursor(data.color === "Black" ? "White" : "Black");
               });
           }}

@@ -45,7 +45,9 @@ export default (props) => {
         size="small"
         onChange={(e, newValue) => {
           if (newValue === null) {
-            context.setCursor("Black");
+            context.setCursor(
+              context.data.color === "Black" ? "White" : "Black",
+            );
           } else {
             context.setCursor(newValue);
           }

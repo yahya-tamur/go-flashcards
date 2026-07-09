@@ -44,7 +44,13 @@ export default (props) => {
         exclusive
         size="small"
         onChange={(e, newValue) => {
-          context.setCursor(newValue);
+          if (newValue === null) {
+            context.setCursor(
+              context.data.color === "Black" ? "White" : "Black",
+            );
+          } else {
+            context.setCursor(newValue);
+          }
         }}
       >
         <ToggleButton value="Black">

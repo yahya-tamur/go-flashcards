@@ -21,7 +21,7 @@ export default ({ side, force, ...props }) => {
       marks
       onChange={(e) => {
         let [a, b] = e.target.value;
-        if (a !== context.window[0] || b !== context.window[1]) {
+        if (a !== context.window[l] || b !== context.window[r]) {
           context.setWindow((window) => {
             let new_window = [...window];
             new_window[l] = a;
