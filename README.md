@@ -24,6 +24,8 @@ Notes
     - file situation
     - perf?
 
+  - typescript and eslint
+  
   - histogram!
 
   - things that popped up while studying:
