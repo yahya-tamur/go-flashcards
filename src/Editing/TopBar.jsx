@@ -22,8 +22,6 @@ const Tooltip = (await import("@mui/material/Tooltip")).default;
 
 await import("../App.css");
 
-const { createSVGElement } = await import("../utils");
-
 const black_image = (await import("../assets/black_night.png")).default;
 const board_image = (await import("../assets/oak.jpg")).default;
 const white_image = (await import("../assets/white_anime.png")).default;

@@ -25,7 +25,6 @@ await import("../App.css");
 const AppContext = (await import("../AppContext")).default;
 const InitializeMenu = (await import("../InitializeMenu")).default;
 const MakeTreeMenu = (await import("../MakeTreeMenu")).default;
-const { createSVGElement } = await import("../utils");
 
 const black_image = (await import("../assets/black_night.png")).default;
 const board_image = (await import("../assets/oak.jpg")).default;

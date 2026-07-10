@@ -1,3 +1,5 @@
+import { highlightingFor } from "@codemirror/language";
+
 const { useEffect, useState, useRef, useContext } = await import("react");
 
 const { invoke } = await import("@tauri-apps/api/core");
@@ -10,7 +12,6 @@ const { useTheme } = await import("@mui/material/styles");
 await import("./App.css");
 
 const AppContext = (await import("./AppContext")).default;
-const { createSVGElement } = await import("./utils");
 
 const black_image = (await import("./assets/black_night.png")).default;
 const board_image = (await import("./assets/persimmon.jpg")).default;
@@ -30,6 +31,13 @@ export default (props) => {
   const variant_square_diff = 1;
   const gap_size = 40;
   const margin = 20;
+
+  const variantColorDict = {
+    Correct: theme.palette.success.dark,
+    Incorrect: theme.palette.error.dark,
+    New: theme.palette.primary.light,
+  };
+  const variantColor = (v) => variantColorDict[v] ?? "#4480a6";
 
   useEffect(() => {
     const handle_key = (e) => {
@@ -124,6 +132,11 @@ export default (props) => {
     return null;
   };
 
+  const [lines, setLines] = useState([]);
+  const [paths, setPaths] = useState([]);
+  const [rects, setRects] = useState([]);
+  const [moves, setMoves] = useState([]); // r, c, color, text, variant
+
   useEffect(() => {
     if (
       treecontainer.current === null ||
@@ -139,44 +152,22 @@ export default (props) => {
     setTableWidth(2 * margin + gap_size * (num_columns - 1) + square_size);
     setTableHeight(2 * margin + gap_size * (num_rows - 1) + square_size);
 
-    createSVGElement(
-      "circle",
-      {
-        cx: margin + square_size / 2,
-        cy: margin + square_size / 2,
-        r: 3,
-        stroke: "none",
-        strokeWidth: "0",
-        fill: theme.palette.primary.light,
-      },
-      treecontainer.current,
-    );
+    let newLines = [];
 
-    let draw_line = (r1, c1, r2, c2) => {
-      createSVGElement(
-        "line",
-        {
-          x1: margin + gap_size * c1 + square_size / 2,
-          y1: margin + gap_size * r1 + square_size / 2,
-          x2: margin + gap_size * c2 + square_size / 2,
-          y2: margin + gap_size * r2 + square_size / 2,
-          stroke: theme.palette.primary.light,
-          "stroke-width": 2,
-        },
-        treecontainer.current,
-      );
-    };
     // horizontal lines
     table.forEach((line, r) => {
       for (let c = 0; c < line.length - 1; c++) {
         if (line[c] !== null && line[c + 1] !== null) {
-          draw_line(r, c, r, c + 1);
+          newLines.push([r, c, r, c + 1]);
         }
       }
     });
-    if (table[0].length > 1) {
-      draw_line(0, 0, 0, 1);
-    }
+    /*if (table[0].length > 1) {
+      newLines.push([0, 0, 0, 1]);
+    }*/
+    setLines(newLines);
+
+    let newPaths = [];
     //diagonal lines
     for (let r = 1; r < table.length; r++) {
       let c = 0;
@@ -192,113 +183,63 @@ export default (props) => {
       const y1 = margin + gap_size * r + square_size / 2;
       const x2 = margin + gap_size * c_ + square_size / 2;
       const y2 = margin + gap_size * r_ + square_size / 2;
-      createSVGElement(
-        "path",
-        {
-          d: `M ${x2},${y2} C ${x2},${y2} ${x1 - square_size},${y1 - square_size} ${x1},${y1}`,
-          stroke: theme.palette.primary.light,
-          "stroke-width": 2,
-          fill: "none",
-        },
-        treecontainer.current,
-      );
-      // draw_line(r, c, r_, c_);
+      newPaths.push([
+        x2,
+        y2,
+        x2,
+        y2,
+        x1 - square_size,
+        y1 - square_size,
+        x1,
+        y1,
+      ]);
     }
+    setPaths(newPaths);
 
+    let newRects = [];
     table.forEach((line, r) => {
       line.forEach((mov, c) => {
-        if (mov === null) {
+        if (mov === null || mov.variant === "None") {
           return;
         }
-        createSVGElement(
-          "rect",
-          {
-            x:
-              margin +
-              gap_size * c -
-              (gap_size - square_size) / 2 +
-              variant_square_diff,
-            y:
-              margin +
-              gap_size * r -
-              (gap_size - square_size) / 2 +
-              variant_square_diff,
-            width: gap_size - variant_square_diff * 2,
-            height: gap_size - variant_square_diff * 2,
-            stroke: "none",
-            strokeWidth: "0",
-            opacity: "0.8",
-            fill:
-              mov.variant === "Correct"
-                ? theme.palette.success.dark
-                : mov.variant === "Incorrect"
-                  ? theme.palette.error.dark
-                  : mov.variant === "New"
-                    ? theme.palette.primary.light
-                    : "none",
-          },
-          treecontainer.current,
-        );
+        newRects.push([
+          margin +
+            gap_size * c -
+            (gap_size - square_size) / 2 +
+            variant_square_diff,
+
+          margin +
+            gap_size * r -
+            (gap_size - square_size) / 2 +
+            variant_square_diff,
+
+          mov.variant === "Correct"
+            ? theme.palette.success.dark
+            : mov.variant === "Incorrect"
+              ? theme.palette.error.dark
+              : mov.variant === "New"
+                ? theme.palette.primary.light
+                : "#4480a6",
+        ]);
       });
     });
+    setRects(newRects);
 
-    createSVGElement(
-      "circle",
-      {
-        cx: margin + gap_size * context.data.col + square_size / 2,
-        cy: margin + gap_size * context.data.row + square_size / 2,
-        r: hl_radius,
-        stroke: "black",
-        "stroke-width": 2,
-        fill: theme.palette.primary.main,
-        opacity: 0.8,
-      },
-      treecontainer.current,
-    );
+    let newMoves = [];
     table.forEach((line, r) => {
       line.forEach((mov, c) => {
         if (mov === null || (r === 0 && c === 0)) {
           return;
         }
-        createSVGElement(
-          "image",
-          {
-            x: margin + gap_size * c,
-            y: margin + gap_size * r,
-            width: square_size,
-            height: square_size,
-            href: mov.color === "Black" ? black_image : white_image,
-          },
-          treecontainer.current,
-        );
-        let text = createSVGElement(
-          "text",
-          {
-            x: margin + gap_size * c + square_size / 2,
-            y: margin + gap_size * r + square_size / 2,
-            width: square_size,
-            height: square_size,
-            "text-anchor": "middle",
-            "dominant-baseline": "central",
-          },
-          treecontainer.current,
-        );
-        if (mov.color == "Black") {
-          text.style.fill = "white";
-        } else {
-          text.style.fill = "black";
-        }
-
-        text.style.webkitUserSelect = "none";
-        text.style.font = "bold 14px sans-serif";
-        if (mov.loc !== null) {
-          let [i, j] = mov.loc;
-          text.textContent = `${"ABCDEFGHJKLMNOPQRST"[i]}${19 - j}`;
-        } else {
-          text.textContent = ".";
-        }
+        let text =
+          mov.loc === null
+            ? "."
+            : `${"ABCDEFGHJKLMNOPQRST"[mov.loc[0]]}${19 - mov.loc[1]}`;
+        let key = JSON.stringify([r, c, mov.color, text, mov.variant]);
+        newMoves.push([r, c, mov.color, text, mov.variant, key]);
       });
     });
+    setMoves(newMoves);
 
     return () => {
       if (treecontainer.current) {
@@ -361,6 +302,119 @@ export default (props) => {
           }}
         >
           <g ref={treecontainer} />
+          <g>
+            <circle
+              cx={margin + square_size / 2}
+              cy={margin + square_size / 2}
+              r={3}
+              stroke="none"
+              strokeWidth={0}
+              fill={theme.palette.primary.light}
+            />
+            <g>
+              {lines.map(([r1, c1, r2, c2]) => (
+                <line
+                  x1={margin + gap_size * c1 + square_size / 2}
+                  y1={margin + gap_size * r1 + square_size / 2}
+                  x2={margin + gap_size * c2 + square_size / 2}
+                  y2={margin + gap_size * r2 + square_size / 2}
+                  stroke={theme.palette.primary.light}
+                  strokeWidth={2}
+                  key={JSON.stringify([r1, c1, r2, c2])}
+                />
+              ))}
+            </g>
+            <g>
+              {paths.map(([a, b, c, d, e, f, g, h]) => (
+                <path
+                  d={`M ${a},${b} C ${c},${d} ${e},${f} ${g},${h}`}
+                  stroke={theme.palette.primary.light}
+                  strokeWidth={2}
+                  fill="none"
+                  key={JSON.stringify([a, b, c, d, e, f, g, h])}
+                />
+              ))}
+            </g>
+            <g>
+              {moves
+                .filter(
+                  ([_r, _c, _color, _text, variant, _key]) =>
+                    variant !== "None",
+                )
+                .map(([r, c, _color, _text, variant, key]) => (
+                  <rect
+                    x={
+                      margin +
+                      gap_size * c -
+                      (gap_size - square_size) / 2 +
+                      variant_square_diff
+                    }
+                    y={
+                      margin +
+                      gap_size * r -
+                      (gap_size - square_size) / 2 +
+                      variant_square_diff
+                    }
+                    width={gap_size - variant_square_diff * 2}
+                    height={gap_size - variant_square_diff * 2}
+                    stroke="none"
+                    strokeWidth={0}
+                    opacity="0.8"
+                    fill={variantColor(variant)}
+                    key={key}
+                  />
+                ))}
+            </g>
+            <circle
+              cx={
+                context.data === null
+                  ? -10000
+                  : margin + gap_size * context.data.col + square_size / 2
+              }
+              cy={
+                context.data === null
+                  ? -10000
+                  : margin + gap_size * context.data.row + square_size / 2
+              }
+              r={hl_radius}
+              stroke={"black"}
+              strokeWidth={"2"}
+              fill={theme.palette.primary.main}
+              opacity={0.8}
+            />
+            <g>
+              {moves.map(([r, c, color, _text, _variant, key]) => (
+                <image
+                  x={margin + gap_size * c}
+                  y={margin + gap_size * r}
+                  width={square_size}
+                  height={square_size}
+                  href={color === "Black" ? black_image : white_image}
+                  key={key}
+                />
+              ))}
+            </g>
+            <g>
+              {moves.map(([r, c, color, text, _variant, key]) => (
+                <text
+                  x={margin + gap_size * c + square_size / 2}
+                  y={margin + gap_size * r + square_size / 2}
+                  width={square_size}
+                  height={square_size}
+                  textAnchor="middle"
+                  dominantBaseline="central"
+                  style={{
+                    fill: color === "Black" ? "white" : "black",
+                    WebkitUserSelect: "none",
+                    font: "bold 14px sans-serif",
+                  }}
+                  key={key}
+                >
+                  {text}
+                </text>
+              ))}
+            </g>
+          </g>
         </svg>
       }
     </Paper>

@@ -20,7 +20,6 @@ const CodeMirror = (await import("@uiw/react-codemirror")).default;
 await import("../App.css");
 
 const AppContext = (await import("../AppContext")).default;
-const { createSVGElement } = await import("../utils");
 
 const black_image = (await import("../assets/black_night.png")).default;
 const board_image = (await import("../assets/oak.jpg")).default;

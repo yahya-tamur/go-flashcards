@@ -24,7 +24,6 @@ const TextField = (await import("@mui/material/TextField")).default;
 await import("../App.css");
 
 const AppContext = (await import("../AppContext")).default;
-const { createSVGElement } = await import("../utils");
 
 const black_image = (await import("../assets/black_night.png")).default;
 const board_image = (await import("../assets/oak.jpg")).default;
@@ -107,7 +106,7 @@ export default (props) => {
           <List sx={{ overflow: "scroll" }}>
             {props.exercises.map((e, i) => (
               <ListItem
-                key={i}
+                key={JSON.stringify([e, i])}
                 disablePadding
                 secondaryAction={
                   <IconButton
@@ -213,7 +212,7 @@ export default (props) => {
         >
           <List sx={{ overflow: "scroll", width: "100%" }}>
             {props.studies.map((e, i) => (
-              <ListItem key={i} disablePadding>
+              <ListItem key={JSON.stringify([e, i])} disablePadding>
                 <ListItemButton
                   onClick={() => {
                     invoke("load_study", { flashcardSet: e })

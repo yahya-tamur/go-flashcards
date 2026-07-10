@@ -92,11 +92,12 @@ impl MoveTree {
     }
 
     // this should just not be called when not initializing.
-    pub fn place_stone(&mut self, locs: Vec<(usize, usize)>, color: Option<Color>) {
-        for (i, j) in locs {
+    pub fn set_stones(&mut self, stones: Vec<(usize, usize, Color)>) {
+        self.game.stones = [const { [const { None }; 21] }; 21];
+        for (i, j, color) in stones {
             let (i, j) = self.recv(i, j);
-            let color = color.map(|c| self.send_recv_color(c));
-            self.game.stones[i][j] = color;
+            let color = self.send_recv_color(color);
+            self.game.stones[i][j] = Some(color);
         }
     }
 
@@ -374,52 +375,58 @@ impl MoveTree {
         self.problem.table[r][c].as_ref().unwrap()
     }
 
-    fn set_mark(&mut self, mark: Option<Mark>, (i, j): (usize, usize)) {
-        // if there's a number or circle on this spot, don't let user add marks they can't see.
-        match self.config.show_recent {
-            ShowRecent::Number => {
-                if self.game.numbers[i][j].is_some() {
-                    return;
-                }
-            }
-            ShowRecent::Circle => {
-                if self.game.numbers[i][j] == Some(self.tree_loc.1) {
-                    return;
-                }
-            }
-            ShowRecent::None => {}
-        };
+    pub fn set_marks(&mut self, marks: Vec<(usize, usize, Mark)>) {
+        self.current_mut().marks.clear();
+        self.game.marks = [const { [const { None }; 21] }; 21];
 
-        self.game.marks[i][j] = mark.clone();
-
-        let current_move = self.current_mut();
-        match (
-            current_move
-                .marks
-                .iter()
-                .position(|&(ii, jj, ref _mark)| i == ii && j == jj),
-            mark,
-        ) {
-            (Some(n), Some(mark)) => current_move.marks[n] = (i, j, mark),
-            (Some(n), None) => {
-                current_move.marks.remove(n);
+        for (i, j, mark) in marks.into_iter() {
+            let (i, j) = self.recv(i, j);
+            if match self.config.show_recent {
+                ShowRecent::Number => self.game.numbers[i][j].is_some(),
+                ShowRecent::Circle => self.game.numbers[i][j] == Some(self.tree_loc.1),
+                ShowRecent::None => false,
+            } {
+                continue;
             }
-            (None, Some(mark)) => current_move.marks.push((i, j, mark)),
-            (None, None) => {}
-        }
-    }
-
-    pub fn set_marks(&mut self, mark: Option<Mark>, locs: Vec<(usize, usize)>) {
-        for (i, j) in locs {
-            self.set_mark(mark.clone(), self.recv(i, j));
+            self.game.marks[i][j] = Some(mark.clone());
+            self.current_mut().marks.push((i, j, mark));
         }
     }
 
     pub fn set_marks_window(&mut self, mark: Option<Mark>, window: (usize, usize, usize, usize)) {
         let (row_start, row_end, col_start, col_end) = self.recv_window(window);
-        for row in row_start..=row_end {
-            for col in col_start..=col_end {
-                self.set_mark(mark.clone(), (row, col));
+
+        let (r, c) = self.tree_loc;
+        self.problem.table[r][c]
+            .as_mut()
+            .unwrap()
+            .marks
+            .retain(|&(i, j, ref _mark)| {
+                if i > row_end || i < row_start || j < col_start || j > col_end {
+                    return true;
+                }
+                match self.config.show_recent {
+                    ShowRecent::Number => self.game.numbers[i][j].is_some(),
+                    ShowRecent::Circle => self.game.numbers[i][j] == Some(self.tree_loc.1),
+                    ShowRecent::None => false,
+                }
+            });
+
+        for i in row_start..=row_end {
+            for j in col_start..=col_end {
+                if match self.config.show_recent {
+                    ShowRecent::Number => self.game.numbers[i][j].is_some(),
+                    ShowRecent::Circle => self.game.numbers[i][j] == Some(self.tree_loc.1),
+                    ShowRecent::None => false,
+                } {
+                    continue;
+                }
+                if let Some(ref mark) = mark {
+                    self.current_mut().marks.push((i, j, mark.clone()));
+                    self.game.marks[i][j] = Some(mark.clone());
+                } else {
+                    self.game.marks[i][j] = None;
+                }
             }
         }
     }

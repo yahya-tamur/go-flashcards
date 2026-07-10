@@ -25,7 +25,6 @@ const ToggleButtonGroup = (await import("@mui/material/ToggleButtonGroup"))
 await import("./App.css");
 
 const AppContext = (await import("./AppContext")).default;
-const { createSVGElement } = await import("./utils");
 
 const black_image = (await import("./assets/black_night.png")).default;
 const circle_icon = (await import("./assets/circle.svg")).default;

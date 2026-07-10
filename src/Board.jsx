@@ -5,7 +5,6 @@ const { invoke } = await import("@tauri-apps/api/core");
 const Paper = (await import("@mui/material/Paper")).default;
 
 const AppContext = (await import("./AppContext")).default;
-const { createSVGElement } = await import("./utils");
 
 const black_image = (await import("./assets/black_night.png")).default;
 const black_territory_icon = (await import("./assets/black_territory.svg"))
@@ -44,29 +43,52 @@ export default (props) => {
   };
   const context = useContext(AppContext);
   const board_svg = useRef(null);
-  const ghostcontainer = useRef(null);
-  const gridcontainer = useRef(null);
-  const stonecontainer = useRef(null);
-  const markcontainer = useRef(null);
-  const labelmask = useRef(null);
   const paper = useRef(null);
-
-  const [ghost, setGhost] = useState(null);
 
   const square_size = 100;
   const margin = 150;
   const partial = 70; // dots for partial board.
   const partial_border = 0; // border from partial edges
 
-  // separate to avoid unnecessary updates
-  const [stoneDragSet, setStoneDragSet] = useState(() => []);
-  const [markDragSet, setMarkDragSet] = useState(() => []);
-
   const [dragStart, setDragStart] = useState(null);
+  const [dragCurrent, setDragCurrent] = useState(null);
+  const [ghosts, setGhosts] = useState([]); // [row, column]
+
+  useEffect(() => {
+    if (dragCurrent === null) {
+      setGhosts([]);
+    } else if (dragStart === null) {
+      setGhosts([dragCurrent]);
+    } else {
+      let [r, c] = dragStart;
+      let [rr, cc] = dragCurrent;
+      if (r > rr) {
+        [r, rr] = [rr, r];
+      }
+      if (c > cc) {
+        [c, cc] = [cc, c];
+      }
+      let newGhosts = [];
+      for (let row = r; row <= rr; row++) {
+        for (let col = c; col <= cc; col++) {
+          newGhosts.push([row, col]);
+        }
+      }
+      setGhosts((oldGhosts) =>
+        JSON.stringify(oldGhosts.toSorted()) ===
+        JSON.stringify(newGhosts.toSorted())
+          ? oldGhosts
+          : newGhosts,
+      );
+    }
+  }, [dragStart, dragCurrent]);
+
   const [dragging, setDragging] = useState(false);
 
   const [boardBoxWidth, setBoardBoxWidth] = useState(0);
   const [boardBoxHeight, setBoardBoxHeight] = useState(0);
+  const [stones, setStones] = useState([]); // [row, column, color]
+  const [marks, setMarks] = useState([]); // mark: [row, column, type, label (string or null)]
 
   useEffect(() => {
     if (
@@ -142,9 +164,9 @@ export default (props) => {
       }
     } else if (get_mode() === "DragPlace") {
       if (context.cursor === "Delete") {
-        if (context.data.game.stones[si][sj] === null) {
-          return null;
-        }
+        //if (context.data.game.stones[si][sj] === null) {
+        //  return null;
+        //}
       } else if (context.cursor === "Black" || context.cursor === "White") {
         if (context.data.game.stones[si][sj] === context.cursor) {
           return null;
@@ -180,7 +202,6 @@ export default (props) => {
       })
         .then(() => invoke("get_data"))
         .then((data) => {
-          setGhost(null);
           if (
             context.data.game.stones[w[0]][w[1]] ===
             data.game.stones[w[0]][w[1]]
@@ -230,57 +251,44 @@ export default (props) => {
         })
         .catch((e) => {
           console.log(e);
-          setGhost(null);
         });
     } else if (get_mode() === "DragPlace") {
-      if (stoneDragSet.length === 0 && markDragSet.length === 0) {
-        return;
-      }
       if (
         context.cursor === "Black" ||
         context.cursor === "White" ||
         context.cursor === "Delete"
       ) {
-        invoke("place_stone", {
-          locs: stoneDragSet,
-          color: { Black: "Black", White: "White" }[context.cursor],
+        invoke("set_stones", {
+          stones: stones,
         })
           .then(() => invoke("get_data"))
           .then((data) => {
             context.setData(data);
-            setStoneDragSet([]);
           })
           .catch((e) => {
             console.log(e);
           });
       } else {
         invoke("set_marks", {
-          locs: markDragSet,
-          mark:
-            context.cursor === "DeleteMark"
-              ? undefined
-              : context.cursor === "Label"
-                ? { Label: context.nextLabel }
-                : context.cursor,
+          marks: marks.map(([i, j, type, label]) =>
+            type === "Label" ? [i, j, { Label: label }] : [i, j, type],
+          ),
         })
           .then(() => invoke("get_data"))
           .then((data) => {
             context.setData(data);
-            setMarkDragSet([]);
           })
           .catch((e) => {
             console.log(e);
-          })
-          .finally(() => {
-            setMarkDragSet([]);
           });
       }
     } else if (get_mode() === "DragRectangle") {
-      if (dragStart === null) {
-        return;
-      }
+      //if (dragStart === null) {
+      //return;
+      //}
+      let start = dragStart === null ? [w[0], w[1]] : dragStart;
       invoke("set_marks_window", {
-        window: [dragStart[0], w[0], dragStart[1], w[1]],
+        window: [start[0], w[0], start[1], w[1]],
         mark:
           context.cursor === "DeleteMark"
             ? undefined
@@ -291,13 +299,11 @@ export default (props) => {
         .then(() => invoke("get_data"))
         .then((data) => {
           context.setData(data);
+          setDragStart(null);
         })
         .catch((e) => {
           console.log(e);
-        })
-        .finally(() => {
           setDragStart(null);
-          setGhost(null);
         });
       return;
     }
@@ -305,443 +311,81 @@ export default (props) => {
 
   const drag = (w) => {
     if (get_mode() === "DragPlace") {
-      if (
-        context.cursor === "Black" ||
-        context.cursor === "White" ||
-        context.cursor === "Delete"
-      ) {
-        context.data.game.stones[w[0]][w[1]] =
-          context.cursor === "Delete" ? null : context.cursor;
-
-        if (!stoneDragSet.some((z) => w[0] === z[0] && w[1] === z[1])) {
-          setStoneDragSet((oldSet) => [...oldSet, w]);
+      if (context.cursor === "Delete") {
+        if (stones.some((stone) => w[0] === stone[0] && w[1] === stone[1])) {
+          setStones((oldSet) =>
+            oldSet.filter((stone) => w[0] !== stone[0] || w[1] !== stone[1]),
+          );
+        }
+      } else if (context.cursor === "Black" || context.cursor === "White") {
+        if (
+          !stones.some(
+            (stone) =>
+              w[0] === stone[0] &&
+              w[1] === stone[1] &&
+              context.cursor == stone[2],
+          )
+        ) {
+          setStones((oldSet) => {
+            if (
+              !oldSet.some(
+                (stone) =>
+                  w[0] === stone[0] &&
+                  w[1] === stone[1] &&
+                  context.cursor == stone[2],
+              )
+            ) {
+              return [
+                ...oldSet.filter(
+                  (stone) => w[0] !== stone[0] || w[1] !== stone[1],
+                ),
+                [w[0], w[1], context.cursor],
+              ];
+            } else {
+              return oldSet;
+            }
+          });
         }
       } else {
-        context.data.game.marks[w[0]][w[1]] =
-          context.cursor === "DeleteMark"
-            ? null
-            : context.cursor === "Label"
-              ? { Label: context.nextLabel }
-              : context.cursor;
-
-        if (!markDragSet.some((z) => w[0] === z[0] && w[1] === z[1])) {
-          setMarkDragSet((oldSet) => [...oldSet, w]);
+        // DeleteMark is under DragRectangle
+        if (
+          !marks.some(
+            ([i, j, type, label]) =>
+              i === w[0] &&
+              j === w[1] &&
+              type === context.cursor &&
+              (type !== "Label" || label == context.nextLabel),
+          )
+        ) {
+          setMarks((oldSet) => {
+            if (
+              !oldSet.some(
+                ([i, j, type, label]) =>
+                  i === w[0] &&
+                  j === w[1] &&
+                  type === context.cursor &&
+                  (type !== "Label" || label == context.nextLabel),
+              )
+            ) {
+              return [
+                ...oldSet.filter(
+                  (stone) => w[0] !== stone[0] || w[1] !== stone[1],
+                ),
+                [
+                  w[0],
+                  w[1],
+                  context.cursor,
+                  context.cursor === "Label" ? context.nextLabel : null,
+                ],
+              ];
+            } else {
+              return oldSet;
+            }
+          });
         }
       }
     }
   };
-
-  useEffect(() => {
-    let return_val = () => {
-      if (labelmask.current) {
-        labelmask.current.replaceChildren();
-      }
-    };
-
-    if (
-      labelmask.current === null ||
-      context.data === null ||
-      context.data === undefined
-    ) {
-      return return_val;
-    }
-    let [left, right, top, bottom] = context.window;
-
-    createSVGElement(
-      "rect",
-      {
-        x: viewBoxLeft,
-        y: viewBoxTop,
-        width: viewBoxWidth,
-        height: viewBoxHeight,
-        fill: "white",
-      },
-      labelmask.current,
-    );
-
-    for (let i = left; i <= right; i++) {
-      for (let j = top; j <= bottom; j++) {
-        if (
-          (context.data.game.marks[i][j] !== null ||
-            (!(
-              context.cursor === "Black" ||
-              context.cursor === "White" ||
-              context.cursor === "Delete" ||
-              context.cursor === "BlackTerritory" ||
-              context.cursor === "WhiteTerritory" ||
-              context.cursor === "DeleteMark"
-            ) &&
-              i === ghost?.[0] &&
-              j === ghost?.[1])) &&
-          context.data.game.stones[i][j] === null &&
-          context.data.game.marks[i][j] !== "BlackTerritory" &&
-          context.data.game.marks[i][j] !== "WhiteTerritory"
-        ) {
-          createSVGElement(
-            "circle",
-            {
-              cx: margin + square_size * i,
-              cy: margin + square_size * j,
-              r: 0.4 * square_size,
-              strokeWidth: 0,
-              fill: "#000000",
-              filter: "url(#gaussian-blur)",
-            },
-            labelmask.current,
-          );
-        }
-      }
-    }
-  }, [
-    labelmask,
-    context.data,
-    context.cursor,
-    ghost,
-    context.window,
-    markDragSet,
-  ]);
-
-  useEffect(() => {
-    let return_val = () => {
-      if (gridcontainer.current) {
-        gridcontainer.current.replaceChildren();
-      }
-    };
-
-    if (gridcontainer.current === null || boardBoxWidth === null) {
-      return return_val;
-    }
-    let [left, right, top, bottom] = context.window;
-
-    let stroke_width = 0;
-
-    let hline_start =
-      margin +
-      square_size * left +
-      (left > 0 ? -partial : 0) -
-      stroke_width / 2;
-    let hline_end =
-      margin +
-      square_size * right +
-      (right < 18 ? partial : 0) +
-      stroke_width / 2;
-    let vline_start = margin + square_size * top + (top > 0 ? -partial : 0);
-    let vline_end = margin + square_size * bottom + (bottom < 18 ? partial : 0);
-
-    const width = 1;
-    for (let i = left; i <= right; i++) {
-      createSVGElement(
-        "path",
-        {
-          d: `M${margin + square_size * i} ${vline_start} ${margin + square_size * i} ${vline_end}`,
-          stroke: "black",
-          "stroke-width": `${width}px`,
-          "vector-effect": "non-scaling-stroke",
-          "shape-rendering": "crispEdges",
-        },
-
-        gridcontainer.current,
-      );
-    }
-
-    for (let j = top; j <= bottom; j++) {
-      //<path d="M10 0 V100" stroke="black" stroke-width="1" vector-effect="non-scaling-stroke" />
-
-      createSVGElement(
-        "path",
-        {
-          d: `M${hline_start} ${margin + square_size * j} ${hline_end} ${margin + square_size * j}`,
-          stroke: "black",
-          "stroke-width": `${width}px`,
-          "vector-effect": "non-scaling-stroke",
-          "shape-rendering": "crispEdges",
-        },
-        gridcontainer.current,
-      );
-    }
-
-    for (let i = 3; i < 18; i += 6) {
-      for (let j = 3; j < 18; j += 6) {
-        if (top <= j && j <= bottom && left <= i && i <= right) {
-          createSVGElement(
-            "circle",
-            {
-              cx: margin + square_size * i,
-              cy: margin + square_size * j,
-              r: 12,
-              fill: "black",
-            },
-            gridcontainer.current,
-          );
-        }
-      }
-    }
-    let letters = "ABCDEFGHJKLMNOPQRST".split("");
-    if (left == 0) {
-      for (let j = top; j <= bottom; j++) {
-        let text = createSVGElement(
-          "text",
-          {
-            x: hline_start - 70,
-            y: margin + square_size * j,
-            width: square_size,
-            height: square_size,
-            "text-anchor": "middle",
-            "dominant-baseline": "central",
-          },
-          gridcontainer.current,
-        );
-        text.style.fill = "black";
-        text.style.webkitUserSelect = "none";
-        text.style.font = "bold 40pt sans-serif";
-        text.textContent = 19 - j;
-      }
-    }
-    if (right == 18) {
-      for (let j = top; j <= bottom; j++) {
-        let text = createSVGElement(
-          "text",
-          {
-            x: hline_end + 70,
-            y: margin + square_size * j,
-            width: square_size,
-            height: square_size,
-            "text-anchor": "middle",
-            "dominant-baseline": "central",
-          },
-          gridcontainer.current,
-        );
-        text.style.fill = "black";
-        text.style.webkitUserSelect = "none";
-        text.style.font = "bold 40pt sans-serif";
-        text.textContent = 19 - j;
-      }
-    }
-    if (top == 0) {
-      for (let i = left; i <= right; i++) {
-        let text = createSVGElement(
-          "text",
-          {
-            x: margin + square_size * i,
-            y: vline_start - 70,
-            width: square_size,
-            height: square_size,
-            "text-anchor": "middle",
-            "dominant-baseline": "central",
-          },
-          gridcontainer.current,
-        );
-        text.style.fill = "black";
-        text.style.webkitUserSelect = "none";
-        text.style.font = "bold 40pt sans-serif";
-        text.textContent = letters[i];
-      }
-    }
-    if (bottom == 18) {
-      for (let i = left; i <= right; i++) {
-        let text = createSVGElement(
-          "text",
-          {
-            x: margin + square_size * i,
-            y: vline_end + 70,
-            width: square_size,
-            height: square_size,
-            "text-anchor": "middle",
-            "dominant-baseline": "central",
-          },
-          gridcontainer.current,
-        );
-        text.style.fill = "black";
-        text.style.webkitUserSelect = "none";
-        text.style.font = "bold 40pt sans-serif";
-        text.textContent = letters[i];
-      }
-    }
-
-    return return_val;
-  }, [gridcontainer, context.window, boardBoxWidth]);
-
-  // draws circles
-  useEffect(() => {
-    let return_val = () => {
-      if (stonecontainer.current) {
-        stonecontainer.current.replaceChildren();
-      }
-    };
-
-    if (
-      stonecontainer.current === null ||
-      context.data === null ||
-      context.data === undefined
-    ) {
-      return return_val;
-    }
-    let [left, right, top, bottom] = context.window;
-
-    for (let i = left; i <= right; i++) {
-      for (let j = top; j <= bottom; j++) {
-        const w = context.data.game.stones[i][j];
-
-        if (w !== null) {
-          createSVGElement(
-            "image",
-            {
-              x: square_size * i + margin - 0.5 * square_size,
-              y: square_size * j + margin - 0.5 * square_size,
-              width: square_size,
-              height: square_size,
-              href: w === "Black" ? black_image : white_image,
-            },
-            stonecontainer.current,
-          );
-        }
-      }
-    }
-
-    return return_val;
-  }, [context.data, stonecontainer, context.window, stoneDragSet]);
-
-  useEffect(() => {
-    let return_val = () => {
-      if (markcontainer.current) {
-        markcontainer.current.replaceChildren();
-      }
-    };
-    if (
-      markcontainer.current === null ||
-      context.data === null ||
-      context.data === undefined
-    ) {
-      return return_val;
-    }
-    let [left, right, top, bottom] = context.window;
-
-    for (let i = left; i <= right; i++) {
-      for (let j = top; j <= bottom; j++) {
-        const w = context.data.game.stones[i][j];
-        let label_color = w === "Black" ? "white" : "black";
-
-        if ((context.data.game.marks[i][j] ?? null) !== null) {
-          if (context.data.game.marks[i][j].Label !== undefined) {
-            let text = createSVGElement(
-              "text",
-              {
-                x: margin + square_size * i,
-                y: margin + square_size * j,
-                width: square_size,
-                height: square_size,
-                "text-anchor": "middle",
-                "dominant-baseline": "central",
-              },
-              markcontainer.current,
-            );
-            text.style.fill = label_color;
-            text.style.webkitUserSelect = "none";
-            text.style.font = "bold 40pt sans-serif";
-            text.textContent = context.data.game.marks[i][j].Label;
-          } else {
-            let filter = label_color === "black" ? "" : "url(#invert-color)";
-            if (
-              context.data.game.marks[i][j] === "BlackTerritory" ||
-              context.data.game.marks[i][j] === "WhiteTerritory"
-            ) {
-              filter = "";
-            }
-            let image = createSVGElement(
-              "image",
-              {
-                x: square_size * i + margin - 0.5 * square_size,
-                y: square_size * j + margin - 0.5 * square_size,
-                width: square_size,
-                height: square_size,
-                href: mark_icons[context.data.game.marks[i][j]],
-                filter: filter,
-              },
-              markcontainer.current,
-            );
-          }
-        }
-      }
-    }
-
-    return return_val;
-  }, [context.data, markcontainer, context.window, markDragSet]);
-  // creates ghost
-
-  useEffect(() => {
-    if (ghost === null || ghostcontainer.current === null) {
-      return;
-    }
-    let [row_start, row_end, col_start, col_end] =
-      dragStart !== null &&
-      (context.cursor === "BlackTerritory" ||
-        context.cursor === "WhiteTerritory" ||
-        context.cursor === "DeleteMark")
-        ? [
-            Math.min(dragStart[0], ghost[0]),
-            Math.max(dragStart[0], ghost[0]),
-            Math.min(dragStart[1], ghost[1]),
-            Math.max(dragStart[1], ghost[1]),
-          ]
-        : [ghost[0], ghost[0], ghost[1], ghost[1]];
-
-    for (let row = row_start; row <= row_end; row += 1) {
-      for (let col = col_start; col <= col_end; col += 1) {
-        let label_color =
-          context.data.game.stones[row][col] === "Black" ? "white" : "black";
-        let filter = label_color === "black" ? "" : "url(#invert-color)";
-        let opacity = "0.6";
-        if (
-          context.cursor === "BlackTerritory" ||
-          context.cursor === "WhiteTerritory" ||
-          context.cursor === "DeleteMark" ||
-          context.cursor === "Delete"
-        ) {
-          filter = "";
-          opacity = "0.8";
-        }
-        if (context.cursor !== "Label") {
-          createSVGElement(
-            "image",
-            {
-              x: square_size * row + margin - 0.5 * square_size,
-              y: square_size * col + margin - 0.5 * square_size,
-              width: square_size,
-              height: square_size,
-              href: cursor_icons[context.cursor],
-              filter: filter,
-              opacity: opacity,
-            },
-            ghostcontainer.current,
-          );
-        } else {
-          let text = createSVGElement(
-            "text",
-            {
-              x: margin + square_size * row,
-              y: margin + square_size * col,
-              width: square_size,
-              height: square_size,
-              "text-anchor": "middle",
-              "dominant-baseline": "central",
-              opacity: opacity,
-            },
-            ghostcontainer.current,
-          );
-          text.style.fill = label_color;
-          text.style.webkitUserSelect = "none";
-          text.style.font = "bold 40pt sans-serif";
-          text.textContent = context.nextLabel;
-        }
-      }
-    }
-
-    return () => {
-      if (ghostcontainer?.current) {
-        ghostcontainer.current.replaceChildren();
-      }
-    };
-  }, [ghostcontainer, ghost, context.cursor, context.nextLabel, dragStart]);
 
   let size_ref = useRef([null, null]); // there's a relevant stackexchange for this
 
@@ -798,7 +442,36 @@ export default (props) => {
     };
   }, [paper, context.window]);
 
-  // is(n't) there a better place for this?
+  useEffect(() => {
+    if (context.data === null) {
+      return;
+    }
+    let new_stones = [];
+    let new_marks = [];
+    let [left, right, top, bottom] = context.window;
+
+    for (let i = left; i <= right; i++) {
+      for (let j = top; j <= bottom; j++) {
+        const w = context.data.game.stones[i][j];
+
+        if (w !== null) {
+          new_stones.push([i, j, w]);
+        }
+        let mark = context.data.game.marks[i][j];
+        if (mark !== null) {
+          new_marks.push(
+            mark.Label !== undefined
+              ? [i, j, "Label", mark.Label]
+              : [i, j, mark, null],
+          );
+        }
+      }
+    }
+    setStones(new_stones);
+    setMarks(new_marks);
+    //!!??
+    setGhosts([]);
+  }, [context.window, context.data]);
 
   useEffect(() => {
     if (context.data === null || context.data === undefined) {
@@ -815,6 +488,7 @@ export default (props) => {
       return;
     }
 
+    // is(n't) there a better place for this?
     let seen_once = false;
     for (const row of context.data.game.marks) {
       for (const mark of row) {
@@ -831,6 +505,72 @@ export default (props) => {
       return;
     }
   }, [context.data]);
+
+  //maybe just always do 0..19?
+  const [rows, setRows] = useState([]);
+  const [cols, setCols] = useState([]);
+  const [lines, setLines] = useState([]);
+  const [borders, setBorders] = useState([]); // [x, y, text]
+
+  useEffect(() => {
+    let [left, right, top, bottom] = context.window;
+
+    let newRows = [];
+    for (let i = left; i <= right; i++) {
+      newRows.push(i);
+    }
+    setRows(newRows);
+
+    let newCols = [];
+    for (let j = top; j <= bottom; j++) {
+      newCols.push(j);
+    }
+    setCols(newCols);
+
+    let stroke_width = 0; // but it's 1??
+    let hline_start =
+      margin +
+      square_size * left +
+      (left > 0 ? -partial : 0) -
+      stroke_width / 2;
+    let hline_end =
+      margin +
+      square_size * right +
+      (right < 18 ? partial : 0) +
+      stroke_width / 2;
+    let vline_start = margin + square_size * top + (top > 0 ? -partial : 0);
+    let vline_end = margin + square_size * bottom + (bottom < 18 ? partial : 0);
+    setLines([hline_start, hline_end, vline_start, vline_end]);
+
+    let newBorders = [];
+    if (left == 0) {
+      for (let j = top; j <= bottom; j++) {
+        newBorders.push([hline_start - 70, margin + square_size * j, 19 - j]);
+      }
+    }
+    if (right == 18) {
+      for (let j = top; j <= bottom; j++) {
+        newBorders.push([hline_end + 70, margin + square_size * j, 19 - j]);
+      }
+    }
+    if (top == 0) {
+      for (let i = left; i <= right; i++) {
+        newBorders.push([
+          margin + square_size * i,
+          vline_start - 70,
+          letters[i],
+        ]);
+      }
+    }
+    if (bottom == 18) {
+      for (let i = left; i <= right; i++) {
+        newBorders.push([margin + square_size * i, vline_end + 70, letters[i]]);
+      }
+    }
+    setBorders(newBorders);
+  }, [context.window]);
+
+  let letters = "ABCDEFGHJKLMNOPQRST".split("");
 
   return (
     <Paper
@@ -859,7 +599,9 @@ export default (props) => {
             const w = get_coord(e);
             if (get_mode() === "DragPlace") {
               setDragging(true);
-              setGhost(null);
+              if (context.cursor !== "Delete") {
+                setDragCurrent(null);
+              }
               if (w !== null) {
                 drag(w);
               }
@@ -868,6 +610,7 @@ export default (props) => {
                 return;
               }
               setDragStart(w);
+              setDragCurrent(w);
             }
           }}
           onMouseUp={(e) => {
@@ -891,23 +634,23 @@ export default (props) => {
           onMouseMove={async (e) => {
             const w = get_coord(e);
             if (w === null) {
-              if (ghost !== null) {
-                setGhost(null);
-              }
+              setDragCurrent(null);
+
               return;
             }
+
             if (
               !(
                 w !== null &&
-                ghost !== null &&
-                w[0] === ghost[0] &&
-                w[1] === ghost[1]
+                dragCurrent !== null &&
+                w[0] === dragCurrent[0] &&
+                w[1] === dragCurrent[1]
               )
             ) {
               if (get_mode() === "DragPlace" && dragging) {
                 drag(w);
               } else {
-                setGhost(w);
+                setDragCurrent(w);
               }
             }
           }}
@@ -919,23 +662,12 @@ export default (props) => {
             if (get_mode() === "Click") {
               dragEnd(w);
             } else if (get_mode() === "DragRectangle") {
-              setDragStart(w);
               dragEnd(w);
             } else if (get_mode() === "DragPlace") {
-              if (
-                context.cursor === "Black" ||
-                context.cursor === "White" ||
-                context.cursor === "Delete"
-              ) {
-                setStoneDragSet([w]);
-              } else {
-                setMarkDragSet([w]);
-              }
               dragEnd(null);
             }
           }}
           onMouseLeave={() => {
-            setGhost(null);
             if (get_mode() === "DragPlace") {
               setDragging(false);
               dragEnd(null);
@@ -945,11 +677,58 @@ export default (props) => {
           }}
         >
           <defs>
-            <mask
-              id="labelMask"
-              maskUnits="objectBoundingBox"
-              ref={labelmask}
-            ></mask>
+            <mask id="labelMask" maskUnits="objectBoundingBox">
+              <rect
+                x={viewBoxLeft}
+                y={viewBoxTop}
+                width={viewBoxWidth}
+                height={viewBoxHeight}
+                fill="white"
+              />
+              {rows
+                .flatMap((i) => cols.map((j) => [i, j]))
+                .filter(
+                  ([i, j]) =>
+                    !stones.some(([ii, jj]) => i === ii && j === jj) &&
+                    !ghosts.some(
+                      ([ii, jj]) =>
+                        i === ii &&
+                        j === jj &&
+                        (context.cursor === "BlackTerritory" ||
+                          context.cursor === "WhiteTerritory"),
+                    ) &&
+                    (ghosts.some(
+                      ([ii, jj]) =>
+                        i === ii &&
+                        j === jj &&
+                        context.cursor !== "BlackTerritory" &&
+                        context.cursor !== "WhiteTerritory" &&
+                        context.cursor !== "Black" &&
+                        context.cursor !== "White" &&
+                        context.cursor !== "Delete" &&
+                        context.cursor !== "DeleteMark",
+                    ) ||
+                      marks.some(
+                        ([ii, jj, type]) =>
+                          i === ii &&
+                          j === jj &&
+                          type !== "BlackTerritory" &&
+                          type !== "WhiteTerritory",
+                      )),
+                )
+                .map(([i, j]) => (
+                  <circle
+                    cx={margin + square_size * i}
+                    cy={margin + square_size * j}
+                    r={0.4 * square_size}
+                    strokeWidth={0}
+                    fill="#00000"
+                    filter="url(#gaussian-blur)"
+                    key={JSON.stringify([i, j])}
+                  />
+                ))}
+            </mask>
+
             <filter id="flatten-alpha">
               <feComponentTransfer>
                 <feFuncA type="linear" slope="999" />
@@ -977,14 +756,193 @@ export default (props) => {
             height={2 * margin + 18 * square_size}
             href={board_image}
           />
-          <g
-            ref={gridcontainer}
-            mask="url(#labelMask)"
-            filter="url(#flatten-alpha)"
-          />
-          <g ref={stonecontainer} />
-          <g ref={markcontainer} />
-          <g ref={ghostcontainer} />
+          <g mask="url(#labelMask)" filter="url(#flatten-alpha)">
+            <g>
+              {rows.map((i) => (
+                <path
+                  d={`M${margin + square_size * i} ${lines[2]} ${margin + square_size * i} ${lines[3]}`}
+                  stroke={"black"}
+                  strokeWidth={`${1}px`}
+                  vectorEffect="non-scaling-stroke"
+                  shapeRendering="crispEdges"
+                  key={i}
+                />
+              ))}
+            </g>
+            <g>
+              {cols.map((j) => (
+                <path
+                  d={`M${lines[0]} ${margin + square_size * j} ${lines[1]} ${margin + square_size * j}`}
+                  stroke={"black"}
+                  strokeWidth={`${1}px`}
+                  vectorEffect="non-scaling-stroke"
+                  shapeRendering="crispEdges"
+                  key={j}
+                />
+              ))}
+            </g>
+            <g>
+              {[3, 9, 15]
+                .flatMap((i) => [3, 9, 15].map((j) => [i, j]))
+                .filter(([i, j]) => {
+                  let [left, right, top, bottom] = context.window;
+                  return top <= j && j <= bottom && left <= i && i <= right;
+                })
+                .map(([i, j]) => (
+                  <circle
+                    cx={margin + square_size * i}
+                    cy={margin + square_size * j}
+                    r={12}
+                    fill="black"
+                    key={JSON.stringify([i, j])}
+                  />
+                ))}
+            </g>
+            <g>
+              {borders.map(([x, y, text]) => (
+                <text
+                  x={x}
+                  y={y}
+                  width={square_size}
+                  height={square_size}
+                  textAnchor="middle"
+                  dominantBaseline="central"
+                  style={{
+                    fill: "black",
+                    WebkitUserSelect: "none",
+                    font: "bold 40pt sans-serif",
+                  }}
+                  key={JSON.stringify([x, y])}
+                >
+                  {text}
+                </text>
+              ))}
+            </g>
+          </g>
+          <g>
+            {stones.map(([i, j, w]) => (
+              <image
+                x={square_size * i + margin - 0.5 * square_size}
+                y={square_size * j + margin - 0.5 * square_size}
+                width={square_size}
+                height={square_size}
+                href={w === "Black" ? black_image : white_image}
+                key={JSON.stringify([i, j, w])}
+              />
+            ))}
+          </g>
+          <g>
+            {marks
+              .filter(
+                ([i, j]) =>
+                  context.cursor === "Black" ||
+                  context.cursor === "White" ||
+                  context.cursor === "Delete" ||
+                  context.cursor === "DeleteMark" ||
+                  !ghosts.some(([ii, jj]) => i === ii && j === jj),
+              )
+              .map(([i, j, type, label]) =>
+                type === "Label" ? (
+                  <text
+                    x={margin + square_size * i}
+                    y={margin + square_size * j}
+                    width={square_size}
+                    height={square_size}
+                    textAnchor="middle"
+                    dominantBaseline="central"
+                    key={JSON.stringify([i, j, type, label])}
+                    style={{
+                      fill:
+                        stones.some(
+                          ([ii, jj, color]) =>
+                            ii === i && jj === j && color === "Black",
+                        ) ||
+                        ghosts.some(
+                          ([ii, jj]) =>
+                            ii === i && jj === j && context.cursor === "Black",
+                        )
+                          ? "white"
+                          : "black",
+                      WebkitUserSelect: "none",
+                      font: "bold 40pt sans-serif",
+                    }}
+                  >
+                    {label}
+                  </text>
+                ) : (
+                  <image
+                    x={square_size * i + margin - 0.5 * square_size}
+                    y={square_size * j + margin - 0.5 * square_size}
+                    width={square_size}
+                    height={square_size}
+                    href={mark_icons[type]}
+                    filter={
+                      (stones.some(
+                        ([ii, jj, color]) =>
+                          ii === i && jj === j && color === "Black",
+                      ) ||
+                        ghosts.some(
+                          ([ii, jj]) =>
+                            ii === i && jj === j && context.cursor === "Black",
+                        )) &&
+                      !(type === "BlackTerritory" || type === "WhiteTerritory")
+                        ? "url(#invert-color)"
+                        : ""
+                    }
+                    key={JSON.stringify([i, j, type, label])}
+                  />
+                ),
+              )}
+          </g>
+          <g>
+            {ghosts.map(([row, col]) => {
+              let label_color =
+                context.data.game.stones[row][col] === "Black"
+                  ? "white"
+                  : "black";
+              let filter = label_color === "black" ? "" : "url(#invert-color)";
+              let opacity = "0.6";
+              if (
+                context.cursor === "BlackTerritory" ||
+                context.cursor === "WhiteTerritory" ||
+                context.cursor === "DeleteMark" ||
+                context.cursor === "Delete"
+              ) {
+                filter = "";
+                opacity = "0.5";
+              }
+              return context.cursor === "Label" ? (
+                <text
+                  x={margin + square_size * row}
+                  y={margin + square_size * col}
+                  width={square_size}
+                  height={square_size}
+                  textAnchor="middle"
+                  dominantBaseline="central"
+                  opacity={opacity}
+                  style={{
+                    fill: label_color,
+                    WebkitUserSelect: "none",
+                    font: "bold 40pt sans-serif",
+                  }}
+                  key={JSON.stringify([row, col, context.cursor])}
+                >
+                  {context.nextLabel}
+                </text>
+              ) : (
+                <image
+                  x={square_size * row + margin - 0.5 * square_size}
+                  y={square_size * col + margin - 0.5 * square_size}
+                  width={square_size}
+                  height={square_size}
+                  href={cursor_icons[context.cursor]}
+                  filter={filter}
+                  opacity={opacity}
+                  key={JSON.stringify([row, col, context.cursor])}
+                />
+              );
+            })}
+          </g>
         </svg>
       }
     </Paper>

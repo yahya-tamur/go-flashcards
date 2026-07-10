@@ -20,11 +20,6 @@ Current Large Goal in progress
           - [  |  |  | ] graph on mobile. Maybe on desktop too.
 Notes
 --------------
-  - redo board to comply with React
-    - delete createSvg util, do shapes.map
-    - shapes.key important!!
-      - actually double check this for lists etc. as well
-
   - Actually compile for phone!
     - file situation
     - perf?
@@ -33,8 +28,10 @@ Notes
 
   - things that popped up while studying:
     - reset label when moving exercises
+      - increment number labels too
       - util
-    - increment number labels too
+        - move stuff around in Board.jsx when you're at ir
+
     - new exercise: preserve window
     - lots of errors while studying
 
@@ -58,6 +55,7 @@ Remaining Goals
 Small things that come to mind:
 -----------------
 
+  - option to not put territory marks on stones
   - 'file system error' alert
   - tactility:
     - exit without saving? popup on edit
