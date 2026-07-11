@@ -29,7 +29,7 @@ def sort_imports():
 
     for path in Path("./src/").rglob("*"):
         start = perf_counter_ns()
-        if path.suffix not in [".js", ".jsx"]:
+        if path.suffix not in [".ts", ".tsx"]:
             continue
 
         with open(path) as file:

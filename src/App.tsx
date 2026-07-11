@@ -1,10 +1,13 @@
-const { useState, useEffect } = await import("react");
+const { useState } = await import("react");
 
-const { invoke } = await import("@tauri-apps/api/core");
-
-const Box = (await import("@mui/material/Box")).default;
 const CssBaseline = (await import("@mui/material/CssBaseline")).default;
 const { ThemeProvider, createTheme } = await import("@mui/material/styles");
+
+import type { PaletteMode } from "@mui/material";
+const { StudyPhaseType, EditingPhaseType, CursorType, PhaseType } =
+  await import("./AppContext");
+
+import type { Snapshot } from "./bindings";
 
 await import("./App.css");
 
@@ -20,7 +23,13 @@ const theme_import = (
   await import("./assets/theme.json", { with: { type: "json" } })
 ).default;
 
-let theme = createTheme(theme_import);
+let theme = createTheme({
+  ...theme_import,
+  palette: {
+    ...theme_import.palette,
+    mode: theme_import.palette.mode as PaletteMode,
+  },
+});
 
 theme = createTheme(theme, {
   components: {
@@ -55,19 +64,25 @@ function App() {
   // Main = config / select exercise or flashcard screen
   // Config (Select Exercise / Flashcard)
   // Main, Editing, Study.
-  const [phase, setPhase] = useState("Main");
+  const [phase, setPhase] = useState(PhaseType.Main);
   // Initialize, MakeTree
-  const [editingPhase, setEditingPhase] = useState("Initialize");
+  const [editingPhase, setEditingPhase] = useState(EditingPhaseType.Initialize);
   // Guess, GuessUnknown View, Edit.
-  const [studyPhase, setStudyPhase] = useState("Guess");
+  const [studyPhase, setStudyPhase] = useState(StudyPhaseType.Guess);
   const [feedback, setFeedback] = useState("");
-  const [data, setData] = useState(null);
-  const [exerciseColor, setExerciseColor] = useState("");
-  const [config, setConfig] = useState(null);
-  const [nextLabel, setNextLabel] = useState("A");
-  const [window, setWindow] = useState([0, 18, 0, 18]);
+  const [data, setData] = useState<Snapshot | null>(null);
+  // you will need to fix any issues that arise from this!:
+  //const [exerciseColor, setExerciseColor] = useState("");
 
-  const [cursor, setCursor] = useState("Black");
+  //add back when needed:
+  //const [config, setConfig] = useState(null);
+
+  const [nextLabel, setNextLabel] = useState<string>("A");
+  const [window, setWindow] = useState<[number, number, number, number]>([
+    0, 18, 0, 18,
+  ]);
+
+  const [cursor, setCursor] = useState(CursorType.Black);
 
   return (
     <ThemeProvider theme={theme}>
@@ -84,10 +99,6 @@ function App() {
           setData,
           feedback,
           setFeedback,
-          exerciseColor,
-          setExerciseColor,
-          config,
-          setConfig,
           cursor,
           setCursor,
           nextLabel,

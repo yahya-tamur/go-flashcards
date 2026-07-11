@@ -1,4 +1,6 @@
 use serde::Serialize;
+use specta::Type;
+use specta_typescript::Number;
 
 use crate::{
     config::ShowRecent,
@@ -7,33 +9,42 @@ use crate::{
     problem::Variant,
 };
 
-#[derive(Serialize)]
+#[derive(Serialize, Type)]
 pub struct MoveSnapshot {
+    #[specta(type = Option<(Number, Number)>)]
     pub loc: Option<(usize, usize)>,
     pub color: Color,
     pub variant: Variant,
 }
 
-#[derive(Serialize)]
+#[derive(Serialize, Type)]
 pub struct GameSnapshot {
     pub stones: [[Option<Color>; 19]; 19],
+    #[specta(type = (Number, Number))]
     pub captures: (usize, usize),
+    #[specta(type = Option<(Number, Number)>)]
     pub ko: Option<(usize, usize)>,
     pub marks: [[Option<Mark>; 19]; 19],
 }
 
-#[derive(Serialize)]
+#[derive(Serialize, Type)]
 pub struct Snapshot {
     pub game: GameSnapshot,
     pub table: Vec<Vec<Option<MoveSnapshot>>>,
+    #[specta(type = Number)]
     pub row: usize,
+    #[specta(type = Number)]
     pub col: usize,
     pub color: Color,
     pub comment: String,
     pub variant: Variant,
+    #[specta(type = Number)]
     pub current_location: usize,
+    #[specta(type = Number)]
     pub max_location: usize,
+    #[specta(type = (Number, Number, Number, Number))]
     pub window: (usize, usize, usize, usize),
+    #[specta(type = Option<(Number, Number, Number, Number)>)]
     pub min_window: Option<(usize, usize, usize, usize)>,
 }
 

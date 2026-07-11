@@ -1,37 +1,20 @@
-const { useEffect, useState, useRef, useContext } = await import("react");
-
-const { invoke } = await import("@tauri-apps/api/core");
-
-const { Avatar, Icon, IconButton, SvgIcon } = await import("@mui/material");
-
-const ClearIcon = (await import("@mui/icons-material/Clear")).default;
+const { EditingPhaseType, PhaseType, StudyPhaseType } =
+  await import("../AppContext");
+const { useContext } = await import("react");
 
 const Box = (await import("@mui/material/Box")).default;
 const Button = (await import("@mui/material/Button")).default;
-const Dialog = (await import("@mui/material/Dialog")).default;
-const DialogActions = (await import("@mui/material/DialogActions")).default;
-const DialogContent = (await import("@mui/material/DialogContent")).default;
-const DialogContentText = (await import("@mui/material/DialogContentText"))
-  .default;
-const DialogTitle = (await import("@mui/material/DialogTitle")).default;
 const Paper = (await import("@mui/material/Paper")).default;
-const Slider = (await import("@mui/material/Slider")).default;
-const TextField = (await import("@mui/material/TextField")).default;
-const { createSvgIcon } = await import("@mui/material/utils");
 
 await import("../App.css");
 
 const AppContext = (await import("../AppContext")).default;
-
-const black_image = (await import("../assets/black_night.png")).default;
-const board_image = (await import("../assets/oak.jpg")).default;
-const white_image = (await import("../assets/white_anime.png")).default;
+const { commands } = await import("../bindings");
 
 const NumberSpinner = (await import("../components/NumberSpinner")).default;
 
-export default (props) => {
+export default () => {
   let context = useContext(AppContext);
-  const [savedMsgOpen, setSavedMsgOpen] = useState(false);
   //  useEffect(
   //    setComment(props.data?.tree?.comment)
   //
@@ -67,9 +50,9 @@ export default (props) => {
           variant="contained"
           sx={{ height: "40px" }}
           onClick={async () => {
-            invoke("main_menu").then(() => {
-              context.setPhase("Main");
-              context.setConfig(null);
+            commands.mainMenu().then(() => {
+              context.setPhase(PhaseType.Main);
+              //context.setConfig(null);
             });
           }}
         >
@@ -84,16 +67,16 @@ export default (props) => {
           value={(context.data?.current_location ?? 0) + 1}
           min={1}
           max={context.data?.max_location ?? 1}
-          onValueChange={async (v, e) => {
-            if (context.data === null || context.data === undefined) {
+          onValueChange={async (v) => {
+            if (context.data === null || v === null) {
               return;
             }
-            invoke("jump_to_exercise", { index: v - 1 })
-              .then(() => invoke("get_data"))
+            commands
+              .jumpToExercise(v - 1)
+              .then(() => commands.getData())
               .then((data) => {
                 context.setData(data);
                 context.setFeedback("");
-                context.setCursor(data.color === "Black" ? "White" : "Black");
               });
           }}
         />
@@ -102,15 +85,15 @@ export default (props) => {
             variant="contained"
             sx={{ height: "40px" }}
             onClick={async () => {
-              invoke("stop_editing", { save: true })
-                .then(() => invoke("get_data"))
+              commands
+                .stopEditing(true)
+                .then(() => commands.getData())
                 .then((data) => {
                   context.setData(data);
-                  context.setCursor(data.color === "Black" ? "White" : "Black");
-                  context.setExerciseColor(
-                    data.color === "Black" ? "White" : "Black",
-                  );
-                  context.setStudyPhase("View");
+                  //context.setExerciseColor(
+                  //  data.color === "Black" ? CursorType.White : CursorType.Black,
+                  //);
+                  context.setStudyPhase(StudyPhaseType.View);
                   context.setNextLabel("A");
                 })
                 .catch((e) => {
@@ -126,8 +109,8 @@ export default (props) => {
             disabled={context.studyPhase !== "View"}
             sx={{ height: "40px" }}
             onClick={async () => {
-              context.setStudyPhase("Edit");
-              context.setEditingPhase("MakeTree");
+              context.setStudyPhase(StudyPhaseType.Edit);
+              context.setEditingPhase(EditingPhaseType.MakeTree);
               context.setFeedback("");
             }}
           >
@@ -139,15 +122,15 @@ export default (props) => {
             variant="contained"
             sx={{ height: "40px" }}
             onClick={async () => {
-              invoke("stop_editing", { save: false })
-                .then(() => invoke("get_data"))
+              commands
+                .stopEditing(false)
+                .then(() => commands.getData())
                 .then((data) => {
                   context.setData(data);
-                  context.setCursor(data.color === "Black" ? "White" : "Black");
-                  context.setExerciseColor(
-                    data.color === "Black" ? "White" : "Black",
-                  );
-                  context.setStudyPhase("View");
+                  //context.setExerciseColor(
+                  //data.color === "Black" ? "White" : "Black",
+                  //);
+                  context.setStudyPhase(StudyPhaseType.View);
                   context.setNextLabel("A");
                 })
                 .catch((e) => {
@@ -165,15 +148,15 @@ export default (props) => {
             )}
             sx={{ height: "40px" }}
             onClick={async () => {
-              invoke("next_exercise")
-                .then(() => invoke("get_data"))
+              commands
+                .nextExercise()
+                .then(() => commands.getData())
                 .then((data) => {
                   context.setData(data);
-                  context.setCursor(data.color === "Black" ? "White" : "Black");
-                  context.setExerciseColor(
-                    data.color === "Black" ? "White" : "Black",
-                  );
-                  context.setStudyPhase("Guess");
+                  //context.setExerciseColor(
+                  //data.color === "Black" ? "White" : "Black",
+                  //);
+                  context.setStudyPhase(StudyPhaseType.Guess);
                 })
                 .catch((e) => {
                   console.log(e);

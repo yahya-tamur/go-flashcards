@@ -1,6 +1,10 @@
-const { useEffect, useState, useRef, useContext } = await import("react");
+const { CursorType } = await import("./AppContext");
 
-const { invoke } = await import("@tauri-apps/api/core");
+import type { Color, Mark } from "./bindings";
+const { commands } = await import("./bindings");
+const { cursorMark, handleError, label, studyStep } = await import("./utils");
+
+const { useEffect, useState, useRef, useContext } = await import("react");
 
 const Paper = (await import("@mui/material/Paper")).default;
 
@@ -20,7 +24,7 @@ const white_image = (await import("./assets/white_anime.png")).default;
 const white_territory_icon = (await import("./assets/white_territory.svg"))
   .default;
 
-export default (props) => {
+export default () => {
   const mark_icons = {
     Triangle: triangle_icon,
     Circle: circle_icon,
@@ -42,17 +46,17 @@ export default (props) => {
     WhiteTerritory: white_territory_icon,
   };
   const context = useContext(AppContext);
-  const board_svg = useRef(null);
-  const paper = useRef(null);
+  const board_svg = useRef<SVGSVGElement>(null);
+  const paper = useRef<HTMLDivElement>(null);
 
   const square_size = 100;
   const margin = 150;
   const partial = 70; // dots for partial board.
   const partial_border = 0; // border from partial edges
 
-  const [dragStart, setDragStart] = useState(null);
-  const [dragCurrent, setDragCurrent] = useState(null);
-  const [ghosts, setGhosts] = useState([]); // [row, column]
+  const [dragStart, setDragStart] = useState<[number, number] | null>(null);
+  const [dragCurrent, setDragCurrent] = useState<[number, number] | null>(null);
+  const [ghosts, setGhosts] = useState<[number, number][]>([]); // [row, column]
 
   useEffect(() => {
     if (dragCurrent === null) {
@@ -68,7 +72,7 @@ export default (props) => {
       if (c > cc) {
         [c, cc] = [cc, c];
       }
-      let newGhosts = [];
+      let newGhosts: [number, number][] = [];
       for (let row = r; row <= rr; row++) {
         for (let col = c; col <= cc; col++) {
           newGhosts.push([row, col]);
@@ -85,17 +89,21 @@ export default (props) => {
 
   const [dragging, setDragging] = useState(false);
 
-  const [boardBoxWidth, setBoardBoxWidth] = useState(0);
-  const [boardBoxHeight, setBoardBoxHeight] = useState(0);
-  const [stones, setStones] = useState([]); // [row, column, color]
-  const [marks, setMarks] = useState([]); // mark: [row, column, type, label (string or null)]
+  const [boardBoxWidth, setBoardBoxWidth] = useState("0px");
+  const [boardBoxHeight, setBoardBoxHeight] = useState("0px");
+  const [stones, setStones] = useState<[number, number, Color][]>([]); // [row, column, color]
+  const [marks, setMarks] = useState<[number, number, Mark][]>([]);
 
   useEffect(() => {
+    let contextdata = context.data;
+    if (contextdata === null) {
+      return;
+    }
     if (
-      context.data !== null &&
-      !context.window.every((val, index) => context.data.window[index] === val)
+      contextdata !== null &&
+      !context.window.every((val, index) => contextdata.window[index] === val)
     ) {
-      context.setWindow(context.data.window);
+      context.setWindow(contextdata.window);
     }
   }, [context.data]);
 
@@ -119,7 +127,9 @@ export default (props) => {
     return "DragPlace";
   };
 
-  const get_coord = (e) => {
+  const get_coord = (
+    e: React.MouseEvent<SVGSVGElement>,
+  ): [number, number] | null => {
     if (
       board_svg.current === null ||
       context.data === null ||
@@ -133,8 +143,8 @@ export default (props) => {
     let j = (e.pageY - (rect.top + window.scrollY)) / rect.height;
 
     // coord in board viewBox
-    i = viewBoxWidth * i;
-    j = viewBoxHeight * j;
+    i = viewBox[2] * i;
+    j = viewBox[3] * j;
 
     // if board is 19 x 19, this labels the top left square (0, 0),
     // and linearly increases by 1 per square_size .
@@ -155,14 +165,16 @@ export default (props) => {
       return null;
     }
 
-    if (get_mode() === "Click") {
+    const mode = get_mode();
+
+    if (mode === "Click") {
       if ((i - si) * (i - si) + (j - sj) * (j - sj) > 0.25) {
         return null;
       }
       if (context.data.game.stones[si][sj] !== null) {
         return null;
       }
-    } else if (get_mode() === "DragPlace") {
+    } else if (mode === "DragPlace") {
       if (context.cursor === "Delete") {
         //if (context.data.game.stones[si][sj] === null) {
         //  return null;
@@ -176,7 +188,7 @@ export default (props) => {
           return null;
         }
       } else if (context.cursor === "Label") {
-        if (context.data.game.marks[si][sj]?.Label === context.nextLabel) {
+        if (label(context.data.game.marks[si][sj]) === context.nextLabel) {
           return null;
         }
       } else {
@@ -184,140 +196,103 @@ export default (props) => {
           return null;
         }
       }
-    } else if (get_mode() === "DragRectangle") {
+    } else if (mode === "DragRectangle") {
     }
     return [si, sj];
   };
 
-  const [viewBoxHeight, setViewBoxHeight] = useState(2100);
-  const [viewBoxWidth, setViewBoxWidth] = useState(2100);
-  const [viewBoxLeft, setViewBoxLeft] = useState(0);
-  const [viewBoxTop, setViewBoxTop] = useState(0);
+  const [viewBox, setViewBox] = useState<[number, number, number, number]>([
+    0, 0, 2100, 2100,
+  ]);
 
-  const dragEnd = (w) => {
-    if (get_mode() === "Click") {
-      invoke("play", {
-        loc: [w[0], w[1]],
-        color: context.cursor,
-      })
-        .then(() => invoke("get_data"))
+  const dragEnd = (
+    wmode:
+      | { mode: "Click"; w: [number, number] }
+      | { mode: "DragRectangle"; w: [number, number] }
+      | { mode: "DragPlace" },
+  ) => {
+    if (wmode.mode === "Click") {
+      if (context.cursor !== "Black" && context.cursor !== "White") {
+        console.log("invalid cursor in click mode");
+        return;
+      }
+      commands
+        .play([wmode.w[0], wmode.w[1]], context.cursor)
+        .then(() => commands.getData())
         .then((data) => {
+          let contextdata = context.data;
           if (
-            context.data.game.stones[w[0]][w[1]] ===
-            data.game.stones[w[0]][w[1]]
+            contextdata !== null &&
+            contextdata.game.stones[wmode.w[0]][wmode.w[1]] ===
+              data.game.stones[wmode.w[0]][wmode.w[1]]
           ) {
             return;
           }
           context.setData(data);
-          context.setCursor(data.color === "Black" ? "White" : "Black");
           if (context.phase === "Study" && context.studyPhase === "Guess") {
-            switch (data.variant) {
-              case "Correct":
-                invoke("answer", { correct: true })
-                  .then(() => invoke("get_data"))
-                  .then((data) => {
-                    context.setData(data);
-                    context.setFeedback("Correct");
-                    context.setStudyPhase("View");
-                  });
-                break;
-              case "Incorrect":
-                invoke("answer", { correct: false })
-                  .then(() => invoke("get_data"))
-                  .then((data) => {
-                    context.setData(data);
-                    context.setFeedback("Incorrect");
-                    context.setStudyPhase("View");
-                  });
-                break;
-              case "New":
-                if (context.cursor === context.exerciseColor) {
-                  invoke("answer", { correct: false })
-                    .then(() => invoke("get_data"))
-                    .then((data) => {
-                      context.setData(data);
-                      context.setFeedback("Incorrect");
-                      context.setStudyPhase("View");
-                    });
-                } else {
-                  context.setStudyPhase("UnknownGuess");
-                }
-
-                break;
-              default:
-                break;
-            }
+            studyStep(data, context);
           }
         })
-        .catch((e) => {
-          console.log(e);
-        });
-    } else if (get_mode() === "DragPlace") {
+        .catch((e) => handleError(e));
+    } else if (wmode.mode === "DragPlace") {
+      let contextcursor = context.cursor;
       if (
-        context.cursor === "Black" ||
-        context.cursor === "White" ||
-        context.cursor === "Delete"
+        contextcursor === "Black" ||
+        contextcursor === "White" ||
+        contextcursor === "Delete"
       ) {
-        invoke("set_stones", {
-          stones: stones,
-        })
-          .then(() => invoke("get_data"))
-          .then((data) => {
-            context.setData(data);
-          })
-          .catch((e) => {
-            console.log(e);
-          });
+        commands
+          .setStones(stones)
+          .then(() => commands.getData())
+          .then((data) => context.setData(data));
       } else {
-        invoke("set_marks", {
-          marks: marks.map(([i, j, type, label]) =>
-            type === "Label" ? [i, j, { Label: label }] : [i, j, type],
-          ),
-        })
-          .then(() => invoke("get_data"))
-          .then((data) => {
-            context.setData(data);
-          })
-          .catch((e) => {
-            console.log(e);
-          });
+        commands
+          .setMarks(marks)
+          .then(() => commands.getData())
+          .then((data) => context.setData(data));
       }
-    } else if (get_mode() === "DragRectangle") {
+    } else if (wmode.mode === "DragRectangle") {
       //if (dragStart === null) {
       //return;
       //}
-      let start = dragStart === null ? [w[0], w[1]] : dragStart;
-      invoke("set_marks_window", {
-        window: [start[0], w[0], start[1], w[1]],
-        mark:
-          context.cursor === "DeleteMark"
-            ? undefined
-            : context.cursor === "Label"
-              ? { Label: context.nextLabel }
-              : context.cursor,
-      })
-        .then(() => invoke("get_data"))
+
+      let contextcursor = context.cursor;
+      if (!(
+        contextcursor === "BlackTerritory" ||
+        contextcursor === "WhiteTerritory" ||
+        contextcursor === "DeleteMark"
+      )) {
+        console.log("Invalid cursor in dragRectangle mode");
+        return;
+      }
+      let start = dragStart === null ? [wmode.w[0], wmode.w[1]] : dragStart;
+      commands
+        .setMarksWindow(contextcursor === "DeleteMark" ? null : contextcursor, [
+          start[0],
+          wmode.w[0],
+          start[1],
+          wmode.w[1],
+        ])
+        .then(() => commands.getData())
         .then((data) => {
           context.setData(data);
-          setDragStart(null);
-        })
-        .catch((e) => {
-          console.log(e);
           setDragStart(null);
         });
       return;
     }
   };
 
-  const drag = (w) => {
-    if (get_mode() === "DragPlace") {
-      if (context.cursor === "Delete") {
+  const drag = (w: [number, number]) => {
+    let contextcursor = context.cursor;
+    const mode = get_mode();
+    if (mode === "DragPlace") {
+      if (contextcursor === "Delete") {
         if (stones.some((stone) => w[0] === stone[0] && w[1] === stone[1])) {
           setStones((oldSet) =>
             oldSet.filter((stone) => w[0] !== stone[0] || w[1] !== stone[1]),
           );
         }
-      } else if (context.cursor === "Black" || context.cursor === "White") {
+      } else if (contextcursor === "Black" || contextcursor === "White") {
         if (
           !stones.some(
             (stone) =>
@@ -339,7 +314,7 @@ export default (props) => {
                 ...oldSet.filter(
                   (stone) => w[0] !== stone[0] || w[1] !== stone[1],
                 ),
-                [w[0], w[1], context.cursor],
+                [w[0], w[1], contextcursor],
               ];
             } else {
               return oldSet;
@@ -347,24 +322,30 @@ export default (props) => {
           });
         }
       } else {
-        // DeleteMark is under DragRectangle
+        contextcursor;
+        if (contextcursor === "DeleteMark") {
+          console.log("cursor shouldn't be DeleteMark in DragPlace mode");
+          return;
+        }
         if (
           !marks.some(
-            ([i, j, type, label]) =>
+            ([i, j, mark]) =>
               i === w[0] &&
               j === w[1] &&
-              type === context.cursor &&
-              (type !== "Label" || label == context.nextLabel),
+              ((contextcursor === "Label" &&
+                label(mark) === context.nextLabel) ||
+                mark === contextcursor),
           )
         ) {
           setMarks((oldSet) => {
             if (
               !oldSet.some(
-                ([i, j, type, label]) =>
+                ([i, j, mark]) =>
                   i === w[0] &&
                   j === w[1] &&
-                  type === context.cursor &&
-                  (type !== "Label" || label == context.nextLabel),
+                  ((contextcursor === "Label" &&
+                    label(mark) === context.nextLabel) ||
+                    mark === contextcursor),
               )
             ) {
               return [
@@ -374,8 +355,9 @@ export default (props) => {
                 [
                   w[0],
                   w[1],
-                  context.cursor,
-                  context.cursor === "Label" ? context.nextLabel : null,
+                  contextcursor === "Label"
+                    ? { Label: context.nextLabel }
+                    : cursorMark(contextcursor),
                 ],
               ];
             } else {
@@ -387,8 +369,6 @@ export default (props) => {
     }
   };
 
-  let size_ref = useRef([null, null]); // there's a relevant stackexchange for this
-
   // fits board in app. This was easier than pure css.
   useEffect(() => {
     if (paper.current === null) {
@@ -396,12 +376,13 @@ export default (props) => {
     }
 
     let [left, right, top, bottom] = context.window;
+    console.log("aah!");
 
     // Offset viewBox.
 
     //maybe add bigger margin for edges or letters on every side
-    setViewBoxLeft(square_size * left + (left > 0 ? -partial_border : 0));
-    setViewBoxTop(square_size * top + (top > 0 ? -partial_border : 0));
+    let vbleft = square_size * left + (left > 0 ? -partial_border : 0);
+    let vbtop = square_size * top + (top > 0 ? -partial_border : 0);
     let vbwidth =
       2 * margin +
       (right - left) * square_size +
@@ -413,28 +394,25 @@ export default (props) => {
       (top > 0 ? partial_border : 0) +
       (bottom < 18 ? partial_border : 0);
 
-    setViewBoxHeight(vbheight);
-    setViewBoxWidth(vbwidth);
+    setViewBox([vbleft, vbtop, vbwidth, vbheight]);
 
     const observer = new ResizeObserver(() => {
+      console.log("oh noo");
       if (paper.current === null) {
         return;
       }
-      const current_size = [
+      const current_size: [number, number] = [
         paper.current.offsetWidth,
         paper.current.offsetHeight,
       ];
-      if (current_size[0] !== size_ref[0] || current_size[1] !== size_ref[1]) {
-        size_ref = current_size;
-        let [width, height] = current_size;
+      let [width, height] = current_size;
 
-        let ratio = Math.min(
-          (height - 2 * 20) / vbheight,
-          (width - 2 * 20) / vbwidth,
-        );
-        setBoardBoxHeight(`${vbheight * ratio}px`);
-        setBoardBoxWidth(`${vbwidth * ratio}px`);
-      }
+      let ratio = Math.min(
+        (width - 2 * 20) / vbwidth,
+        (height - 2 * 20) / vbheight,
+      );
+      setBoardBoxWidth(`${vbwidth * ratio}px`);
+      setBoardBoxHeight(`${vbheight * ratio}px`);
     });
     observer.observe(paper.current);
     return () => {
@@ -446,8 +424,8 @@ export default (props) => {
     if (context.data === null) {
       return;
     }
-    let new_stones = [];
-    let new_marks = [];
+    let new_stones: [number, number, Color][] = [];
+    let new_marks: [number, number, Mark][] = [];
     let [left, right, top, bottom] = context.window;
 
     for (let i = left; i <= right; i++) {
@@ -459,18 +437,20 @@ export default (props) => {
         }
         let mark = context.data.game.marks[i][j];
         if (mark !== null) {
-          new_marks.push(
-            mark.Label !== undefined
-              ? [i, j, "Label", mark.Label]
-              : [i, j, mark, null],
-          );
+          new_marks.push([i, j, mark]);
         }
       }
     }
     setStones(new_stones);
     setMarks(new_marks);
-    //!!??
     setGhosts([]);
+
+    let mode = get_mode();
+    if (mode === "Click") {
+      context.setCursor(
+        context.data.color === "Black" ? CursorType.White : CursorType.Black,
+      );
+    }
   }, [context.window, context.data]);
 
   useEffect(() => {
@@ -492,7 +472,7 @@ export default (props) => {
     let seen_once = false;
     for (const row of context.data.game.marks) {
       for (const mark of row) {
-        if (mark?.Label === context.nextLabel) {
+        if (label(mark) === context.nextLabel) {
           if (seen_once) {
             return;
           }
@@ -507,25 +487,27 @@ export default (props) => {
   }, [context.data]);
 
   //maybe just always do 0..19?
-  const [rows, setRows] = useState([]);
-  const [cols, setCols] = useState([]);
-  const [lines, setLines] = useState([]);
-  const [borders, setBorders] = useState([]); // [x, y, text]
+  const [rows, setRows] = useState<number[]>([]);
+  const [cols, setCols] = useState<number[]>([]);
+  const [lines, setLines] = useState<number[]>([]);
+  const [borders, setBorders] = useState<[number, number, string][]>([]);
 
   useEffect(() => {
     let [left, right, top, bottom] = context.window;
 
-    let newRows = [];
+    let newRows: number[] = [];
     for (let i = left; i <= right; i++) {
       newRows.push(i);
     }
     setRows(newRows);
 
-    let newCols = [];
+    let newCols: number[] = [];
     for (let j = top; j <= bottom; j++) {
       newCols.push(j);
     }
     setCols(newCols);
+
+    console.log("BBBB");
 
     let stroke_width = 0; // but it's 1??
     let hline_start =
@@ -541,16 +523,34 @@ export default (props) => {
     let vline_start = margin + square_size * top + (top > 0 ? -partial : 0);
     let vline_end = margin + square_size * bottom + (bottom < 18 ? partial : 0);
     setLines([hline_start, hline_end, vline_start, vline_end]);
+    console.log(
+      hline_start,
+      hline_end,
+      vline_start,
+      vline_end,
+      left,
+      right,
+      top,
+      bottom,
+    );
 
-    let newBorders = [];
+    let newBorders: [number, number, string][] = [];
     if (left == 0) {
       for (let j = top; j <= bottom; j++) {
-        newBorders.push([hline_start - 70, margin + square_size * j, 19 - j]);
+        newBorders.push([
+          hline_start - 70,
+          margin + square_size * j,
+          String(19 - j),
+        ]);
       }
     }
     if (right == 18) {
       for (let j = top; j <= bottom; j++) {
-        newBorders.push([hline_end + 70, margin + square_size * j, 19 - j]);
+        newBorders.push([
+          hline_end + 70,
+          margin + square_size * j,
+          String(19 - j),
+        ]);
       }
     }
     if (top == 0) {
@@ -589,7 +589,8 @@ export default (props) => {
         <svg
           ref={board_svg}
           id="board"
-          viewBox={`${viewBoxLeft} ${viewBoxTop} ${viewBoxWidth} ${viewBoxHeight}`}
+          //viewBox={`${viewBoxLeft} ${viewBoxTop} ${viewBoxWidth} ${viewBoxHeight}`}
+          viewBox={`${viewBox[0]} ${viewBox[1]} ${viewBox[2]} ${viewBox[3]}`}
           style={{
             width: boardBoxWidth,
             height: boardBoxHeight,
@@ -597,7 +598,8 @@ export default (props) => {
           }}
           onMouseDown={(e) => {
             const w = get_coord(e);
-            if (get_mode() === "DragPlace") {
+            const mode = get_mode();
+            if (mode === "DragPlace") {
               setDragging(true);
               if (context.cursor !== "Delete") {
                 setDragCurrent(null);
@@ -605,7 +607,7 @@ export default (props) => {
               if (w !== null) {
                 drag(w);
               }
-            } else if (get_mode() === "DragRectangle") {
+            } else if (mode === "DragRectangle") {
               if (w === null) {
                 return;
               }
@@ -614,21 +616,22 @@ export default (props) => {
             }
           }}
           onMouseUp={(e) => {
-            if (get_mode() === "Click") {
+            const mode = get_mode();
+            if (mode === "Click") {
               let w = get_coord(e);
               if (w === null) {
                 return;
               }
-              dragEnd(w);
-            } else if (get_mode() === "DragPlace") {
+              dragEnd({ mode: mode, w: w });
+            } else if (mode === "DragPlace") {
               setDragging(false);
-              dragEnd();
-            } else if (get_mode() === "DragRectangle") {
+              dragEnd({ mode: mode });
+            } else if (mode === "DragRectangle") {
               let w = get_coord(e);
               if (w === null) {
                 return;
               }
-              dragEnd(w);
+              dragEnd({ mode: mode, w: w });
             }
           }}
           onMouseMove={async (e) => {
@@ -639,18 +642,16 @@ export default (props) => {
               return;
             }
 
-            if (
-              !(
-                w !== null &&
-                dragCurrent !== null &&
-                w[0] === dragCurrent[0] &&
-                w[1] === dragCurrent[1]
-              )
-            ) {
-              if (get_mode() === "DragPlace" && dragging) {
+            if (!(
+              w !== null &&
+              dragCurrent !== null &&
+              w[0] === dragCurrent[0] &&
+              w[1] === dragCurrent[1]
+            )) {
+              const mode = get_mode();
+              setDragCurrent(w);
+              if (mode === "DragPlace" && dragging) {
                 drag(w);
-              } else {
-                setDragCurrent(w);
               }
             }
           }}
@@ -659,19 +660,21 @@ export default (props) => {
             if (w === null) {
               return;
             }
-            if (get_mode() === "Click") {
-              dragEnd(w);
-            } else if (get_mode() === "DragRectangle") {
-              dragEnd(w);
-            } else if (get_mode() === "DragPlace") {
-              dragEnd(null);
+            const mode = get_mode();
+            if (mode === "Click") {
+              dragEnd({ mode: mode, w: w });
+            } else if (mode === "DragRectangle") {
+              dragEnd({ mode: mode, w: w });
+            } else if (mode === "DragPlace") {
+              dragEnd({ mode: mode });
             }
           }}
           onMouseLeave={() => {
-            if (get_mode() === "DragPlace") {
+            const mode = get_mode();
+            if (mode === "DragPlace") {
               setDragging(false);
-              dragEnd(null);
-            } else if (get_mode() === "DragRectangle") {
+              dragEnd({ mode: mode });
+            } else if (mode === "DragRectangle") {
               setDragStart(null);
             }
           }}
@@ -679,10 +682,10 @@ export default (props) => {
           <defs>
             <mask id="labelMask" maskUnits="objectBoundingBox">
               <rect
-                x={viewBoxLeft}
-                y={viewBoxTop}
-                width={viewBoxWidth}
-                height={viewBoxHeight}
+                x={viewBox[0]}
+                y={viewBox[1]}
+                width={viewBox[2]}
+                height={viewBox[3]}
                 fill="white"
               />
               {rows
@@ -841,8 +844,8 @@ export default (props) => {
                   context.cursor === "DeleteMark" ||
                   !ghosts.some(([ii, jj]) => i === ii && j === jj),
               )
-              .map(([i, j, type, label]) =>
-                type === "Label" ? (
+              .map(([i, j, mark]) =>
+                typeof mark !== "string" ? (
                   <text
                     x={margin + square_size * i}
                     y={margin + square_size * j}
@@ -850,7 +853,7 @@ export default (props) => {
                     height={square_size}
                     textAnchor="middle"
                     dominantBaseline="central"
-                    key={JSON.stringify([i, j, type, label])}
+                    key={JSON.stringify([i, j, mark])}
                     style={{
                       fill:
                         stones.some(
@@ -867,7 +870,7 @@ export default (props) => {
                       font: "bold 40pt sans-serif",
                     }}
                   >
-                    {label}
+                    {label(mark)}
                   </text>
                 ) : (
                   <image
@@ -875,7 +878,7 @@ export default (props) => {
                     y={square_size * j + margin - 0.5 * square_size}
                     width={square_size}
                     height={square_size}
-                    href={mark_icons[type]}
+                    href={mark_icons[mark]}
                     filter={
                       (stones.some(
                         ([ii, jj, color]) =>
@@ -885,11 +888,11 @@ export default (props) => {
                           ([ii, jj]) =>
                             ii === i && jj === j && context.cursor === "Black",
                         )) &&
-                      !(type === "BlackTerritory" || type === "WhiteTerritory")
+                      !(mark === "BlackTerritory" || mark === "WhiteTerritory")
                         ? "url(#invert-color)"
                         : ""
                     }
-                    key={JSON.stringify([i, j, type, label])}
+                    key={JSON.stringify([i, j, mark, label])}
                   />
                 ),
               )}
@@ -897,7 +900,7 @@ export default (props) => {
           <g>
             {ghosts.map(([row, col]) => {
               let label_color =
-                context.data.game.stones[row][col] === "Black"
+                context.data?.game.stones[row][col] === "Black"
                   ? "white"
                   : "black";
               let filter = label_color === "black" ? "" : "url(#invert-color)";

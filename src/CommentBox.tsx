@@ -1,54 +1,38 @@
 const { useEffect, useState, useRef, useContext } = await import("react");
 
-const { invoke } = await import("@tauri-apps/api/core");
-
-const ClearIcon = (await import("@mui/icons-material/Clear")).default;
-
 const Box = (await import("@mui/material/Box")).default;
 const Button = (await import("@mui/material/Button")).default;
 const ButtonGroup = (await import("@mui/material/ButtonGroup")).default;
-const Icon = (await import("@mui/material/Icon")).default;
 const Paper = (await import("@mui/material/Paper")).default;
-const Slider = (await import("@mui/material/Slider")).default;
 const TextField = (await import("@mui/material/TextField")).default;
-const { createSvgIcon } = await import("@mui/material/utils");
 
 await import("./App.css");
 
 const AppContext = (await import("./AppContext")).default;
+const { commands } = await import("./bindings");
 
-const black_image = (await import("./assets/black_night.png")).default;
-const black_territory_icon = (await import("./assets/black_territory.svg"))
-  .default;
 const circle_icon = (await import("./assets/circle.svg")).default;
 const cross_icon = (await import("./assets/cross.svg")).default;
-const delete_mark_icon = (await import("./assets/delete_mark.svg")).default;
-const mui_clear = (await import("./assets/mui_clear.svg")).default;
-const board_image = (await import("./assets/oak.jpg")).default;
 const square_icon = (await import("./assets/square.svg")).default;
 const triangle_icon = (await import("./assets/triangle.svg")).default;
-const white_image = (await import("./assets/white_anime.png")).default;
-const white_territory_icon = (await import("./assets/white_territory.svg"))
-  .default;
 
-export default (props) => {
+export default () => {
   let context = useContext(AppContext);
 
   const [comment, setComment] = useState("");
   useEffect(() => {
-    if ((context.data?.comment ?? null) !== null) {
-      setComment(context.data.comment);
+    let comment = context.data?.comment ?? null;
+    if (comment !== null) {
+      setComment(comment);
     }
   }, [context.data]);
   const img_size = "20px";
-  const update_comment = (comm) => {
-    invoke("comment", {
-      comment: comm,
-    });
-    setComment(comm);
+  const update_comment = (comment: string) => {
+    commands.comment(comment);
+    setComment(comment);
   };
 
-  const areaRef = useRef(null);
+  const areaRef = useRef<HTMLDivElement>(null);
   const [rows, setRows] = useState(2);
 
   useEffect(() => {
@@ -57,6 +41,9 @@ export default (props) => {
     }
 
     const observer = new ResizeObserver(() => {
+      if (areaRef.current === null) {
+        return;
+      }
       let textAreaHeight = areaRef.current.offsetHeight - 33;
       // just in case
       textAreaHeight -= 1;
@@ -98,8 +85,8 @@ export default (props) => {
             sx={{ height: "30px", margin: "5px", marginBottom: "0pt" }}
           >
             <Button
-              sx={{ width: "30px", minWidth: "0px", width: "30px" }}
-              onClick={(e) => {
+              sx={{ width: "30px", minWidth: "0px" }}
+              onClick={() => {
                 update_comment(comment + "△");
               }}
             >
@@ -113,8 +100,8 @@ export default (props) => {
               />
             </Button>
             <Button
-              sx={{ width: "30px", minWidth: "0px", width: "30px" }}
-              onClick={(e) => {
+              sx={{ width: "30px", minWidth: "0px" }}
+              onClick={() => {
                 update_comment(comment + "□");
               }}
             >
@@ -128,8 +115,8 @@ export default (props) => {
               />
             </Button>
             <Button
-              sx={{ width: "30px", minWidth: "0px", width: "30px" }}
-              onClick={(e) => {
+              sx={{ width: "30px", minWidth: "0px" }}
+              onClick={() => {
                 update_comment(comment + "○");
               }}
             >
@@ -143,8 +130,8 @@ export default (props) => {
               />
             </Button>
             <Button
-              sx={{ width: "30px", minWidth: "0px", width: "30px" }}
-              onClick={(e) => {
+              sx={{ width: "30px", minWidth: "0px" }}
+              onClick={() => {
                 update_comment(comment + "×");
               }}
             >
@@ -168,10 +155,8 @@ export default (props) => {
               onChange={(e) => {
                 setComment(e.target.value);
               }}
-              onBlur={(e) => {
-                invoke("comment", {
-                  comment: comment,
-                });
+              onBlur={() => {
+                commands.comment(comment);
               }}
               multiline
               rows={rows} // do with inputref later

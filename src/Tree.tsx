@@ -1,11 +1,9 @@
-import { highlightingFor } from "@codemirror/language";
+const { commands } = await import("./bindings");
+
+import type { Color, Variant } from "./bindings";
 
 const { useEffect, useState, useRef, useContext } = await import("react");
 
-const { invoke } = await import("@tauri-apps/api/core");
-
-const Box = (await import("@mui/material/Box")).default;
-const Button = (await import("@mui/material/Button")).default;
 const Paper = (await import("@mui/material/Paper")).default;
 const { useTheme } = await import("@mui/material/styles");
 
@@ -14,14 +12,11 @@ await import("./App.css");
 const AppContext = (await import("./AppContext")).default;
 
 const black_image = (await import("./assets/black_night.png")).default;
-const board_image = (await import("./assets/persimmon.jpg")).default;
 const white_image = (await import("./assets/white_anime.png")).default;
 
-export default (props) => {
+export default () => {
   let context = useContext(AppContext);
-  const svgNS = "http://www.w3.org/2000/svg";
-  const treecontainer = useRef(null);
-  const treeBox = useRef(null);
+  const treeBox = useRef<HTMLDivElement>(null);
   const [tableWidth, setTableWidth] = useState(100);
   const [tableHeight, setTableHeight] = useState(100);
 
@@ -36,15 +31,19 @@ export default (props) => {
     Correct: theme.palette.success.dark,
     Incorrect: theme.palette.error.dark,
     New: theme.palette.primary.light,
+    None: null,
   };
-  const variantColor = (v) => variantColorDict[v] ?? "#4480a6";
+  const variantColor = (v: Variant) => variantColorDict[v] ?? "#4480a6";
 
   useEffect(() => {
-    const handle_key = (e) => {
-      if (/INPUT|TEXTAREA|SELECT/.test(event.target.tagName)) {
-        return;
+    const handle_key = (e: KeyboardEvent) => {
+      if (e.currentTarget !== null) {
+        let target = e.currentTarget as HTMLElement;
+        if (/INPUT|TEXTAREA|SELECT/.test(target.tagName)) {
+          return;
+        }
       }
-      if (context.data === undefined || context.data === null) {
+      if (context.data === null) {
         return;
       }
       let [r, c] = [context.data.row, context.data.col];
@@ -87,11 +86,11 @@ export default (props) => {
         context.data.table[r][c] !== null &&
         context.data.table[r][c] !== undefined
       ) {
-        invoke("jump", { r: r, c: c })
-          .then(() => invoke("get_data"))
+        commands
+          .jump(r, c)
+          .then(() => commands.getData())
           .then((data) => {
             context.setData(data);
-            context.setCursor(data.color === "Black" ? "White" : "Black");
           })
           .catch((e) => {
             console.log(e);
@@ -106,7 +105,10 @@ export default (props) => {
     };
   }, [context.data]);
 
-  const get_coord = (e) => {
+  const get_coord = (e: React.MouseEvent<SVGSVGElement>) => {
+    if (treeBox.current === null) {
+      return null;
+    }
     // coord in viewBox
     const rect = treeBox.current.getBoundingClientRect();
     let i = e.pageX - (rect.left + window.scrollX - treeBox.current.scrollLeft);
@@ -132,17 +134,16 @@ export default (props) => {
     return null;
   };
 
-  const [lines, setLines] = useState([]);
-  const [paths, setPaths] = useState([]);
-  const [rects, setRects] = useState([]);
-  const [moves, setMoves] = useState([]); // r, c, color, text, variant
+  const [lines, setLines] = useState<[number, number, number, number][]>([]);
+  const [paths, setPaths] = useState<
+    [number, number, number, number, number, number, number, number][]
+  >([]);
+  const [moves, setMoves] = useState<
+    [number, number, Color, string, Variant, string][]
+  >([]);
 
   useEffect(() => {
-    if (
-      treecontainer.current === null ||
-      context.data === null ||
-      context.data === undefined
-    ) {
+    if (context.data === null || context.data === undefined) {
       return;
     }
 
@@ -152,7 +153,7 @@ export default (props) => {
     setTableWidth(2 * margin + gap_size * (num_columns - 1) + square_size);
     setTableHeight(2 * margin + gap_size * (num_rows - 1) + square_size);
 
-    let newLines = [];
+    let newLines: [number, number, number, number][] = [];
 
     // horizontal lines
     table.forEach((line, r) => {
@@ -167,7 +168,16 @@ export default (props) => {
     }*/
     setLines(newLines);
 
-    let newPaths = [];
+    let newPaths: [
+      number,
+      number,
+      number,
+      number,
+      number,
+      number,
+      number,
+      number,
+    ][] = [];
     //diagonal lines
     for (let r = 1; r < table.length; r++) {
       let c = 0;
@@ -196,36 +206,7 @@ export default (props) => {
     }
     setPaths(newPaths);
 
-    let newRects = [];
-    table.forEach((line, r) => {
-      line.forEach((mov, c) => {
-        if (mov === null || mov.variant === "None") {
-          return;
-        }
-        newRects.push([
-          margin +
-            gap_size * c -
-            (gap_size - square_size) / 2 +
-            variant_square_diff,
-
-          margin +
-            gap_size * r -
-            (gap_size - square_size) / 2 +
-            variant_square_diff,
-
-          mov.variant === "Correct"
-            ? theme.palette.success.dark
-            : mov.variant === "Incorrect"
-              ? theme.palette.error.dark
-              : mov.variant === "New"
-                ? theme.palette.primary.light
-                : "#4480a6",
-        ]);
-      });
-    });
-    setRects(newRects);
-
-    let newMoves = [];
+    let newMoves: [number, number, Color, string, Variant, string][] = [];
     table.forEach((line, r) => {
       line.forEach((mov, c) => {
         if (mov === null || (r === 0 && c === 0)) {
@@ -240,13 +221,7 @@ export default (props) => {
       });
     });
     setMoves(newMoves);
-
-    return () => {
-      if (treecontainer.current) {
-        treecontainer.current.replaceChildren();
-      }
-    };
-  }, [context.data, treecontainer]);
+  }, [context.data]);
 
   return (
     <Paper
@@ -289,11 +264,11 @@ export default (props) => {
               r < context.data.table.length &&
               c < context.data.table[r].length
             ) {
-              invoke("jump", { r: r, c: c })
-                .then(() => invoke("get_data"))
+              commands
+                .jump(r, c)
+                .then(() => commands.getData())
                 .then((data) => {
                   context.setData(data);
-                  context.setCursor(data.color === "Black" ? "White" : "Black");
                 })
                 .catch((e) => {
                   console.log(e);
@@ -301,7 +276,6 @@ export default (props) => {
             }
           }}
         >
-          <g ref={treecontainer} />
           <g>
             <circle
               cx={margin + square_size / 2}

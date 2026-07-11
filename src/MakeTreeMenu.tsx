@@ -1,22 +1,11 @@
-const { useEffect, useState, useRef, useContext } = await import("react");
-
-const { invoke } = await import("@tauri-apps/api/core");
-
-const { withTheme } = await import("@emotion/react");
+const { useEffect, useState, useContext } = await import("react");
 
 const CheckIcon = (await import("@mui/icons-material/Check")).default;
 const ClearIcon = (await import("@mui/icons-material/Clear")).default;
 
 const Box = (await import("@mui/material/Box")).default;
 const Button = (await import("@mui/material/Button")).default;
-const Dialog = (await import("@mui/material/Dialog")).default;
-const DialogActions = (await import("@mui/material/DialogActions")).default;
-const DialogContent = (await import("@mui/material/DialogContent")).default;
-const DialogContentText = (await import("@mui/material/DialogContentText"))
-  .default;
-const DialogTitle = (await import("@mui/material/DialogTitle")).default;
 const Paper = (await import("@mui/material/Paper")).default;
-const Slider = (await import("@mui/material/Slider")).default;
 const TextField = (await import("@mui/material/TextField")).default;
 const ToggleButton = (await import("@mui/material/ToggleButton")).default;
 const ToggleButtonGroup = (await import("@mui/material/ToggleButtonGroup"))
@@ -25,23 +14,17 @@ const ToggleButtonGroup = (await import("@mui/material/ToggleButtonGroup"))
 await import("./App.css");
 
 const AppContext = (await import("./AppContext")).default;
+const { CursorType, EditingPhaseType } = await import("./AppContext");
+const { commands } = await import("./bindings");
 
 const black_image = (await import("./assets/black_night.png")).default;
-const circle_icon = (await import("./assets/circle.svg")).default;
-const cross_icon = (await import("./assets/cross.svg")).default;
-const delete_mark_icon = (await import("./assets/delete_mark.svg")).default;
-const board_image = (await import("./assets/oak.jpg")).default;
-const square_icon = (await import("./assets/square.svg")).default;
-const triangle_icon = (await import("./assets/triangle.svg")).default;
 const white_image = (await import("./assets/white_anime.png")).default;
 
 const BoardSlider = (await import("./components/BoardSlider")).default;
 const DragLabelGroup = (await import("./components/DragLabelGroup")).default;
-const NumberSpinner = (await import("./components/NumberSpinner")).default;
-const PlaceStoneGroup = (await import("./components/PlaceStoneGroup")).default;
 const RectLabelGroup = (await import("./components/RectLabelGroup")).default;
 
-export default (props) => {
+export default () => {
   let context = useContext(AppContext);
   const [variant, setVariant] = useState("None");
 
@@ -95,10 +78,10 @@ export default (props) => {
           value={context.nextLabel}
           onChange={(e) => {
             context.setNextLabel(e.target.value);
-            context.setCursor("Label");
+            context.setCursor(CursorType.Label);
           }}
-          onFocus={(e) => {
-            context.setCursor("Label");
+          onFocus={() => {
+            context.setCursor(CursorType.Label);
           }}
         ></TextField>
         <DragLabelGroup />
@@ -117,10 +100,12 @@ export default (props) => {
           color="toggle"
           exclusive
           size="small"
-          onChange={(e, newValue) => {
+          onChange={(_e, newValue) => {
             if (newValue === null) {
               context.setCursor(
-                context.data.color === "Black" ? "White" : "Black",
+                context.data?.color === "Black"
+                  ? CursorType.White
+                  : CursorType.Black,
               );
             } else {
               context.setCursor(newValue);
@@ -128,10 +113,10 @@ export default (props) => {
           }}
         >
           <ToggleButton
-            value={context.data.color === "Black" ? "White" : "Black"}
+            value={context.data?.color === "Black" ? "White" : "Black"}
           >
             <img
-              src={context.data.color === "Black" ? white_image : black_image}
+              src={context.data?.color === "Black" ? white_image : black_image}
               style={{ height: "25px", width: "25px" }}
             />
           </ToggleButton>
@@ -140,13 +125,21 @@ export default (props) => {
         <Button
           sx={{ height: "40px" }}
           onClick={async () => {
-            invoke("play", {
-              color: context.cursor,
-            })
-              .then(() => invoke("get_data"))
+            let contextdata = context.data;
+            if (contextdata === null) {
+              return;
+            }
+            commands
+              .play(
+                null,
+                contextdata.table[contextdata.row][contextdata.col]?.color ===
+                  "Black"
+                  ? "White"
+                  : "Black",
+              )
+              .then(() => commands.getData())
               .then((data) => {
                 context.setData(data);
-                context.setCursor(data.color === "Black" ? "White" : "Black");
               });
           }}
           color="button"
@@ -165,8 +158,9 @@ export default (props) => {
             if (newValue === null) {
               newValue = "None";
             }
-            invoke("set_variant", { variant: newValue })
-              .then(() => invoke("get_data"))
+            commands
+              .setVariant(newValue)
+              .then(() => commands.getData())
               .then((data) => {
                 context.setData(data);
               });
@@ -194,12 +188,13 @@ export default (props) => {
       >
         <Button
           onClick={async () => {
-            invoke("collapse_tree")
-              .then(() => invoke("get_data"))
+            commands
+              .collapseTree()
+              .then(() => commands.getData())
               .then((data) => {
                 context.setData(data);
-                context.setEditingPhase("Initialize");
-                context.setCursor("Black");
+                context.setEditingPhase(EditingPhaseType.Initialize);
+                context.setCursor(CursorType.Black);
               });
           }}
           color="button"
@@ -215,10 +210,10 @@ export default (props) => {
             (context.data?.row ?? 0) == 0 && (context.data?.col ?? 0) == 0
           }
           onClick={async () => {
-            invoke("delete_branch")
-              .then(() => invoke("get_data"))
+            commands
+              .deleteBranch()
+              .then(() => commands.getData())
               .then((data) => {
-                context.setCursor(data.color === "Black" ? "White" : "Black");
                 context.setData(data);
               });
           }}

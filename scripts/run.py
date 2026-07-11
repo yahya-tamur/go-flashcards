@@ -2,9 +2,10 @@ import os
 import sys
 
 if "format" in sys.argv:
-    from sort_imports import sort_imports
-    print("\nSorting imports.\n")
-    sort_imports()
+    # maybe eslint will address this?
+    #from sort_imports import sort_imports
+    #print("\nSorting imports.\n")
+    #sort_imports()
 
     print("\nRunning prettier.\n")
     os.system("npx prettier ./src -w")

@@ -1,41 +1,22 @@
 const { useContext } = await import("react");
 
-const { invoke } = await import("@tauri-apps/api/core");
-
-const ClearIcon = (await import("@mui/icons-material/Clear")).default;
-
 const Box = (await import("@mui/material/Box")).default;
 const Button = (await import("@mui/material/Button")).default;
 const Paper = (await import("@mui/material/Paper")).default;
 const TextField = (await import("@mui/material/TextField")).default;
-const ToggleButton = (await import("@mui/material/ToggleButton")).default;
-const ToggleButtonGroup = (await import("@mui/material/ToggleButtonGroup"))
-  .default;
 
 await import("./App.css");
 
 const AppContext = (await import("./AppContext")).default;
-
-const black_image = (await import("./assets/black_night.png")).default;
-const black_territory_icon = (await import("./assets/black_territory.svg"))
-  .default;
-const circle_icon = (await import("./assets/circle.svg")).default;
-const cross_icon = (await import("./assets/cross.svg")).default;
-const delete_mark_icon = (await import("./assets/delete_mark.svg")).default;
-const mui_clear = (await import("./assets/mui_clear.svg")).default;
-const board_image = (await import("./assets/oak.jpg")).default;
-const square_icon = (await import("./assets/square.svg")).default;
-const triangle_icon = (await import("./assets/triangle.svg")).default;
-const white_image = (await import("./assets/white_anime.png")).default;
-const white_territory_icon = (await import("./assets/white_territory.svg"))
-  .default;
+const { CursorType, EditingPhaseType } = await import("./AppContext");
+const { commands } = await import("./bindings");
 
 const BoardSlider = (await import("./components/BoardSlider")).default;
 const DragLabelGroup = (await import("./components/DragLabelGroup")).default;
 const PlaceStoneGroup = (await import("./components/PlaceStoneGroup")).default;
 const RectLabelGroup = (await import("./components/RectLabelGroup")).default;
 
-export default (props) => {
+export default () => {
   let context = useContext(AppContext);
 
   return (
@@ -82,10 +63,10 @@ export default (props) => {
           value={context.nextLabel}
           onChange={(e) => {
             context.setNextLabel(e.target.value);
-            context.setCursor("Label");
+            context.setCursor(CursorType.Label);
           }}
-          onFocus={(e) => {
-            context.setCursor("Label");
+          onFocus={() => {
+            context.setCursor(CursorType.Label);
           }}
         ></TextField>
         <DragLabelGroup />
@@ -115,13 +96,12 @@ export default (props) => {
           color="button"
           disabled={context.cursor !== "Black" && context.cursor !== "White"}
           onClick={async () => {
-            invoke("finish_setup", {
-              color: context.cursor === "Black" ? "White" : "Black",
-            })
-              .then(() => invoke("get_data"))
+            commands
+              .finishSetup(context.cursor === "Black" ? "White" : "Black")
+              .then(() => commands.getData())
               .then((data) => {
                 context.setData(data);
-                context.setEditingPhase("MakeTree");
+                context.setEditingPhase(EditingPhaseType.MakeTree);
               });
           }}
         >

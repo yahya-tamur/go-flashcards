@@ -1,6 +1,4 @@
-const { useEffect, useState, useRef, useContext } = await import("react");
-
-const { invoke } = await import("@tauri-apps/api/core");
+const { useState, useContext } = await import("react");
 
 const ClearIcon = (await import("@mui/icons-material/Clear")).default;
 const DownloadIcon = (await import("@mui/icons-material/Download")).default;
@@ -14,17 +12,16 @@ const DialogActions = (await import("@mui/material/DialogActions")).default;
 const DialogContent = (await import("@mui/material/DialogContent")).default;
 const DialogContentText = (await import("@mui/material/DialogContentText"))
   .default;
-const DialogTitle = (await import("@mui/material/DialogTitle")).default;
 const Paper = (await import("@mui/material/Paper")).default;
-const Slider = (await import("@mui/material/Slider")).default;
-const TextField = (await import("@mui/material/TextField")).default;
 const Tooltip = (await import("@mui/material/Tooltip")).default;
 
 await import("../App.css");
 
-const black_image = (await import("../assets/black_night.png")).default;
-const board_image = (await import("../assets/oak.jpg")).default;
-const white_image = (await import("../assets/white_anime.png")).default;
+await import("../AppContext");
+
+const { CursorType, EditingPhaseType, PhaseType } =
+  await import("../AppContext");
+const { commands } = await import("../bindings");
 
 const KeyboardArrowDownOutlinedIcon = (
   await import("@mui/icons-material/KeyboardArrowDownOutlined")
@@ -33,16 +30,11 @@ const KeyboardArrowRightOutlinedIcon = (
   await import("@mui/icons-material/KeyboardArrowRightOutlined")
 ).default;
 
-const { ask } = await import("@tauri-apps/plugin-dialog");
-
 const NumberSpinner = (await import("../components/NumberSpinner")).default;
 
 const AppContext = (await import("../AppContext")).default;
 
-const { Avatar, Icon, IconButton, SvgIcon } = await import("@mui/material");
-const { createSvgIcon } = await import("@mui/material/utils");
-
-export default (props) => {
+export default () => {
   let context = useContext(AppContext);
   const [dialogContent, setDialogContent] = useState("");
   const [savedMsgOpen, setSavedMsgOpen] = useState(false);
@@ -82,9 +74,9 @@ export default (props) => {
           color="button"
           sx={{ height: "40px" }}
           onClick={async () => {
-            invoke("main_menu").then(() => {
-              context.setPhase("Main");
-              context.setConfig(null);
+            commands.mainMenu().then(() => {
+              context.setPhase(PhaseType.Main);
+              //context.setConfig(null);
               context.setNextLabel("A");
             });
           }}
@@ -97,20 +89,20 @@ export default (props) => {
           value={(context.data?.current_location ?? 0) + 1}
           min={1}
           max={context.data?.max_location ?? 1}
-          onValueChange={async (v, e) => {
-            if (context.data === null || context.data === undefined) {
+          onValueChange={async (v) => {
+            if (context.data === null || v === null) {
               return;
             }
-            invoke("jump_to_exercise", { index: v - 1 })
-              .then(() => invoke("get_data"))
+            commands
+              .jumpToExercise(v - 1)
+              .then(() => commands.getData())
               .then((data) => {
                 context.setData(data);
                 if (data.table.length === 1 && data.table[0].length === 1) {
-                  context.setEditingPhase("Initialize");
+                  context.setEditingPhase(EditingPhaseType.Initialize);
                 } else {
-                  context.setEditingPhase("MakeTree");
+                  context.setEditingPhase(EditingPhaseType.MakeTree);
                 }
-                context.setCursor(data.color === "Black" ? "White" : "Black");
               });
           }}
         />
@@ -123,18 +115,16 @@ export default (props) => {
               color="button"
               sx={{ height: "40px" }}
               onClick={async () => {
-                invoke("delete_exercise")
-                  .then(() => invoke("get_data"))
+                commands
+                  .deleteExercise()
+                  .then(() => commands.getData())
                   .then((data) => {
                     if (data.table.length === 1 && data.table[0].length === 1) {
-                      context.setEditingPhase("Initialize");
+                      context.setEditingPhase(EditingPhaseType.Initialize);
                     } else {
-                      context.setEditingPhase("MakeTree");
+                      context.setEditingPhase(EditingPhaseType.MakeTree);
                     }
                     context.setData(data);
-                    context.setCursor(
-                      data.color === "Black" ? "White" : "Black",
-                    );
                   });
               }}
             >
@@ -147,12 +137,13 @@ export default (props) => {
               color="button"
               sx={{ height: "40px" }}
               onClick={async () => {
-                invoke("new_exercise", { insert: true })
-                  .then(() => invoke("get_data"))
+                commands
+                  .newExercise(true)
+                  .then(() => commands.getData())
                   .then((data) => {
                     context.setData(data);
-                    context.setCursor("Black");
-                    context.setEditingPhase("Initialize");
+                    context.setCursor(CursorType.Black);
+                    context.setEditingPhase(EditingPhaseType.Initialize);
                   });
               }}
             >
@@ -166,12 +157,13 @@ export default (props) => {
               color="button"
               sx={{ height: "40px" }}
               onClick={async () => {
-                invoke("new_exercise", { insert: false })
-                  .then(() => invoke("get_data"))
+                commands
+                  .newExercise(false)
+                  .then(() => commands.getData())
                   .then((data) => {
                     context.setData(data);
-                    context.setCursor("Black");
-                    context.setEditingPhase("Initialize");
+                    context.setCursor(CursorType.Black);
+                    context.setEditingPhase(EditingPhaseType.Initialize);
                   });
               }}
             >
@@ -188,21 +180,19 @@ export default (props) => {
                 variant="outlined"
                 color="button"
                 onClick={async () => {
-                  invoke("import_sgf")
-                    .then(() => invoke("get_data"))
+                  commands
+                    .importSgf()
+                    .then(() => commands.getData())
                     .then((data) => {
                       if (
                         data.table.length === 1 &&
                         data.table[0].length === 1
                       ) {
-                        context.setEditingPhase("Initialize");
+                        context.setEditingPhase(EditingPhaseType.Initialize);
                       } else {
-                        context.setEditingPhase("MakeTree");
+                        context.setEditingPhase(EditingPhaseType.MakeTree);
                       }
                       context.setData(data);
-                      context.setCursor(
-                        data.color === "Black" ? "White" : "Black",
-                      );
                     })
                     .catch((e) => {
                       console.log(e);
@@ -221,9 +211,9 @@ export default (props) => {
                 sx={{ height: "40px" }}
                 variant="outlined"
                 color="button"
-                label="export"
                 onClick={async () => {
-                  invoke("export_sgf")
+                  commands
+                    .exportSgf()
                     .then(() => {
                       setDialogContent("Exported to sgf, under app_data/sgf.");
                       setSavedMsgOpen(true);
@@ -244,7 +234,7 @@ export default (props) => {
           color="button"
           sx={{ height: "40px" }}
           onClick={async () => {
-            invoke("save_exercises").then(() => {
+            commands.saveExercises().then(() => {
               setDialogContent("Saved.");
               setSavedMsgOpen(true);
             });

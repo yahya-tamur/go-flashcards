@@ -19,12 +19,16 @@ use move_tree::MoveTree;
 use problem::Variant;
 use snapshot::Snapshot;
 
+use specta_typescript::Typescript;
 use tauri::{Builder, Manager};
 
 use tokio::sync::Mutex;
 
 use app_data::AppData;
 use game_state::Color;
+
+//use specta_typescript::{Typescript, semantic};
+//use tauri_specta::*;
 
 // is std sync mutex better? is tauri multithreaded? probably doesn't matter, since
 // won't be getting too many requests / second. Probably didn't even need mutex.
@@ -41,15 +45,25 @@ async fn apply_to_move_tree<'a, A>(
 }
 
 #[tauri::command]
+#[specta::specta]
 async fn set_stones(
     state: tauri::State<'_, Mutex<AppData>>,
-    stones: Vec<(usize, usize, Color)>,
+    stones: Vec<(u32, u32, Color)>,
 ) -> Result<(), String> {
-    apply_to_move_tree(state, |move_tree, _| move_tree.set_stones(stones)).await;
+    apply_to_move_tree(state, |move_tree, _| {
+        move_tree.set_stones(
+            stones
+                .into_iter()
+                .map(|(i, j, c)| (i as usize, j as usize, c))
+                .collect(),
+        )
+    })
+    .await;
     Ok(())
 }
 
 #[tauri::command]
+#[specta::specta]
 async fn get_data(state: tauri::State<'_, Mutex<AppData>>) -> Result<Snapshot, String> {
     match &*state.lock().await {
         AppData::Editing(editing_data) => {
@@ -61,35 +75,47 @@ async fn get_data(state: tauri::State<'_, Mutex<AppData>>) -> Result<Snapshot, S
 }
 
 #[tauri::command]
+#[specta::specta]
 async fn set_window(
     state: tauri::State<'_, Mutex<AppData>>,
-    window: (usize, usize, usize, usize),
+    window: (u32, u32, u32, u32),
 ) -> Result<(), String> {
-    apply_to_move_tree(state, |move_tree, _| move_tree.set_window(window)).await;
+    let (a, b, c, d) = window;
+    apply_to_move_tree(state, |move_tree, _| {
+        move_tree.set_window((a as usize, b as usize, c as usize, d as usize))
+    })
+    .await;
     Ok(())
 }
 
 #[tauri::command]
+#[specta::specta]
 async fn play(
     state: tauri::State<'_, Mutex<AppData>>,
-    loc: Option<(usize, usize)>,
+    loc: Option<(u32, u32)>,
     color: Color,
 ) -> Result<bool, String> {
-    Ok(apply_to_move_tree(state, |move_tree, study| move_tree.play(loc, color, study)).await)
+    Ok(apply_to_move_tree(state, |move_tree, study| {
+        move_tree.play(loc.map(|(i, j)| (i as usize, j as usize)), color, study)
+    })
+    .await)
 }
 
 #[tauri::command]
-async fn jump(state: tauri::State<'_, Mutex<AppData>>, r: usize, c: usize) -> Result<(), String> {
-    apply_to_move_tree(state, |move_tree, _| move_tree.jump(r, c)).await;
+#[specta::specta]
+async fn jump(state: tauri::State<'_, Mutex<AppData>>, r: u32, c: u32) -> Result<(), String> {
+    apply_to_move_tree(state, |move_tree, _| move_tree.jump(r as usize, c as usize)).await;
     Ok(())
 }
 
 #[tauri::command]
+#[specta::specta]
 async fn delete_branch(state: tauri::State<'_, Mutex<AppData>>) -> Result<bool, String> {
     Ok(apply_to_move_tree(state, |move_tree, _| move_tree.delete_branch()).await)
 }
 
 #[tauri::command]
+#[specta::specta]
 async fn new_exercise(state: tauri::State<'_, Mutex<AppData>>, insert: bool) -> Result<(), String> {
     match &mut *state.lock().await {
         AppData::Editing(editing_data) => {
@@ -101,6 +127,7 @@ async fn new_exercise(state: tauri::State<'_, Mutex<AppData>>, insert: bool) -> 
 }
 
 #[tauri::command]
+#[specta::specta]
 async fn next_exercise(state: tauri::State<'_, Mutex<AppData>>) -> Result<(), String> {
     match &mut *state.lock().await {
         AppData::Study(study_data) => {
@@ -112,6 +139,7 @@ async fn next_exercise(state: tauri::State<'_, Mutex<AppData>>) -> Result<(), St
 }
 
 #[tauri::command]
+#[specta::specta]
 async fn delete_exercise(state: tauri::State<'_, Mutex<AppData>>) -> Result<(), String> {
     match &mut *state.lock().await {
         AppData::Editing(editing_data) => {
@@ -123,18 +151,21 @@ async fn delete_exercise(state: tauri::State<'_, Mutex<AppData>>) -> Result<(), 
 }
 
 #[tauri::command]
+#[specta::specta]
 async fn finish_setup(state: tauri::State<'_, Mutex<AppData>>, color: Color) -> Result<(), String> {
     apply_to_move_tree(state, |move_tree, _| move_tree.finish_setup(Some(color))).await;
     Ok(())
 }
 
 #[tauri::command]
+#[specta::specta]
 async fn collapse_tree(state: tauri::State<'_, Mutex<AppData>>) -> Result<(), String> {
     apply_to_move_tree(state, |move_tree, _| move_tree.collapse_tree()).await;
     Ok(())
 }
 
 #[tauri::command]
+#[specta::specta]
 async fn comment(state: tauri::State<'_, Mutex<AppData>>, comment: String) -> Result<(), String> {
     apply_to_move_tree(state, |move_tree, _| {
         move_tree.current_mut().comment = comment;
@@ -144,12 +175,18 @@ async fn comment(state: tauri::State<'_, Mutex<AppData>>, comment: String) -> Re
 }
 
 #[tauri::command]
+#[specta::specta]
 async fn set_marks(
     state: tauri::State<'_, Mutex<AppData>>,
-    marks: Vec<(usize, usize, Mark)>,
+    marks: Vec<(u32, u32, Mark)>,
 ) -> Result<(), String> {
     apply_to_move_tree(state, |move_tree, _| {
-        move_tree.set_marks(marks);
+        move_tree.set_marks(
+            marks
+                .into_iter()
+                .map(|(i, j, m)| (i as usize, j as usize, m))
+                .collect(),
+        );
     })
     .await;
 
@@ -157,19 +194,22 @@ async fn set_marks(
 }
 
 #[tauri::command]
+#[specta::specta]
 async fn set_marks_window(
     state: tauri::State<'_, Mutex<AppData>>,
     mark: Option<Mark>,
-    window: (usize, usize, usize, usize),
+    window: (u32, u32, u32, u32),
 ) -> Result<(), String> {
+    let (a, b, c, d) = window;
     apply_to_move_tree(state, |move_tree, _| {
-        move_tree.set_marks_window(mark, window);
+        move_tree.set_marks_window(mark, (a as usize, b as usize, c as usize, d as usize));
     })
     .await;
     Ok(())
 }
 
 #[tauri::command]
+#[specta::specta]
 async fn set_variant(
     state: tauri::State<'_, Mutex<AppData>>,
     variant: Variant,
@@ -182,17 +222,18 @@ async fn set_variant(
 }
 
 #[tauri::command]
+#[specta::specta]
 async fn jump_to_exercise(
     state: tauri::State<'_, Mutex<AppData>>,
-    index: usize,
+    index: u32,
 ) -> Result<(), String> {
     match &mut *state.lock().await {
         AppData::Editing(editing_data) => {
-            editing_data.jump_to_exercise(index);
+            editing_data.jump_to_exercise(index as usize);
             Ok(())
         }
         AppData::Study(study_data) => {
-            study_data.jump_to_exercise(index);
+            study_data.jump_to_exercise(index as usize);
             Ok(())
         }
         _ => unimplemented!(),
@@ -200,6 +241,7 @@ async fn jump_to_exercise(
 }
 
 #[tauri::command]
+#[specta::specta]
 async fn save_exercises(
     state: tauri::State<'_, Mutex<AppData>>,
     app: tauri::AppHandle,
@@ -220,6 +262,7 @@ async fn save_exercises(
 }
 
 #[tauri::command]
+#[specta::specta]
 async fn delete_exercise_file(app: tauri::AppHandle, exercise: String) -> Result<(), String> {
     fs::delete_exercise(&app.path().app_data_dir().unwrap(), &exercise)
         .await
@@ -231,6 +274,7 @@ async fn delete_exercise_file(app: tauri::AppHandle, exercise: String) -> Result
 // EditingScreen useEffect calls this, which switches
 // it to editing mode.
 #[tauri::command]
+#[specta::specta]
 async fn load_exercises(
     state: tauri::State<'_, Mutex<AppData>>,
     app: tauri::AppHandle,
@@ -245,6 +289,7 @@ async fn load_exercises(
 }
 
 #[tauri::command]
+#[specta::specta]
 async fn get_config(state: tauri::State<'_, Mutex<AppData>>) -> Result<ActiveConfig, String> {
     match &mut *state.lock().await {
         AppData::Editing(editing_data) => Ok((*editing_data.config).clone()),
@@ -254,6 +299,7 @@ async fn get_config(state: tauri::State<'_, Mutex<AppData>>) -> Result<ActiveCon
 }
 
 #[tauri::command]
+#[specta::specta]
 async fn get_config_str(app: tauri::AppHandle) -> Result<String, String> {
     Ok(fs::load_config(&app.path().app_data_dir().unwrap())
         .await
@@ -261,22 +307,24 @@ async fn get_config_str(app: tauri::AppHandle) -> Result<String, String> {
 }
 
 #[tauri::command]
+#[specta::specta]
 async fn set_config_str(
     app: tauri::AppHandle,
     config: String,
-) -> Result<(), (String, usize, usize)> {
+) -> Result<Option<(String, u32, u32)>, String> {
     match config::validate(&app.path().app_data_dir().unwrap(), Some(&config)).await {
         Ok(()) => {
             crate::fs::save_config(&app.path().app_data_dir().unwrap(), &config)
                 .await
                 .unwrap();
-            Ok(())
+            Ok(None)
         }
-        Err(error) => Err(error),
+        Err(error) => Ok(Some(error)),
     }
 }
 
 #[tauri::command]
+#[specta::specta]
 async fn list_exercises(app: tauri::AppHandle) -> Result<Vec<String>, String> {
     Ok(fs::list_exercises(&app.path().app_data_dir().unwrap())
         .await
@@ -284,12 +332,14 @@ async fn list_exercises(app: tauri::AppHandle) -> Result<Vec<String>, String> {
 }
 
 #[tauri::command]
+#[specta::specta]
 async fn main_menu(state: tauri::State<'_, Mutex<AppData>>) -> Result<(), String> {
     state.lock().await.main();
     Ok(())
 }
 
 #[tauri::command]
+#[specta::specta]
 async fn load_study(
     state: tauri::State<'_, Mutex<AppData>>,
     app: tauri::AppHandle,
@@ -305,11 +355,13 @@ async fn load_study(
 }
 
 #[tauri::command]
+#[specta::specta]
 async fn list_studies(app: tauri::AppHandle) -> Result<Vec<String>, String> {
     Ok(crate::config::flashcard_sets(&app.path().app_data_dir().unwrap()).await)
 }
 
 #[tauri::command]
+#[specta::specta]
 async fn answer(
     state: tauri::State<'_, Mutex<AppData>>,
     app: tauri::AppHandle,
@@ -327,6 +379,7 @@ async fn answer(
 }
 
 #[tauri::command]
+#[specta::specta]
 async fn stop_editing(
     state: tauri::State<'_, Mutex<AppData>>,
     app: tauri::AppHandle,
@@ -344,6 +397,7 @@ async fn stop_editing(
 }
 
 #[tauri::command]
+#[specta::specta]
 async fn get_history(state: tauri::State<'_, Mutex<AppData>>) -> Result<Vec<bool>, String> {
     match &mut *state.lock().await {
         AppData::Study(study_data) => Ok(study_data.get_history().iter().copied().collect()),
@@ -352,6 +406,7 @@ async fn get_history(state: tauri::State<'_, Mutex<AppData>>) -> Result<Vec<bool
 }
 
 #[tauri::command]
+#[specta::specta]
 async fn export_sgf(
     app: tauri::AppHandle,
     state: tauri::State<'_, Mutex<AppData>>,
@@ -372,6 +427,7 @@ async fn export_sgf(
 }
 
 #[tauri::command]
+#[specta::specta]
 async fn import_sgf(
     app: tauri::AppHandle,
     state: tauri::State<'_, Mutex<AppData>>,
@@ -386,6 +442,45 @@ async fn import_sgf(
         _ => unimplemented!(),
     }
     Ok(())
+}
+
+pub fn make_bindings() {
+    tauri_specta::Builder::<tauri::Wry>::new()
+        .commands(tauri_specta::collect_commands![
+            get_data,
+            play,
+            jump,
+            delete_branch,
+            set_stones,
+            new_exercise,
+            next_exercise,
+            delete_exercise,
+            finish_setup,
+            collapse_tree,
+            comment,
+            set_variant,
+            delete_exercise_file,
+            jump_to_exercise,
+            save_exercises,
+            load_exercises,
+            get_config_str,
+            set_config_str,
+            get_config,
+            list_exercises,
+            list_studies,
+            main_menu,
+            set_window,
+            load_study,
+            answer,
+            get_history,
+            stop_editing,
+            set_marks,
+            set_marks_window,
+            import_sgf,
+            export_sgf,
+        ])
+        .export(Typescript::default(), "../src/bindings.ts")
+        .unwrap();
 }
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]

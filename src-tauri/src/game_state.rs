@@ -1,9 +1,10 @@
 use serde::{Deserialize, Serialize};
+use specta::Type;
 use std::hash::Hash;
 
 use crate::problem::Move;
 
-#[derive(Clone, PartialEq, Eq, Debug, Serialize, Deserialize)]
+#[derive(Clone, PartialEq, Eq, Debug, Serialize, Deserialize, Type)]
 pub enum Mark {
     Triangle,
     Circle,
@@ -14,7 +15,7 @@ pub enum Mark {
     Label(String),
 }
 
-#[derive(Clone, Copy, PartialEq, Eq, Debug, Serialize, Deserialize, Hash)]
+#[derive(Clone, Copy, PartialEq, Eq, Debug, Serialize, Deserialize, Hash, Type)]
 #[repr(u8)]
 pub enum Color {
     Black = 0,

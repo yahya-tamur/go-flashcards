@@ -1,5 +1,6 @@
 use indexmap::IndexMap;
 use regex::Regex;
+use specta::Type;
 use std::{
     collections::{HashMap, HashSet},
     path::Path,
@@ -10,7 +11,7 @@ use struct_patch::Patch;
 
 use serde::{Deserialize, Serialize};
 
-#[derive(PartialEq, Deserialize, Debug, Copy, Clone, Serialize)]
+#[derive(PartialEq, Deserialize, Debug, Copy, Clone, Serialize, Type)]
 #[serde(rename_all = "snake_case")]
 pub enum ShowRecent {
     None,
@@ -18,7 +19,7 @@ pub enum ShowRecent {
     Number,
 }
 
-#[derive(Deserialize, Patch, PartialEq, Debug, Clone, Serialize)]
+#[derive(Deserialize, Patch, PartialEq, Debug, Clone, Serialize, Type)]
 #[patch(attribute(derive(Deserialize, Debug, Clone)))]
 #[patch(attribute(serde(deny_unknown_fields, rename_all = "snake_case")))]
 pub struct ActiveConfig {
@@ -144,7 +145,7 @@ pub async fn load_study(
     )
 }
 
-pub async fn validate(app_data: &Path, input: Option<&str>) -> Result<(), (String, usize, usize)> {
+pub async fn validate(app_data: &Path, input: Option<&str>) -> Result<(), (String, u32, u32)> {
     let input: &str = match input {
         Some(input) => input,
         None => &fs::load_config(app_data).await.unwrap(),
@@ -152,9 +153,13 @@ pub async fn validate(app_data: &Path, input: Option<&str>) -> Result<(), (Strin
 
     let config: ConfigFile = toml::from_str(input).map_err(|err| {
         if let Some(range) = err.span() {
-            (err.message().to_string(), range.start, range.end)
+            (
+                err.message().to_string(),
+                range.start as u32,
+                range.end as u32,
+            )
         } else {
-            (err.message().to_string(), 0, 0)
+            (err.message().to_string(), 0u32, 0u32)
         }
     })?;
 
@@ -169,8 +174,8 @@ pub async fn validate(app_data: &Path, input: Option<&str>) -> Result<(), (Strin
             if !exercise_files.contains(source.get_ref()) {
                 return Err((
                     format!(r#"source "{}" not found."#, source.get_ref()),
-                    source.span().start,
-                    source.span().end,
+                    source.span().start as u32,
+                    source.span().end as u32,
                 ));
             }
         }
@@ -182,15 +187,15 @@ pub async fn validate(app_data: &Path, input: Option<&str>) -> Result<(), (Strin
             if !exercise_files.contains(source.get_ref()) {
                 return Err((
                     format!(r#"source "{}" not found."#, source.get_ref()),
-                    source.span().start,
-                    source.span().end,
+                    source.span().start as u32,
+                    source.span().end as u32,
                 ));
             }
             if !sources.insert(source.get_ref().clone()) {
                 return Err((
                     format!(r#"duplicate source "{}"."#, source.get_ref()),
-                    source.span().start,
-                    source.span().end,
+                    source.span().start as u32,
+                    source.span().end as u32,
                 ));
             }
         }
@@ -198,8 +203,8 @@ pub async fn validate(app_data: &Path, input: Option<&str>) -> Result<(), (Strin
             if !sources.contains(source.as_ref()) {
                 return Err((
                     format!(r#"source "{}" not in this set."#, source.get_ref()),
-                    source.span().start,
-                    source.span().end,
+                    source.span().start as u32,
+                    source.span().end as u32,
                 ));
             }
         }

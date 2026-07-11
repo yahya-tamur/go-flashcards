@@ -1,14 +1,12 @@
-const { useEffect, useState, useRef, useContext } = await import("react");
-
-const { invoke } = await import("@tauri-apps/api/core");
+import type { ReactCodeMirrorRef } from "@uiw/react-codemirror";
+import type { Dispatch, SetStateAction } from "react";
+const { useEffect, useState, useRef } = await import("react");
 
 const { StreamLanguage } = await import("@codemirror/language");
 const { StateField, StateEffect } = await import("@codemirror/state");
 const { Decoration, EditorView } = await import("@codemirror/view");
 
 const { toml } = await import("@codemirror/legacy-modes/mode/toml");
-
-const { border } = await import("@mui/system");
 
 const Box = (await import("@mui/material/Box")).default;
 const Button = (await import("@mui/material/Button")).default;
@@ -19,13 +17,14 @@ const CodeMirror = (await import("@uiw/react-codemirror")).default;
 
 await import("../App.css");
 
-const AppContext = (await import("../AppContext")).default;
+const { commands } = await import("../bindings");
 
-const black_image = (await import("../assets/black_night.png")).default;
-const board_image = (await import("../assets/oak.jpg")).default;
-const white_image = (await import("../assets/white_anime.png")).default;
+interface HighlightPayload {
+  from: number;
+  to: number;
+}
 
-const addHighlight = StateEffect.define({
+const addHighlight = StateEffect.define<HighlightPayload>({
   map: ({ from, to }, change) => ({
     from: change.mapPos(from),
     to: change.mapPos(to),
@@ -71,17 +70,26 @@ const scrollStyle = EditorView.theme({
   ".cm-content": { minHeight: "calc(100vh - 90px)" },
 });
 
-export default (props) => {
-  let context = useContext(AppContext);
+interface EditConfigProps {
+  initialConfig: string;
+  setStudies: Dispatch<SetStateAction<string[]>>;
+  configSignal: number;
+}
+
+export default (props: EditConfigProps) => {
+  //let context = useContext(AppContext);
   const [code, setCode] = useState(props.initialConfig);
   const [lastSaved, setLastSaved] = useState(props.initialConfig);
-  const [error, setError] = useState(undefined);
-  const editorRef = useRef(undefined);
+  const [error, setError] = useState<[string, number, number] | null>(null);
+  const editorRef = useRef<ReactCodeMirrorRef>(null);
 
   useEffect(() => {
-    invoke("set_config_str", { config: props.initialConfig }).catch((err) => {
-      if (err !== error) {
-        let [_, left, right] = err;
+    commands.setConfigStr(props.initialConfig).then((errobj) => {
+      if (errobj === null) {
+        return;
+      }
+      if (errobj !== error) {
+        let [_, left, right] = errobj;
         if (left == right) {
           left = Math.max(0, left - 2);
           right = Math.min(code.length, right + 2);
@@ -92,30 +100,10 @@ export default (props) => {
           });
         }
         setCode(code);
-        setError(err);
+        setError(errobj);
       }
     });
   }, [props.configSignal]);
-
-  useEffect(() => {
-    if (editorRef === null) {
-      return;
-    }
-    window.addHighlight = (left, right) => {
-      editorRef.current?.view?.dispatch({
-        effects: addHighlight.of({ from: left, to: right }),
-      });
-    };
-    window.removeHighlight = () => {
-      editorRef.current?.view?.dispatch({
-        effects: removeHighlight.of(),
-      });
-    };
-    return () => {
-      delete window.addHighlight;
-      delete window.removeHighlight;
-    };
-  }, [editorRef]);
 
   return (
     <>
@@ -183,26 +171,25 @@ export default (props) => {
               marginTop: "10px",
             }}
           >
-            {error !== undefined ? error[0] : ""}
+            {error !== null ? error[0] : ""}
           </Box>
           <Button
             disabled={code === lastSaved}
             variant="contained"
             sx={{ height: "40px", margin: "15px" }}
             onClick={async () => {
-              await invoke("set_config_str", { config: code })
-                .then(() => {
-                  setError(undefined);
+              await commands.setConfigStr(code).then((errobj) => {
+                if (errobj === null) {
+                  setError(null);
                   setLastSaved(code);
                   editorRef.current?.view?.dispatch({
-                    effects: removeHighlight.of(),
+                    effects: removeHighlight.of(null),
                   });
-                  invoke("list_studies", { config: code }).then((studies) =>
-                    props.setStudies(studies),
-                  );
-                })
-                .catch((err) => {
-                  let [_, left, right] = err;
+                  commands
+                    .listStudies()
+                    .then((studies) => props.setStudies(studies));
+                } else {
+                  let [_, left, right] = errobj;
                   if (left == right) {
                     left = Math.max(0, left - 2);
                     right = Math.min(code.length, right + 2);
@@ -214,9 +201,10 @@ export default (props) => {
                   }
                   setLastSaved(code);
 
-                  setError(err);
+                  setError(errobj);
                   props.setStudies([]);
-                });
+                }
+              });
             }}
           >
             {code === lastSaved && error === undefined ? "Saved." : "Save"}

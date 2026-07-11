@@ -1,17 +1,16 @@
-const { useState, useEffect, useContext } = await import("react");
-
-const { invoke } = await import("@tauri-apps/api/core");
+const { useEffect, useContext } = await import("react");
 
 const Box = (await import("@mui/material/Box")).default;
-const Button = (await import("@mui/material/Button")).default;
 const Paper = (await import("@mui/material/Paper")).default;
 
 await import("../App.css");
 
 const AppContext = (await import("../AppContext")).default;
+const { StudyPhaseType } = await import("../AppContext");
 const Board = (await import("../Board")).default;
 const CommentBox = (await import("../CommentBox")).default;
 const Tree = (await import("../Tree")).default;
+const { commands } = await import("../bindings");
 
 const Menu = (await import("./Menu")).default;
 const TopBar = (await import("./TopBar")).default;
@@ -20,12 +19,11 @@ export default () => {
   let context = useContext(AppContext);
 
   useEffect(() => {
-    invoke("get_data")
+    commands
+      .getData()
       .then((data) => {
-        context.setStudyPhase("Guess");
+        context.setStudyPhase(StudyPhaseType.Guess);
         context.setData(data);
-        context.setCursor(data.color === "Black" ? "White" : "Black");
-        context.setExerciseColor(data.color === "Black" ? "White" : "Black");
       })
       .catch((e) => {
         console.log(e);

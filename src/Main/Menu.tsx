@@ -1,11 +1,9 @@
-const { useEffect, useState, useRef, useContext } = await import("react");
-
-const { invoke } = await import("@tauri-apps/api/core");
+import type { Dispatch, SetStateAction } from "react";
+const { useState, useContext } = await import("react");
 
 const AddIcon = (await import("@mui/icons-material/Add")).default;
 const ClearIcon = (await import("@mui/icons-material/Clear")).default;
 
-const Box = (await import("@mui/material/Box")).default;
 const Button = (await import("@mui/material/Button")).default;
 const Dialog = (await import("@mui/material/Dialog")).default;
 const DialogActions = (await import("@mui/material/DialogActions")).default;
@@ -24,25 +22,29 @@ const TextField = (await import("@mui/material/TextField")).default;
 await import("../App.css");
 
 const AppContext = (await import("../AppContext")).default;
+const { PhaseType } = await import("../AppContext");
+const { commands } = await import("../bindings");
 
-const black_image = (await import("../assets/black_night.png")).default;
-const board_image = (await import("../assets/oak.jpg")).default;
-const white_image = (await import("../assets/white_anime.png")).default;
+interface MenuProps {
+  drawerWidth: string;
+  exercises: string[];
+  studies: string[];
+  setExercises: Dispatch<SetStateAction<string[]>>;
+  configSignal: number;
+  setConfigSignal: Dispatch<SetStateAction<number>>;
+}
 
-export default (props) => {
+export default (props: MenuProps) => {
   const context = useContext(AppContext);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [fileToDelete, setFileToDelete] = useState("");
-
-  // "main", "exercises", "study"
-  const [menu, setMenu] = useState("main");
 
   const [editOpen, setEditOpen] = useState(false);
   const [studyOpen, setStudyOpen] = useState(false);
 
   const [newExercise, setNewExercise] = useState("");
 
-  const exercise_name_invalid = (s) =>
+  const exercise_name_invalid = (s: string) =>
     /\/|\\|[\u{0000}-\u{0008}]|[\u{000A}-\u{001F}]|\u{007F}/u.test(s);
 
   return (
@@ -122,11 +124,12 @@ export default (props) => {
               >
                 <ListItemButton
                   onClick={() => {
-                    invoke("load_exercises", { exercise: e })
-                      .then(() => invoke("get_config"))
-                      .then((config) => {
-                        context.setConfig(config);
-                        context.setPhase("Editing");
+                    commands
+                      .loadExercises(e)
+                      //.then(() => invoke("get_config"))
+                      .then(() => {
+                        //context.setConfig(config);
+                        context.setPhase(PhaseType.Editing);
                       });
                   }}
                 >
@@ -137,11 +140,12 @@ export default (props) => {
             <form
               onSubmit={(e) => {
                 e.preventDefault();
-                invoke("load_exercises", { exercise: newExercise })
-                  .then(() => invoke("get_config"))
-                  .then((config) => {
-                    context.setConfig(config);
-                    context.setPhase("Editing");
+                commands
+                  .loadExercises(newExercise)
+                  //.then(() => invoke("get_config"))
+                  .then(() => {
+                    //context.setConfig(config);
+                    context.setPhase(PhaseType.Editing);
                   });
               }}
             >
@@ -155,7 +159,6 @@ export default (props) => {
                     }
                     edge="end"
                     type="submit"
-                    variant="contained"
                   >
                     <AddIcon />
                   </IconButton>
@@ -215,11 +218,12 @@ export default (props) => {
               <ListItem key={JSON.stringify([e, i])} disablePadding>
                 <ListItemButton
                   onClick={() => {
-                    invoke("load_study", { flashcardSet: e })
-                      .then(() => invoke("get_config"))
-                      .then((config) => {
-                        context.setConfig(config);
-                        context.setPhase("Study");
+                    commands
+                      .loadStudy(e)
+                      //.then(() => invoke("get_config"))
+                      .then(() => {
+                        //context.setConfig(config);
+                        context.setPhase(PhaseType.Study);
                       });
                   }}
                 >
@@ -264,15 +268,16 @@ export default (props) => {
           <Button
             variant="contained"
             onClick={() => {
-              invoke("delete_exercise_file", { exercise: fileToDelete }).then(
-                () => {
-                  invoke("list_exercises").then((a) => {
+              commands
+                .deleteExerciseFile(fileToDelete)
+
+                .then(() => {
+                  commands.listExercises().then((a) => {
                     props.setExercises(a);
                     setDeleteDialogOpen(false);
                     props.setConfigSignal(props.configSignal + 1);
                   });
-                },
-              );
+                });
             }}
           >
             Yes

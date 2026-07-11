@@ -1,17 +1,17 @@
-const { useState, useEffect, useContext } = await import("react");
-
-const { invoke } = await import("@tauri-apps/api/core");
+const { useEffect, useContext } = await import("react");
 
 const Box = (await import("@mui/material/Box")).default;
 
 await import("../App.css");
 
 const AppContext = (await import("../AppContext")).default;
+const { EditingPhaseType } = await import("../AppContext");
 const Board = (await import("../Board")).default;
 const CommentBox = (await import("../CommentBox")).default;
 const InitializeMenu = (await import("../InitializeMenu")).default;
 const MakeTreeMenu = (await import("../MakeTreeMenu")).default;
 const Tree = (await import("../Tree")).default;
+const { commands } = await import("../bindings");
 
 const TopBar = (await import("./TopBar")).default;
 
@@ -20,15 +20,15 @@ export default () => {
   // useEffect: load exercise.
 
   useEffect(() => {
-    invoke("get_data")
+    commands
+      .getData()
       .then((data) => {
         if (data.table.length === 1 && data.table[0].length === 1) {
-          context.setEditingPhase("Initialize");
+          context.setEditingPhase(EditingPhaseType.Initialize);
         } else {
-          context.setEditingPhase("MakeTree");
+          context.setEditingPhase(EditingPhaseType.MakeTree);
         }
         context.setData(data);
-        context.setCursor(data.color === "Black" ? "White" : "Black");
       })
       .catch((e) => {
         console.log(e);

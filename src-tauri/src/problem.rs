@@ -1,10 +1,11 @@
 use crate::game_state::{Color, Mark};
 
+use specta::Type;
 use uuid::Uuid;
 
 use serde::{Deserialize, Serialize};
 
-#[derive(Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Debug)]
+#[derive(Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Debug, Type)]
 #[repr(u8)]
 pub enum Variant {
     Correct,

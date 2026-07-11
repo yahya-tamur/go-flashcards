@@ -4,6 +4,7 @@ version = "0.1.0"
 description = "A Tauri App"
 authors = ["you"]
 edition = "2021"
+default-run = "go-flashcards"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
@@ -22,19 +23,28 @@ tauri = { version = "2", features = [] }
 tauri-plugin-opener = "2"
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
-tokio = "1.52.1"
-uuid = { version = "1.23.1", features = ["v4", "serde"] }
-tauri-plugin-fs = "2"
+tokio = "1.52.3"
+uuid = { version = "1.23.4", features = ["v4", "serde"] }
+tauri-plugin-fs = "2.5.1"
 flate2 = "1.1.9"
-rand = "0.10.1"
-regex = "1.12.3"
+rand = "0.10.2"
+regex = "1.13.0"
 sgf-parse = {
-    path = "../../other_git/sgf-parse"
-    #git = "https://github.com/julianandrews/sgf-parse.git",
-    #rev = "e9289575ddf3c079b405878799a889aa0da95b4e"
+    git = "https://github.com/yahya-tamur/sgf-parse.git"
 }
-tauri-plugin-dialog = "2"
-struct-patch = "0.12.5"
+tauri-plugin-dialog = "2.7.1"
+struct-patch = "0.12.6"
 indexmap = { version = "2.14.0", features = ["serde"] }
 toml = { version = "1.1.2", features = ["preserve_order"] }
+tauri-specta = { version = "=2.0.0-rc.25", features = ["derive", "typescript"] }
+specta-typescript = "0.0.12"
+specta = { version = "2.0.0-rc.25", features = ["derive"] }
 
+
+# Read the optimization guideline for more details: https://tauri.app/concept/size/#cargo-configuration
+[profile.release]
+codegen-units = 1
+lto = true
+opt-level = 3
+panic = "abort"
+strip = true

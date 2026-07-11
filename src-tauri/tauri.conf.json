@@ -4,9 +4,9 @@
   "version": "0.1.0",
   "identifier": "com.go-flashcards",
   "build": {
-    "beforeDevCommand": "npm run dev",
+    "beforeDevCommand": "python ./scripts/fix_bindings.py && npm run dev",
     "devUrl": "http://localhost:1420",
-    "beforeBuildCommand": "npm run build",
+    "beforeBuildCommand": "python ./scripts/fix_bindings.py && npm run build",
     "frontendDist": "../dist"
   },
   "app": {
