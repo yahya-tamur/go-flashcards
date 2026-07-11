@@ -41,6 +41,7 @@ Notes
 things that popped up:
 ----------------------------------
 
+  - menus can be dragged??
   - import from sgf ignored AB property in example sgf file!!
   - there's a fontsource: roboto??! what is it, why is it, and do I still need the local font?
   - why isn't the edit menu a little taller to accomodate for default size??
