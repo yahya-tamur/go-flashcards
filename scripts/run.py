@@ -7,6 +7,11 @@ if (Path.cwd().name != "go-flashcards"):
 
 if "format" in sys.argv:
     from sort_imports import sort_imports
+    from make_bindings import make_bindings
+
+    print("\nMaking Bindings.")
+    make_bindings()
+
     print("\nSorting imports.\n")
     sort_imports()
 
@@ -22,6 +27,9 @@ if "lint" in sys.argv:
 
     print("\nRunning cargo clippy.\n")
     os.system("cd src-tauri && cargo clippy")
+
+    print("\nRunning cargo clippy in release mode.")
+    os.system("cd src-tauri && cargo clippy --release")
 
 if "status" in sys.argv:
     print("\nRunning git status.\n")

@@ -116,7 +116,7 @@ def sort_imports():
                 "\n".join(lines[end_of_imports:]) + \
                 ("\n" if end_of_imports < len(lines) else "")
 
-        l, r = "\033[0;30m", "\033[0m"
+        l, r = "\x1b[90m", "\x1b[0m"
         change = "(unchanged)"
         if new_file != file:
             with open(path, 'w') as file:

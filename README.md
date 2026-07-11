@@ -23,12 +23,10 @@ UI overhaul
 
 Notes
 --------------
-  - redo board state:
-    [Box; 19; 19] array, box contains stone? and mark? (flat)
-    - useReducer
 
-  - release build didn't work for some reason?
-  - make bindings only on debug mode
+- redo board state:
+  [Box; 19; 19] array, box contains stone? and mark? (flat)
+  - useReducer
 
 - Actually compile for phone!
   - file situation
@@ -41,17 +39,17 @@ Notes
 things that popped up:
 ----------------------------------
 
-  - menus can be dragged??
-  - import from sgf ignored AB property in example sgf file!!
-  - there's a fontsource: roboto??! what is it, why is it, and do I still need the local font?
-  - why isn't the edit menu a little taller to accomodate for default size??
-  - reset label when moving exercises
-    - increment number labels too
-    - util
-      - move stuff around in Board.jsx when you're at ir
+- menus can be dragged??
+- import from sgf ignored AB property in example sgf file!!
+- there's a fontsource: roboto??! what is it, why is it, and do I still need the local font?
+- why isn't the edit menu a little taller to accomodate for default size??
+- reset label when moving exercises
+  - increment number labels too
+  - util
+    - move stuff around in Board.jsx when you're at ir
 
-  - new exercise: preserve window
-  - lots of errors while studying
+- new exercise: preserve window
+- lots of errors while studying
 
 Remaining Goals
 ---------------
@@ -73,7 +71,11 @@ Remaining Goals
 Small things that come to mind:
 -----------------
 
-  - break up backend into modules
+- theme in config
+  - we will have to have this default theme in the public folder,
+    but you can probably import whatever ThemeOptions you want
+
+- break up backend into modules
 
 - option to not put territory marks on stones
 - 'file system error' alert

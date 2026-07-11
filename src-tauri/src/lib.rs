@@ -19,7 +19,6 @@ use move_tree::MoveTree;
 use problem::Variant;
 use snapshot::Snapshot;
 
-use specta_typescript::Typescript;
 use tauri::{Builder, Manager};
 
 use tokio::sync::Mutex;
@@ -444,9 +443,9 @@ async fn import_sgf(
     Ok(())
 }
 
-pub fn make_bindings() {
-    tauri_specta::Builder::<tauri::Wry>::new()
-        .commands(tauri_specta::collect_commands![
+macro_rules! apply_fns {
+    ($macr:ident) => {{
+        $macr![
             get_data,
             play,
             jump,
@@ -478,54 +477,37 @@ pub fn make_bindings() {
             set_marks_window,
             import_sgf,
             export_sgf,
-        ])
-        .export(Typescript::default(), "../src/bindings.ts")
-        .unwrap();
+        ]
+    }};
 }
+
+use tauri::generate_handler;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
+    #[cfg(debug_assertions)]
+    {
+        use specta_typescript::Typescript;
+        use std::env;
+        use tauri_specta::collect_commands;
+
+        if env::args().any(|a| a == "make-bindings") {
+            tauri_specta::Builder::<tauri::Wry>::new()
+                .commands(apply_fns!(collect_commands))
+                .export(Typescript::default(), "../src/bindings.ts")
+                .unwrap();
+            return;
+        }
+    }
+
     Builder::default()
         //.any_thread()
         .plugin(tauri_plugin_dialog::init())
-        //    .plugin(tauri_plugin_fs::init())
         .setup(|app| {
             app.manage(Mutex::new(AppData::default()));
             Ok(())
         })
-        .invoke_handler(tauri::generate_handler![
-            get_data,
-            play,
-            jump,
-            delete_branch,
-            set_stones,
-            new_exercise,
-            next_exercise,
-            delete_exercise,
-            finish_setup,
-            collapse_tree,
-            comment,
-            set_variant,
-            delete_exercise_file,
-            jump_to_exercise,
-            save_exercises,
-            load_exercises,
-            get_config_str,
-            set_config_str,
-            get_config,
-            list_exercises,
-            list_studies,
-            main_menu,
-            set_window,
-            load_study,
-            answer,
-            get_history,
-            stop_editing,
-            set_marks,
-            set_marks_window,
-            import_sgf,
-            export_sgf,
-        ])
+        .invoke_handler(apply_fns!(generate_handler))
         .run(tauri::generate_context!())
         .unwrap();
 }

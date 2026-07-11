@@ -1,4 +1,4 @@
-import type { PaletteMode } from "@mui/material";
+import type { PaletteMode, ThemeOptions } from "@mui/material";
 
 import type { Snapshot } from "./bindings";
 
@@ -20,16 +20,14 @@ const MainScreen = (await import("./Main/Screen")).default;
 
 const StudyScreen = (await import("./Study/Screen")).default;
 
-await import("./assets/theme.json", { with: { type: "json" } });
-const theme_import = (
-  await import("./assets/theme.json", { with: { type: "json" } })
-).default;
+console.log(`${import.meta.env.BASE_URL}assets/theme.json`);
+const theme_import: ThemeOptions = await (await fetch(`/theme.json`)).json();
 
 let theme = createTheme({
   ...theme_import,
   palette: {
     ...theme_import.palette,
-    mode: theme_import.palette.mode as PaletteMode,
+    mode: (theme_import.palette?.mode ?? "dark") as PaletteMode,
   },
 });
 

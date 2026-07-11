@@ -22,45 +22,48 @@ import os
 #       out of beforeDevCommand and beforeBuildCommand in src-tauri/tauri.conf.json, as long as you don't
 #       make any changes to the backend.
 
-os.system("cd ./src-tauri && cargo run --bin bindings")
+def make_bindings():
+    os.system("cd ./src-tauri && cargo run make-bindings")
+
+    # to help the indent heuristic at the end be more robust
+    os.system("npx prettier -w ./src/bindings.ts")
+
+    file = open("./src/bindings.ts").read()
+
+    lll = 0
+
+    # will need to add here if using more tauri features!!
+    lines = [r'const { invoke : __TAURI_INVOKE, } = await import("@tauri-apps/api/core");', '']
+    for i, line in enumerate(file.splitlines()):
+        if line[:6] == "import":
+            continue
+        if 'typedError' in line:
+            if 'async function' in line:
+                lll = i
+            else:
+                line = re.sub(r'=> typedError<(.*), string>\(__TAURI_INVOKE\("', r': Promise<\1> => (__TAURI_INVOKE("', line, count=1)
+        lines.append(line)
 
 
-# to help the indent heuristic at the end be more robust
-os.system("npx prettier -w ./src/bindings.ts")
-
-file = open("./src/bindings.ts").read()
-
-lll = 0
-
-# will need to add here if using more tauri features!!
-lines = [r'const { invoke : __TAURI_INVOKE, } = await import("@tauri-apps/api/core");']
-for i, line in enumerate(file.splitlines()):
-    if line[:6] == "import":
-        continue
-    if 'typedError' in line:
-        if 'async function' in line:
-            lll = i
-        else:
-            line = re.sub(r'=> typedError<(.*), string>\(__TAURI_INVOKE\("', r': Promise<\1> => (__TAURI_INVOKE("', line, count=1)
-    lines.append(line)
 
 
+    indent = lambda s: len(s) - len(s.lstrip())
+
+    startindent = indent(lines[lll])
+    for rrr in range(lll+1, len(lines)):
+        if indent(lines[rrr]) == startindent:
+            break
+
+    if rrr == len(lines):
+        lines.append("")
+
+    lines[lll] = "/*" + lines[lll]
+    lines[rrr] = lines[rrr] + "*/"
 
 
-indent = lambda s: len(s) - len(s.lstrip())
+    open("./src/bindings.ts", "w").write("\n".join(lines))
 
-startindent = indent(lines[lll])
-for rrr in range(lll+1, len(lines)):
-    if indent(lines[rrr]) == startindent:
-        break
+    os.system("npx prettier -w ./src/bindings.ts")
 
-if rrr == len(lines):
-    lines.append("")
-
-lines[lll] = "/*" + lines[lll]
-lines[rrr] = lines[rrr] + "*/"
-
-
-open("./src/bindings.ts", "w").write("\n".join(lines))
-
-os.system("npx prettier -w ./src/bindings.ts")
+if __name__ == "__main__":
+    make_bindings()
