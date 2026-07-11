@@ -24,15 +24,23 @@ const BoardSlider = (await import("./components/BoardSlider")).default;
 const DragLabelGroup = (await import("./components/DragLabelGroup")).default;
 const RectLabelGroup = (await import("./components/RectLabelGroup")).default;
 
-export default () => {
-  let context = useContext(AppContext);
+const MakeTreeMenu = () => {
+  const {
+    c_data,
+    c_setData,
+    c_cursor,
+    c_setCursor,
+    c_nextLabel,
+    c_setNextLabel,
+    c_setEditingPhase,
+  } = useContext(AppContext);
   const [variant, setVariant] = useState("None");
 
   // i think the array access interfered with state ?
 
   useEffect(() => {
-    setVariant(context.data?.variant ?? "None");
-  }, [context.data]);
+    setVariant(c_data?.variant ?? "None");
+  }, [c_data]);
 
   return (
     <Paper
@@ -75,13 +83,13 @@ export default () => {
           sx={{ width: "60px" }}
           size="small"
           variant="standard"
-          value={context.nextLabel}
+          value={c_nextLabel}
           onChange={(e) => {
-            context.setNextLabel(e.target.value);
-            context.setCursor(CursorType.Label);
+            c_setNextLabel(e.target.value);
+            c_setCursor(CursorType.Label);
           }}
           onFocus={() => {
-            context.setCursor(CursorType.Label);
+            c_setCursor(CursorType.Label);
           }}
         ></TextField>
         <DragLabelGroup />
@@ -96,27 +104,23 @@ export default () => {
         }}
       >
         <ToggleButtonGroup
-          value={context.cursor}
+          value={c_cursor}
           color="toggle"
           exclusive
           size="small"
           onChange={(_e, newValue) => {
             if (newValue === null) {
-              context.setCursor(
-                context.data?.color === "Black"
-                  ? CursorType.White
-                  : CursorType.Black,
+              c_setCursor(
+                c_data?.color === "Black" ? CursorType.White : CursorType.Black,
               );
             } else {
-              context.setCursor(newValue);
+              c_setCursor(newValue);
             }
           }}
         >
-          <ToggleButton
-            value={context.data?.color === "Black" ? "White" : "Black"}
-          >
+          <ToggleButton value={c_data?.color === "Black" ? "White" : "Black"}>
             <img
-              src={context.data?.color === "Black" ? white_image : black_image}
+              src={c_data?.color === "Black" ? white_image : black_image}
               style={{ height: "25px", width: "25px" }}
             />
           </ToggleButton>
@@ -125,7 +129,7 @@ export default () => {
         <Button
           sx={{ height: "40px" }}
           onClick={async () => {
-            let contextdata = context.data;
+            const contextdata = c_data;
             if (contextdata === null) {
               return;
             }
@@ -139,7 +143,7 @@ export default () => {
               )
               .then(() => commands.getData())
               .then((data) => {
-                context.setData(data);
+                c_setData(data);
               });
           }}
           color="button"
@@ -162,7 +166,7 @@ export default () => {
               .setVariant(newValue)
               .then(() => commands.getData())
               .then((data) => {
-                context.setData(data);
+                c_setData(data);
               });
           }}
         >
@@ -192,9 +196,9 @@ export default () => {
               .collapseTree()
               .then(() => commands.getData())
               .then((data) => {
-                context.setData(data);
-                context.setEditingPhase(EditingPhaseType.Initialize);
-                context.setCursor(CursorType.Black);
+                c_setData(data);
+                c_setEditingPhase(EditingPhaseType.Initialize);
+                c_setCursor(CursorType.Black);
               });
           }}
           color="button"
@@ -206,15 +210,13 @@ export default () => {
           color="button"
           variant="outlined"
           sx={{ height: "100%" }}
-          disabled={
-            (context.data?.row ?? 0) == 0 && (context.data?.col ?? 0) == 0
-          }
+          disabled={(c_data?.row ?? 0) == 0 && (c_data?.col ?? 0) == 0}
           onClick={async () => {
             commands
               .deleteBranch()
               .then(() => commands.getData())
               .then((data) => {
-                context.setData(data);
+                c_setData(data);
               });
           }}
         >
@@ -224,3 +226,5 @@ export default () => {
     </Paper>
   );
 };
+
+export default MakeTreeMenu;

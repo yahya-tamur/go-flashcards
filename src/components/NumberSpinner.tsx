@@ -1,3 +1,6 @@
+// Copied (as suggested) from https://mui.com/material-ui/react-number-field/
+// with minimal changes
+// Accessed on 7/11/2026
 const React = (await import("react")).default;
 
 //import { NumberField as BaseNumberField } from '@base-ui/react/number-field';
@@ -15,12 +18,12 @@ import type { NumberField as NF } from "@base-ui/react/number-field";
 
 export default function NumberSpinner({
   id: idProp,
-  label,
+  /* label, */
   error,
   size = "medium",
   ...other
 }: NF.Root.Props & {
-  label?: React.ReactNode;
+  /*  label?: React.ReactNode; */
   size?: "small" | "medium";
   error?: boolean;
 }) {

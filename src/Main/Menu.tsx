@@ -1,4 +1,5 @@
 import type { Dispatch, SetStateAction } from "react";
+
 const { useState, useContext } = await import("react");
 
 const AddIcon = (await import("@mui/icons-material/Add")).default;
@@ -34,8 +35,8 @@ interface MenuProps {
   setConfigSignal: Dispatch<SetStateAction<number>>;
 }
 
-export default (props: MenuProps) => {
-  const context = useContext(AppContext);
+const Menu = (props: MenuProps) => {
+  const { c_setPhase } = useContext(AppContext);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [fileToDelete, setFileToDelete] = useState("");
 
@@ -44,8 +45,12 @@ export default (props: MenuProps) => {
 
   const [newExercise, setNewExercise] = useState("");
 
+  /* eslint-disable no-control-regex */
+
   const exercise_name_invalid = (s: string) =>
     /\/|\\|[\u{0000}-\u{0008}]|[\u{000A}-\u{001F}]|\u{007F}/u.test(s);
+
+  /* eslint-enable no-control-regex */
 
   return (
     <Paper
@@ -128,8 +133,8 @@ export default (props: MenuProps) => {
                       .loadExercises(e)
                       //.then(() => invoke("get_config"))
                       .then(() => {
-                        //context.setConfig(config);
-                        context.setPhase(PhaseType.Editing);
+                        //c_setConfig(config);
+                        c_setPhase(PhaseType.Editing);
                       });
                   }}
                 >
@@ -144,8 +149,8 @@ export default (props: MenuProps) => {
                   .loadExercises(newExercise)
                   //.then(() => invoke("get_config"))
                   .then(() => {
-                    //context.setConfig(config);
-                    context.setPhase(PhaseType.Editing);
+                    //c_setConfig(config);
+                    c_setPhase(PhaseType.Editing);
                   });
               }}
             >
@@ -222,8 +227,8 @@ export default (props: MenuProps) => {
                       .loadStudy(e)
                       //.then(() => invoke("get_config"))
                       .then(() => {
-                        //context.setConfig(config);
-                        context.setPhase(PhaseType.Study);
+                        //c_setConfig(config);
+                        c_setPhase(PhaseType.Study);
                       });
                   }}
                 >
@@ -252,7 +257,7 @@ export default (props: MenuProps) => {
       >
         <DialogContent>
           <DialogContentText>
-            Are you sure you want to delete "{fileToDelete}"?{" "}
+            Are you sure you want to delete &quot;{fileToDelete}&quot;?
           </DialogContentText>
         </DialogContent>
         <DialogActions>
@@ -287,3 +292,5 @@ export default (props: MenuProps) => {
     </Paper>
   );
 };
+
+export default Menu;

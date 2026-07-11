@@ -1,5 +1,3 @@
-const { commands } = await import("./bindings");
-
 import type { Color, Variant } from "./bindings";
 
 const { useEffect, useState, useRef, useContext } = await import("react");
@@ -10,12 +8,13 @@ const { useTheme } = await import("@mui/material/styles");
 await import("./App.css");
 
 const AppContext = (await import("./AppContext")).default;
+const { commands } = await import("./bindings");
 
 const black_image = (await import("./assets/black_night.png")).default;
 const white_image = (await import("./assets/white_anime.png")).default;
 
-export default () => {
-  let context = useContext(AppContext);
+const Tree = () => {
+  const { c_data, c_setData } = useContext(AppContext);
   const treeBox = useRef<HTMLDivElement>(null);
   const [tableWidth, setTableWidth] = useState(100);
   const [tableHeight, setTableHeight] = useState(100);
@@ -38,15 +37,15 @@ export default () => {
   useEffect(() => {
     const handle_key = (e: KeyboardEvent) => {
       if (e.currentTarget !== null) {
-        let target = e.currentTarget as HTMLElement;
+        const target = e.currentTarget as HTMLElement;
         if (/INPUT|TEXTAREA|SELECT/.test(target.tagName)) {
           return;
         }
       }
-      if (context.data === null) {
+      if (c_data === null) {
         return;
       }
-      let [r, c] = [context.data.row, context.data.col];
+      let [r, c] = [c_data.row, c_data.col];
       switch (e.key) {
         case "ArrowRight":
           c += 1;
@@ -55,8 +54,7 @@ export default () => {
           r -= 1;
           while (
             r > 0 &&
-            (context.data.table[r][c] === null ||
-              context.data.table[r][c] === undefined)
+            (c_data.table[r][c] === null || c_data.table[r][c] === undefined)
           ) {
             r -= 1;
           }
@@ -64,16 +62,15 @@ export default () => {
         case "ArrowDown":
           r += 1;
           while (
-            r < context.data.table.length - 1 &&
-            (context.data.table[r][c] === null ||
-              context.data.table[r][c] === undefined)
+            r < c_data.table.length - 1 &&
+            (c_data.table[r][c] === null || c_data.table[r][c] === undefined)
           ) {
             r += 1;
           }
           break;
         case "ArrowLeft":
           c -= 1;
-          while (r > 0 && context.data.table[r][c] === null) {
+          while (r > 0 && c_data.table[r][c] === null) {
             r -= 1;
           }
           break;
@@ -82,15 +79,15 @@ export default () => {
       }
 
       if (
-        context.data.table[r] !== undefined &&
-        context.data.table[r][c] !== null &&
-        context.data.table[r][c] !== undefined
+        c_data.table[r] !== undefined &&
+        c_data.table[r][c] !== null &&
+        c_data.table[r][c] !== undefined
       ) {
         commands
           .jump(r, c)
           .then(() => commands.getData())
           .then((data) => {
-            context.setData(data);
+            c_setData(data);
           })
           .catch((e) => {
             console.log(e);
@@ -103,7 +100,7 @@ export default () => {
     return () => {
       window.removeEventListener("keydown", handle_key);
     };
-  }, [context.data]);
+  }, [c_data, c_setData]);
 
   const get_coord = (e: React.MouseEvent<SVGSVGElement>) => {
     if (treeBox.current === null) {
@@ -143,17 +140,20 @@ export default () => {
   >([]);
 
   useEffect(() => {
-    if (context.data === null || context.data === undefined) {
+    if (c_data === null || c_data === undefined) {
       return;
     }
 
-    let table = context.data.table;
-    let num_columns = table.reduce((m, a) => (a.length > m ? a.length : m), 1);
-    let num_rows = table.length;
+    const table = c_data.table;
+    const num_columns = table.reduce(
+      (m, a) => (a.length > m ? a.length : m),
+      1,
+    );
+    const num_rows = table.length;
     setTableWidth(2 * margin + gap_size * (num_columns - 1) + square_size);
     setTableHeight(2 * margin + gap_size * (num_rows - 1) + square_size);
 
-    let newLines: [number, number, number, number][] = [];
+    const newLines: [number, number, number, number][] = [];
 
     // horizontal lines
     table.forEach((line, r) => {
@@ -168,7 +168,7 @@ export default () => {
     }*/
     setLines(newLines);
 
-    let newPaths: [
+    const newPaths: [
       number,
       number,
       number,
@@ -184,7 +184,7 @@ export default () => {
       while (table[r][c] === null) {
         c += 1;
       }
-      let c_ = c - 1;
+      const c_ = c - 1;
       let r_ = r - 1;
       while (r_ > 0 && table[r_][c_] === null) {
         r_ -= 1;
@@ -206,22 +206,22 @@ export default () => {
     }
     setPaths(newPaths);
 
-    let newMoves: [number, number, Color, string, Variant, string][] = [];
+    const newMoves: [number, number, Color, string, Variant, string][] = [];
     table.forEach((line, r) => {
       line.forEach((mov, c) => {
         if (mov === null || (r === 0 && c === 0)) {
           return;
         }
-        let text =
+        const text =
           mov.loc === null
             ? "."
             : `${"ABCDEFGHJKLMNOPQRST"[mov.loc[0]]}${19 - mov.loc[1]}`;
-        let key = JSON.stringify([r, c, mov.color, text, mov.variant]);
+        const key = JSON.stringify([r, c, mov.color, text, mov.variant]);
         newMoves.push([r, c, mov.color, text, mov.variant, key]);
       });
     });
     setMoves(newMoves);
-  }, [context.data]);
+  }, [c_data]);
 
   return (
     <Paper
@@ -243,32 +243,22 @@ export default () => {
           }}
           onClick={(e) => {
             const w = get_coord(e);
-            if (
-              w === null ||
-              context.data === null ||
-              context.data === undefined
-            ) {
+            if (w === null || c_data === null || c_data === undefined) {
               return;
             }
-            let [c, r] = w;
-            if (
-              r >= context.data.table.length ||
-              c >= context.data.table[r].length
-            ) {
+            const [c, r] = w;
+            if (r >= c_data.table.length || c >= c_data.table[r].length) {
               return;
             }
-            if (context.data.table[r][c] === null) {
+            if (c_data.table[r][c] === null) {
               return;
             }
-            if (
-              r < context.data.table.length &&
-              c < context.data.table[r].length
-            ) {
+            if (r < c_data.table.length && c < c_data.table[r].length) {
               commands
                 .jump(r, c)
                 .then(() => commands.getData())
                 .then((data) => {
-                  context.setData(data);
+                  c_setData(data);
                 })
                 .catch((e) => {
                   console.log(e);
@@ -311,11 +301,8 @@ export default () => {
             </g>
             <g>
               {moves
-                .filter(
-                  ([_r, _c, _color, _text, variant, _key]) =>
-                    variant !== "None",
-                )
-                .map(([r, c, _color, _text, variant, key]) => (
+                .filter(([, , , , variant]) => variant !== "None")
+                .map(([r, c, , , variant, key]) => (
                   <rect
                     x={
                       margin +
@@ -341,14 +328,14 @@ export default () => {
             </g>
             <circle
               cx={
-                context.data === null
+                c_data === null
                   ? -10000
-                  : margin + gap_size * context.data.col + square_size / 2
+                  : margin + gap_size * c_data.col + square_size / 2
               }
               cy={
-                context.data === null
+                c_data === null
                   ? -10000
-                  : margin + gap_size * context.data.row + square_size / 2
+                  : margin + gap_size * c_data.row + square_size / 2
               }
               r={hl_radius}
               stroke={"black"}
@@ -357,7 +344,7 @@ export default () => {
               opacity={0.8}
             />
             <g>
-              {moves.map(([r, c, color, _text, _variant, key]) => (
+              {moves.map(([r, c, color, , , key]) => (
                 <image
                   x={margin + gap_size * c}
                   y={margin + gap_size * r}
@@ -369,7 +356,7 @@ export default () => {
               ))}
             </g>
             <g>
-              {moves.map(([r, c, color, text, _variant, key]) => (
+              {moves.map(([r, c, color, text, , key]) => (
                 <text
                   x={margin + gap_size * c + square_size / 2}
                   y={margin + gap_size * r + square_size / 2}
@@ -394,3 +381,5 @@ export default () => {
     </Paper>
   );
 };
+
+export default Tree;

@@ -16,16 +16,16 @@ const cross_icon = (await import("./assets/cross.svg")).default;
 const square_icon = (await import("./assets/square.svg")).default;
 const triangle_icon = (await import("./assets/triangle.svg")).default;
 
-export default () => {
-  let context = useContext(AppContext);
+const CommentBox = () => {
+  const { c_phase, c_studyPhase, c_data } = useContext(AppContext);
 
   const [comment, setComment] = useState("");
   useEffect(() => {
-    let comment = context.data?.comment ?? null;
+    const comment = c_data?.comment ?? null;
     if (comment !== null) {
       setComment(comment);
     }
-  }, [context.data]);
+  }, [c_data]);
   const img_size = "20px";
   const update_comment = (comment: string) => {
     commands.comment(comment);
@@ -47,7 +47,7 @@ export default () => {
       let textAreaHeight = areaRef.current.offsetHeight - 33;
       // just in case
       textAreaHeight -= 1;
-      let heightPerRow = 23;
+      const heightPerRow = 23;
 
       setRows(Math.max(1, Math.floor(textAreaHeight / heightPerRow)));
     });
@@ -68,7 +68,7 @@ export default () => {
       }}
       elevation={20}
     >
-      {context.studyPhase !== "Edit" && context.phase === "Study" ? (
+      {c_studyPhase !== "Edit" && c_phase === "Study" ? (
         <Box sx={{ height: "100%", margin: "10px", whiteSpace: "pre-wrap" }}>
           {comment}
         </Box>
@@ -175,3 +175,5 @@ export default () => {
     </Paper>
   );
 };
+
+export default CommentBox;

@@ -15,20 +15,19 @@ const { commands } = await import("../bindings");
 const Menu = (await import("./Menu")).default;
 const TopBar = (await import("./TopBar")).default;
 
-export default () => {
-  let context = useContext(AppContext);
-
+const Screen = () => {
+  const { c_studyPhase, c_setStudyPhase, c_setData } = useContext(AppContext);
   useEffect(() => {
     commands
       .getData()
       .then((data) => {
-        context.setStudyPhase(StudyPhaseType.Guess);
-        context.setData(data);
+        c_setStudyPhase(StudyPhaseType.Guess);
+        c_setData(data);
       })
       .catch((e) => {
         console.log(e);
       });
-  }, []);
+  }, [c_setData, c_setStudyPhase]);
 
   return (
     <main style={{ display: "flex", flexDirection: "row" }}>
@@ -58,8 +57,7 @@ export default () => {
         }}
       >
         <Box sx={{ flexBasis: "40%", minHeight: 0 }}>
-          {context.studyPhase === "Guess" ||
-          context.studyPhase === "UnknownGuess" ? (
+          {c_studyPhase === "Guess" || c_studyPhase === "UnknownGuess" ? (
             <Paper
               sx={{
                 maxHeight: "100%",
@@ -81,3 +79,5 @@ export default () => {
     </main>
   );
 };
+
+export default Screen;

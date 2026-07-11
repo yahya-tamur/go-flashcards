@@ -9,7 +9,7 @@ const { commands } = await import("../bindings.js");
 const EditConfig = (await import("./EditConfig.jsx")).default;
 const Menu = (await import("./Menu.jsx")).default;
 
-export default () => {
+const Screen = () => {
   const [exercises, setExercises] = useState<string[]>([]);
   const [studies, setStudies] = useState<string[]>([]);
   const [configSignal, setConfigSignal] = useState(0);
@@ -63,3 +63,5 @@ export default () => {
     </main>
   );
 };
+
+export default Screen;

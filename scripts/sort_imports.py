@@ -1,3 +1,6 @@
+def indent(s):
+    return len(s) - len(s.lstrip())
+
 
 def sort_imports():
     from pathlib import Path
@@ -9,7 +12,7 @@ def sort_imports():
         print("Script must be called from the go-flashcards folder!")
         exit()
 
-    tag_priorities = {
+    mod_priorities = {
         "react" : -2,
         "@tauri-apps" : -1,
         '.' : 20,
@@ -20,14 +23,21 @@ def sort_imports():
         'css': -1
     }
 
-    def get_tag(tag, name):
-        l = sum(v for (k, v) in tag_priorities.items() if k in tag)
+    typ_order = {
+        "plain": 0,
+        "type": 1,
+        "dyn": 2
+    }
+
+    def get_key(typ, mod, name):
+        l = sum(v for (k, v) in mod_priorities.items() if k in mod)
         r = sum(v for (k, v) in name_priorities.items() if k in name)
 
-        return (l + r, tag)
+        return (typ_order[typ], l + r, mod)
 
 
     for path in Path("./src/").rglob("*"):
+    #for path in [Path("./src/theme.d.ts")]:
         start = perf_counter_ns()
         if path.suffix not in [".ts", ".tsx"]:
             continue
@@ -39,57 +49,72 @@ def sort_imports():
 
             preamble = []
 
+            # yes, don't use /* or empty lines or whatever
             while i < len(lines):
-                if 'await import(' in lines[i]:
+                if lines[i][:2] != '//':
                     break
                 preamble.append(lines[i])
                 i += 1
-            preamble = "\n".join(preamble)
-            if preamble:
-                preamble += "\n"
 
             import_lines = defaultdict(set)
 
             while i < len(lines):
                 line = lines[i]
+                j = i
+                while (j + 1 < len(lines) and ( \
+                    (j == i and indent(lines[j+1]) > indent(lines[i])) \
+                    or
+                        (j != i and \
+                        (indent(lines[j+1]) >= indent(lines[i])) and \
+                        (indent(lines[j]) > indent(lines[i]))  ))):
+                    j += 1
 
-                if 'await import(' in line:
-                    while (';' not in line):
-                        i += 1
-                        line += "\n" + lines[i]
-                    match = re.search("""await import\("(.*)"\)""", line)
-                    if match is None:
-                        print("regex failed. line:")
-                        print(line)
-                    imp = match.groups()[0]
-                    tag, name = imp, imp
-                    if (w := imp.rfind('/')) != -1:
-                        tag, name = (imp[:w], imp[w:])
+                linetext = "\n".join([x for x in lines[i:j+1] if x])
 
-                    import_lines[get_tag(tag, name)].add((name, line))
-
-                elif not (len(lines[i]) == 0):
+                match, typ = None, ""
+                if linetext[:11] == "import type":
+                    match = re.search("""from "(.*)";""", linetext)
+                    typ = "type"
+                elif "await import(" in linetext:
+                    match = re.search("""await import\("(.*)\"""", linetext)
+                    typ = "dyn"
+                elif linetext[:8] == "import ":
+                    match = re.search("""from "(.*)";""", linetext)
+                    typ = "plain"
+                elif len(linetext) == 0:
+                    i += 1
+                    continue
+                else:
                     break
+
+                if match is None:
+                    print("regex failed. line:")
+                    print(linetext)
+                    exit()
+
+                imp = match.groups()[0]
+                mod, name = imp, imp
+                if (w := imp.rfind('/')) != -1:
+                    mod, name = (imp[:w], imp[w:])
+
+                import_lines[get_key(typ, mod, name)].add((name, linetext))
                 
-                i += 1
+                i = j + 1
 
             end_of_imports = i
 
-            new_imports = []
             for k in sorted(import_lines.keys()):
                 if (len(import_lines[k]) == 0):
                     print("Noooo!")
                     exit() 
                 for _, line in sorted(import_lines[k]):
-                    new_imports.append(line)
-                new_imports.append('')
+                    preamble.append(line)
+                preamble.append('')
             
-            new_file = preamble + \
-                '\n'.join(new_imports) + \
-                ("\n" if end_of_imports < len(lines) else "") + \
+            new_file = "\n".join(preamble) + \
+                ("\n" if len(preamble) > 0 else "") + \
                 "\n".join(lines[end_of_imports:]) + \
                 ("\n" if end_of_imports < len(lines) else "")
-
 
         l, r = "\033[0;30m", "\033[0m"
         change = "(unchanged)"
@@ -100,3 +125,6 @@ def sort_imports():
             change = ""
 
         print(f"{l}{path}{r} {(perf_counter_ns() - start) // 1_000_000}ms {change}")
+
+if __name__ == "__main__":
+    sort_imports()

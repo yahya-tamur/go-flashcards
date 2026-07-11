@@ -15,8 +15,8 @@ const { CursorType } = await import("../AppContext");
 const black_image = (await import("../assets/black_night.png")).default;
 const white_image = (await import("../assets/white_anime.png")).default;
 
-export default () => {
-  let context = useContext(AppContext);
+const PlaceStoneGroup = () => {
+  const { c_data, c_cursor, c_setCursor } = useContext(AppContext);
 
   const img_size = "25px";
 
@@ -24,18 +24,16 @@ export default () => {
     <Box>
       <ToggleButtonGroup
         color="toggle"
-        value={context.cursor}
+        value={c_cursor}
         exclusive
         size="small"
         onChange={(_e, newValue) => {
           if (newValue === null) {
-            context.setCursor(
-              context.data?.color === "Black"
-                ? CursorType.White
-                : CursorType.Black,
+            c_setCursor(
+              c_data?.color === "Black" ? CursorType.White : CursorType.Black,
             );
           } else {
-            context.setCursor(newValue);
+            c_setCursor(newValue);
           }
         }}
       >
@@ -58,3 +56,5 @@ export default () => {
     </Box>
   );
 };
+
+export default PlaceStoneGroup;

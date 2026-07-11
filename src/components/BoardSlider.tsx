@@ -12,23 +12,23 @@ interface BoardSliderProps {
   force: boolean;
 }
 
-export default (props: BoardSliderProps) => {
-  let context = useContext(AppContext);
+const BoardSlider = (props: BoardSliderProps) => {
+  const { c_data, c_setData, c_window, c_setWindow } = useContext(AppContext);
 
   const [l, r] = props.side === "row" ? [0, 1] : [2, 3];
 
   return (
     <Slider
-      value={context.window.slice(l, r + 1)}
+      value={c_window.slice(l, r + 1)}
       marks
       onChange={(e, newVal) => {
         if (e.target === null) {
           return;
         }
-        let [a, b] = newVal;
-        if (a !== context.window[l] || b !== context.window[r]) {
-          context.setWindow((window) => {
-            let new_window: [number, number, number, number] = [...window];
+        const [a, b] = newVal;
+        if (a !== c_window[l] || b !== c_window[r]) {
+          c_setWindow((window) => {
+            const new_window: [number, number, number, number] = [...window];
             new_window[l] = a;
             new_window[r] = b;
             return new_window;
@@ -36,17 +36,17 @@ export default (props: BoardSliderProps) => {
         }
       }}
       onChangeCommitted={async () => {
-        let contextdata = context.data;
+        const contextdata = c_data;
         if (contextdata === null) {
           return;
         }
 
-        let new_window: [number, number, number, number] = [...context.window];
+        const new_window: [number, number, number, number] = [...c_window];
         if (!props.force && contextdata.min_window !== null) {
-          if (contextdata.min_window[l] < context.window[l]) {
+          if (contextdata.min_window[l] < c_window[l]) {
             new_window[l] = contextdata.min_window[l];
           }
-          if (contextdata.min_window[r] > context.window[r]) {
+          if (contextdata.min_window[r] > c_window[r]) {
             new_window[r] = contextdata.min_window[r];
           }
         }
@@ -55,10 +55,8 @@ export default (props: BoardSliderProps) => {
             (value, index) => contextdata.window[index] === value,
           )
         ) {
-          if (
-            !new_window.every((value, index) => context.window[index] === value)
-          ) {
-            context.setWindow(new_window);
+          if (!new_window.every((value, index) => c_window[index] === value)) {
+            c_setWindow(new_window);
           }
           return;
         }
@@ -66,7 +64,7 @@ export default (props: BoardSliderProps) => {
           .setWindow(new_window)
           .then(() => commands.getData())
           .then((data) => {
-            context.setData(data);
+            c_setData(data);
           })
           .catch((e) => {
             console.log(e);
@@ -79,3 +77,5 @@ export default (props: BoardSliderProps) => {
     />
   );
 };
+
+export default BoardSlider;

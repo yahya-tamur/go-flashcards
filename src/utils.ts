@@ -1,8 +1,10 @@
-const { StudyPhaseType } = await import("./AppContext");
+import type { Dispatch, SetStateAction } from "react";
 
-import type { AppContextType, CursorType } from "./AppContext";
-const { commands } = await import("./bindings");
+import type { CursorType, StudyPhaseType } from "./AppContext";
 import type { Mark, Snapshot } from "./bindings";
+
+const { StudyPhaseType: SPT } = await import("./AppContext");
+const { commands } = await import("./bindings");
 
 export const label = (mark: Mark | null): string | null =>
   typeof mark === "string" ? null : (mark?.Label ?? null);
@@ -21,16 +23,22 @@ export const cursorMark = (
     | CursorType.Square,
 ): Mark => c;
 
-export const studyStep = (data: Snapshot, context: AppContextType) => {
+export const studyStep = (
+  data: Snapshot,
+  c_setData: Dispatch<SetStateAction<Snapshot | null>>,
+  c_setFeedback: Dispatch<SetStateAction<string>>,
+  c_setStudyPhase: Dispatch<SetStateAction<StudyPhaseType>>,
+  c_cursor: CursorType,
+) => {
   switch (data.variant) {
     case "Correct":
       commands
         .answer(true)
         .then(() => commands.getData())
         .then((data) => {
-          context.setData(data);
-          context.setFeedback("Correct");
-          context.setStudyPhase(StudyPhaseType.View);
+          c_setData(data);
+          c_setFeedback("Correct");
+          c_setStudyPhase(SPT.View);
         });
       break;
     case "Incorrect":
@@ -38,26 +46,25 @@ export const studyStep = (data: Snapshot, context: AppContextType) => {
         .answer(false)
         .then(() => commands.getData())
         .then((data) => {
-          context.setData(data);
-          context.setFeedback("Incorrect");
-          context.setStudyPhase(StudyPhaseType.View);
+          c_setData(data);
+          c_setFeedback("Incorrect");
+          c_setStudyPhase(SPT.View);
         });
       break;
     case "New":
       if (
-        context.cursor ===
-        (context.data?.table[0][0]?.color === "White" ? "Black" : "White")
+        c_cursor === (data?.table[0][0]?.color === "White" ? "Black" : "White")
       ) {
         commands
           .answer(false)
           .then(() => commands.getData())
-          .then(() => {
-            context.setData(data);
-            context.setFeedback("Incorrect");
-            context.setStudyPhase(StudyPhaseType.View);
+          .then((data) => {
+            c_setData(data);
+            c_setFeedback("Incorrect");
+            c_setStudyPhase(SPT.View);
           });
       } else {
-        context.setStudyPhase(StudyPhaseType.UnknownGuess);
+        c_setStudyPhase(SPT.UnknownGuess);
       }
 
       break;

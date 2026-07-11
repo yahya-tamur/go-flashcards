@@ -1,5 +1,3 @@
-const { EditingPhaseType, PhaseType, StudyPhaseType } =
-  await import("../AppContext");
 const { useContext } = await import("react");
 
 const Box = (await import("@mui/material/Box")).default;
@@ -8,17 +6,25 @@ const Paper = (await import("@mui/material/Paper")).default;
 
 await import("../App.css");
 
+await import("../AppContext");
 const AppContext = (await import("../AppContext")).default;
+const { EditingPhaseType, PhaseType, StudyPhaseType } =
+  await import("../AppContext");
 const { commands } = await import("../bindings");
 
 const NumberSpinner = (await import("../components/NumberSpinner")).default;
 
-export default () => {
-  let context = useContext(AppContext);
-  //  useEffect(
-  //    setComment(props.data?.tree?.comment)
-  //
-  //  , [props.data])
+const TopBar = () => {
+  const {
+    c_studyPhase,
+    c_data,
+    c_setData,
+    c_setNextLabel,
+    c_setStudyPhase,
+    c_setPhase,
+    c_setFeedback,
+    c_setEditingPhase,
+  } = useContext(AppContext);
   return (
     <Paper
       sx={{
@@ -51,36 +57,33 @@ export default () => {
           sx={{ height: "40px" }}
           onClick={async () => {
             commands.mainMenu().then(() => {
-              context.setPhase(PhaseType.Main);
-              //context.setConfig(null);
+              c_setPhase(PhaseType.Main);
+              //c_setConfig(null);
             });
           }}
         >
           Exit
         </Button>
         <NumberSpinner
-          label="Exercise"
-          disabled={["Guess", "UnknownGuess"].some(
-            (a) => a === context.studyPhase,
-          )}
+          disabled={["Guess", "UnknownGuess"].some((a) => a === c_studyPhase)}
           size="small"
-          value={(context.data?.current_location ?? 0) + 1}
+          value={(c_data?.current_location ?? 0) + 1}
           min={1}
-          max={context.data?.max_location ?? 1}
+          max={c_data?.max_location ?? 1}
           onValueChange={async (v) => {
-            if (context.data === null || v === null) {
+            if (c_data === null || v === null) {
               return;
             }
             commands
               .jumpToExercise(v - 1)
               .then(() => commands.getData())
               .then((data) => {
-                context.setData(data);
-                context.setFeedback("");
+                c_setData(data);
+                c_setFeedback("");
               });
           }}
         />
-        {context.studyPhase === "Edit" ? (
+        {c_studyPhase === "Edit" ? (
           <Button
             variant="contained"
             sx={{ height: "40px" }}
@@ -89,12 +92,12 @@ export default () => {
                 .stopEditing(true)
                 .then(() => commands.getData())
                 .then((data) => {
-                  context.setData(data);
-                  //context.setExerciseColor(
+                  c_setData(data);
+                  //c_setExerciseColor(
                   //  data.color === "Black" ? CursorType.White : CursorType.Black,
                   //);
-                  context.setStudyPhase(StudyPhaseType.View);
-                  context.setNextLabel("A");
+                  c_setStudyPhase(StudyPhaseType.View);
+                  c_setNextLabel("A");
                 })
                 .catch((e) => {
                   console.log(e);
@@ -106,18 +109,18 @@ export default () => {
         ) : (
           <Button
             variant="contained"
-            disabled={context.studyPhase !== "View"}
+            disabled={c_studyPhase !== "View"}
             sx={{ height: "40px" }}
             onClick={async () => {
-              context.setStudyPhase(StudyPhaseType.Edit);
-              context.setEditingPhase(EditingPhaseType.MakeTree);
-              context.setFeedback("");
+              c_setStudyPhase(StudyPhaseType.Edit);
+              c_setEditingPhase(EditingPhaseType.MakeTree);
+              c_setFeedback("");
             }}
           >
             Edit
           </Button>
         )}
-        {context.studyPhase === "Edit" ? (
+        {c_studyPhase === "Edit" ? (
           <Button
             variant="contained"
             sx={{ height: "40px" }}
@@ -126,12 +129,12 @@ export default () => {
                 .stopEditing(false)
                 .then(() => commands.getData())
                 .then((data) => {
-                  context.setData(data);
-                  //context.setExerciseColor(
+                  c_setData(data);
+                  //c_setExerciseColor(
                   //data.color === "Black" ? "White" : "Black",
                   //);
-                  context.setStudyPhase(StudyPhaseType.View);
-                  context.setNextLabel("A");
+                  c_setStudyPhase(StudyPhaseType.View);
+                  c_setNextLabel("A");
                 })
                 .catch((e) => {
                   console.log(e);
@@ -143,20 +146,18 @@ export default () => {
         ) : (
           <Button
             variant="contained"
-            disabled={["Guess", "UnknownGuess"].some(
-              (a) => a === context.studyPhase,
-            )}
+            disabled={["Guess", "UnknownGuess"].some((a) => a === c_studyPhase)}
             sx={{ height: "40px" }}
             onClick={async () => {
               commands
                 .nextExercise()
                 .then(() => commands.getData())
                 .then((data) => {
-                  context.setData(data);
-                  //context.setExerciseColor(
+                  c_setData(data);
+                  //c_setExerciseColor(
                   //data.color === "Black" ? "White" : "Black",
                   //);
-                  context.setStudyPhase(StudyPhaseType.Guess);
+                  c_setStudyPhase(StudyPhaseType.Guess);
                 })
                 .catch((e) => {
                   console.log(e);
@@ -170,3 +171,5 @@ export default () => {
     </Paper>
   );
 };
+
+export default TopBar;

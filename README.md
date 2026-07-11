@@ -23,13 +23,12 @@ UI overhaul
 
 Notes
 --------------
+  - redo board state:
+    [Box; 19; 19] array, box contains stone? and mark? (flat)
+    - useReducer
 
-- typescript and eslint
-  - recheck imports, invoke
-  - import from sgf ignored AB property in example sgf file!!
-  - there's a fontsource: roboto??! what is it, why is it, and do I still need the local font?
-  - separate backend into modules?
-  - is no await import ok?
+  - release build didn't work for some reason?
+  - make bindings only on debug mode
 
 - Actually compile for phone!
   - file situation
@@ -37,10 +36,15 @@ Notes
 
 - histogram!
 
-- things that popped up while studying:
-  - reset label when moving exercises
+- continue with ui
+
+things that popped up:
+----------------------------------
+
+  - import from sgf ignored AB property in example sgf file!!
+  - there's a fontsource: roboto??! what is it, why is it, and do I still need the local font?
   - why isn't the edit menu a little taller to accomodate for default size??
-  - board window is messed up again.........
+  - reset label when moving exercises
     - increment number labels too
     - util
       - move stuff around in Board.jsx when you're at ir
@@ -67,6 +71,8 @@ Remaining Goals
 
 Small things that come to mind:
 -----------------
+
+  - break up backend into modules
 
 - option to not put territory marks on stones
 - 'file system error' alert

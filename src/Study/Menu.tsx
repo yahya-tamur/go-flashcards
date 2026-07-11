@@ -13,20 +13,29 @@ const MakeTreeMenu = (await import("../MakeTreeMenu")).default;
 const { commands } = await import("../bindings");
 const { studyStep } = await import("../utils");
 
-export default () => {
-  let context = useContext(AppContext);
+const Menu = () => {
+  const {
+    c_editingPhase,
+    c_studyPhase,
+    c_data,
+    c_setData,
+    c_cursor,
+    c_setStudyPhase,
+    c_feedback,
+    c_setFeedback,
+  } = useContext(AppContext);
 
-  let [history, setHistory] = useState<string>("");
+  const [history, setHistory] = useState<string>("");
 
   // decided to try this instead of setting history in 3? separate places in board
   useEffect(() => {
-    let f = async () => {
+    const f = async () => {
       await commands.getHistory().then((h) => {
         setHistory(h.map((t) => (t ? "🌟" : "❌")).join(""));
       });
     };
     f();
-  }, [context.studyPhase, context.data]);
+  }, [c_studyPhase, c_data]);
 
   return (
     <Paper
@@ -43,7 +52,7 @@ export default () => {
       }}
       elevation={7}
     >
-      {context.studyPhase === "Guess" ? (
+      {c_studyPhase === "Guess" ? (
         <Box
           sx={{
             margin: "20px",
@@ -54,11 +63,11 @@ export default () => {
             justifyContent: "start",
           }}
         >
-          <Box sx={{ marginBottom: "20px" }}>{context.cursor} to play.</Box>
+          <Box sx={{ marginBottom: "20px" }}>{c_cursor} to play.</Box>
           <Box>
             <Button
               onClick={async () => {
-                let contextdata = context.data;
+                const contextdata = c_data;
                 if (contextdata === null) {
                   return;
                 }
@@ -72,8 +81,14 @@ export default () => {
                   )
                   .then(() => commands.getData())
                   .then((data) => {
-                    context.setData(data);
-                    studyStep(data, context);
+                    c_setData(data);
+                    studyStep(
+                      data,
+                      c_setData,
+                      c_setFeedback,
+                      c_setStudyPhase,
+                      c_cursor,
+                    );
                   });
               }}
               variant="contained"
@@ -82,7 +97,7 @@ export default () => {
             </Button>
           </Box>
         </Box>
-      ) : context.studyPhase === "UnknownGuess" ? (
+      ) : c_studyPhase === "UnknownGuess" ? (
         <>
           <Box
             sx={{
@@ -104,7 +119,7 @@ export default () => {
             <Button
               variant="contained"
               onClick={() => {
-                let contextdata = context.data;
+                const contextdata = c_data;
                 if (contextdata === null) {
                   return;
                 }
@@ -122,8 +137,8 @@ export default () => {
                   .jump(row, col)
                   .then(() => commands.getData())
                   .then((data) => {
-                    context.setData(data);
-                    context.setStudyPhase(StudyPhaseType.Guess);
+                    c_setData(data);
+                    c_setStudyPhase(StudyPhaseType.Guess);
                   })
                   .catch((e) => {
                     console.log(e);
@@ -138,9 +153,9 @@ export default () => {
                 commands
                   .getData()
                   .then((data) => {
-                    context.setData(data);
-                    context.setStudyPhase(StudyPhaseType.View);
-                    context.setFeedback("");
+                    c_setData(data);
+                    c_setStudyPhase(StudyPhaseType.View);
+                    c_setFeedback("");
                   })
                   .catch((e) => {
                     console.log(e);
@@ -151,7 +166,7 @@ export default () => {
             </Button>
           </Box>
         </>
-      ) : context.studyPhase === "View" ? (
+      ) : c_studyPhase === "View" ? (
         <Box
           style={{
             height: "100%",
@@ -165,19 +180,21 @@ export default () => {
             alignItems: "center",
           }}
         >
-          <Box>{context.feedback}</Box>
+          <Box>{c_feedback}</Box>
 
           <Box>{history}</Box>
         </Box>
-      ) : context.studyPhase === "Edit" ? (
-        context.editingPhase === "Initialize" ? (
+      ) : c_studyPhase === "Edit" ? (
+        c_editingPhase === "Initialize" ? (
           <InitializeMenu />
         ) : (
           <MakeTreeMenu />
         )
       ) : (
-        <>unknown phase {context.studyPhase}</>
+        <>unknown phase {c_studyPhase}</>
       )}
     </Paper>
   );
 };
+
+export default Menu;

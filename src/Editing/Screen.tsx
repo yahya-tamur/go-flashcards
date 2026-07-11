@@ -15,25 +15,26 @@ const { commands } = await import("../bindings");
 
 const TopBar = (await import("./TopBar")).default;
 
-export default () => {
-  let context = useContext(AppContext);
+const Screen = () => {
   // useEffect: load exercise.
+  const { c_setData, c_setEditingPhase, c_editingPhase } =
+    useContext(AppContext);
 
   useEffect(() => {
     commands
       .getData()
       .then((data) => {
         if (data.table.length === 1 && data.table[0].length === 1) {
-          context.setEditingPhase(EditingPhaseType.Initialize);
+          c_setEditingPhase(EditingPhaseType.Initialize);
         } else {
-          context.setEditingPhase(EditingPhaseType.MakeTree);
+          c_setEditingPhase(EditingPhaseType.MakeTree);
         }
-        context.setData(data);
+        c_setData(data);
       })
       .catch((e) => {
         console.log(e);
       });
-  }, []);
+  }, [c_setData, c_setEditingPhase]);
   return (
     <main style={{ display: "flex", flexDirection: "column" }}>
       <Box sx={{ height: "60px" }}>
@@ -68,7 +69,7 @@ export default () => {
             <Tree />
           </Box>
           <Box sx={{ flexBasis: "50%", minHeight: 0 }}>
-            {context.editingPhase === "Initialize" ? (
+            {c_editingPhase === "Initialize" ? (
               <InitializeMenu />
             ) : (
               <MakeTreeMenu />
@@ -82,3 +83,5 @@ export default () => {
     </main>
   );
 };
+
+export default Screen;

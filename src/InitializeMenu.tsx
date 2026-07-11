@@ -16,8 +16,15 @@ const DragLabelGroup = (await import("./components/DragLabelGroup")).default;
 const PlaceStoneGroup = (await import("./components/PlaceStoneGroup")).default;
 const RectLabelGroup = (await import("./components/RectLabelGroup")).default;
 
-export default () => {
-  let context = useContext(AppContext);
+const InitializeMenu = () => {
+  const {
+    c_setData,
+    c_cursor,
+    c_setCursor,
+    c_nextLabel,
+    c_setNextLabel,
+    c_setEditingPhase,
+  } = useContext(AppContext);
 
   return (
     <Paper
@@ -60,13 +67,13 @@ export default () => {
           sx={{ width: "60px" }}
           size="small"
           variant="standard"
-          value={context.nextLabel}
+          value={c_nextLabel}
           onChange={(e) => {
-            context.setNextLabel(e.target.value);
-            context.setCursor(CursorType.Label);
+            c_setNextLabel(e.target.value);
+            c_setCursor(CursorType.Label);
           }}
           onFocus={() => {
-            context.setCursor(CursorType.Label);
+            c_setCursor(CursorType.Label);
           }}
         ></TextField>
         <DragLabelGroup />
@@ -94,14 +101,14 @@ export default () => {
         <Button
           variant="outlined"
           color="button"
-          disabled={context.cursor !== "Black" && context.cursor !== "White"}
+          disabled={c_cursor !== "Black" && c_cursor !== "White"}
           onClick={async () => {
             commands
-              .finishSetup(context.cursor === "Black" ? "White" : "Black")
+              .finishSetup(c_cursor === "Black" ? "White" : "Black")
               .then(() => commands.getData())
               .then((data) => {
-                context.setData(data);
-                context.setEditingPhase(EditingPhaseType.MakeTree);
+                c_setData(data);
+                c_setEditingPhase(EditingPhaseType.MakeTree);
               });
           }}
         >
@@ -111,3 +118,5 @@ export default () => {
     </Paper>
   );
 };
+
+export default InitializeMenu;

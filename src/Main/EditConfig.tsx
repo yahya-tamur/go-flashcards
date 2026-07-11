@@ -1,5 +1,7 @@
-import type { ReactCodeMirrorRef } from "@uiw/react-codemirror";
 import type { Dispatch, SetStateAction } from "react";
+
+import type { ReactCodeMirrorRef } from "@uiw/react-codemirror";
+
 const { useEffect, useState, useRef } = await import("react");
 
 const { StreamLanguage } = await import("@codemirror/language");
@@ -40,7 +42,7 @@ const highlightField = StateField.define({
   update(decorations, tr) {
     decorations = decorations.map(tr.changes);
     // Apply new effects
-    for (let e of tr.effects) {
+    for (const e of tr.effects) {
       if (e.is(addHighlight)) {
         decorations = Decoration.none;
         decorations = decorations.update({
@@ -76,7 +78,7 @@ interface EditConfigProps {
   configSignal: number;
 }
 
-export default (props: EditConfigProps) => {
+const EditConfig = (props: EditConfigProps) => {
   //let context = useContext(AppContext);
   const [code, setCode] = useState(props.initialConfig);
   const [lastSaved, setLastSaved] = useState(props.initialConfig);
@@ -88,22 +90,31 @@ export default (props: EditConfigProps) => {
       if (errobj === null) {
         return;
       }
-      if (errobj !== error) {
-        let [_, left, right] = errobj;
+      setError((error) => {
+        if (
+          (error === null && errobj === null) ||
+          (error !== null &&
+            errobj !== null &&
+            error[0] == errobj[0] &&
+            error[1] == errobj[1] &&
+            error[2] === errobj[2])
+        ) {
+          return error;
+        }
+        let [, left, right] = errobj;
         if (left == right) {
-          left = Math.max(0, left - 2);
-          right = Math.min(code.length, right + 2);
+          left = left - 2; // out of bounds seems to be ok
+          right = right + 2;
         }
         if (left < right) {
           editorRef.current?.view?.dispatch({
             effects: addHighlight.of({ from: left, to: right }),
           });
         }
-        setCode(code);
-        setError(errobj);
-      }
+        return errobj;
+      });
     });
-  }, [props.configSignal]);
+  }, [props.configSignal, props.initialConfig, setError]);
 
   return (
     <>
@@ -189,7 +200,7 @@ export default (props: EditConfigProps) => {
                     .listStudies()
                     .then((studies) => props.setStudies(studies));
                 } else {
-                  let [_, left, right] = errobj;
+                  let [, left, right] = errobj;
                   if (left == right) {
                     left = Math.max(0, left - 2);
                     right = Math.min(code.length, right + 2);
@@ -214,3 +225,5 @@ export default (props: EditConfigProps) => {
     </>
   );
 };
+
+export default EditConfig;

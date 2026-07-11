@@ -16,8 +16,8 @@ const delete_mark_icon = (await import("../assets/delete_mark.svg")).default;
 const white_territory_icon = (await import("../assets/white_territory.svg"))
   .default;
 
-export default () => {
-  let context = useContext(AppContext);
+const RectLabelGroup = () => {
+  const { c_data, c_cursor, c_setCursor } = useContext(AppContext);
 
   const img_size = "25px";
 
@@ -25,18 +25,16 @@ export default () => {
     <Box>
       <ToggleButtonGroup
         color="toggle"
-        value={context.cursor}
+        value={c_cursor}
         exclusive
         size="small"
         onChange={(_e, newValue) => {
           if (newValue === null) {
-            context.setCursor(
-              context.data?.color === "Black"
-                ? CursorType.White
-                : CursorType.Black,
+            c_setCursor(
+              c_data?.color === "Black" ? CursorType.White : CursorType.Black,
             );
           } else {
-            context.setCursor(newValue);
+            c_setCursor(newValue);
           }
         }}
       >
@@ -62,3 +60,5 @@ export default () => {
     </Box>
   );
 };
+
+export default RectLabelGroup;

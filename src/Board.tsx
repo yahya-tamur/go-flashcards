@@ -1,14 +1,15 @@
-const { CursorType } = await import("./AppContext");
-
 import type { Color, Mark } from "./bindings";
-const { commands } = await import("./bindings");
-const { cursorMark, handleError, label, studyStep } = await import("./utils");
 
-const { useEffect, useState, useRef, useContext } = await import("react");
+await import("react");
+const { useEffect, useState, useRef, useContext, useCallback } =
+  await import("react");
 
 const Paper = (await import("@mui/material/Paper")).default;
 
 const AppContext = (await import("./AppContext")).default;
+const { CursorType } = await import("./AppContext");
+const { commands } = await import("./bindings");
+const { cursorMark, handleError, label, studyStep } = await import("./utils");
 
 const black_image = (await import("./assets/black_night.png")).default;
 const black_territory_icon = (await import("./assets/black_territory.svg"))
@@ -24,7 +25,7 @@ const white_image = (await import("./assets/white_anime.png")).default;
 const white_territory_icon = (await import("./assets/white_territory.svg"))
   .default;
 
-export default () => {
+const Board = () => {
   const mark_icons = {
     Triangle: triangle_icon,
     Circle: circle_icon,
@@ -45,7 +46,21 @@ export default () => {
     BlackTerritory: black_territory_icon,
     WhiteTerritory: white_territory_icon,
   };
-  const context = useContext(AppContext);
+  const {
+    c_phase,
+    c_editingPhase,
+    c_studyPhase,
+    c_data,
+    c_setData,
+    c_cursor,
+    c_setCursor,
+    c_nextLabel,
+    c_setNextLabel,
+    c_window,
+    c_setFeedback,
+    c_setStudyPhase,
+    c_setWindow,
+  } = useContext(AppContext);
   const board_svg = useRef<SVGSVGElement>(null);
   const paper = useRef<HTMLDivElement>(null);
 
@@ -72,7 +87,7 @@ export default () => {
       if (c > cc) {
         [c, cc] = [cc, c];
       }
-      let newGhosts: [number, number][] = [];
+      const newGhosts: [number, number][] = [];
       for (let row = r; row <= rr; row++) {
         for (let col = c; col <= cc; col++) {
           newGhosts.push([row, col]);
@@ -95,46 +110,41 @@ export default () => {
   const [marks, setMarks] = useState<[number, number, Mark][]>([]);
 
   useEffect(() => {
-    let contextdata = context.data;
+    const contextdata = c_data;
     if (contextdata === null) {
       return;
     }
-    if (
-      contextdata !== null &&
-      !context.window.every((val, index) => contextdata.window[index] === val)
-    ) {
-      context.setWindow(contextdata.window);
-    }
-  }, [context.data]);
+    c_setWindow((window) =>
+      window.every((val, index) => contextdata.window[index] === val)
+        ? window
+        : contextdata.window,
+    );
+  }, [c_data, c_setWindow]);
 
-  const get_mode = () => {
+  const get_mode = useCallback(() => {
     if (
       !(
-        (context.phase === "Editing" || context.studyPhase === "Edit") &&
-        context.editingPhase === "Initialize"
+        (c_phase === "Editing" || c_studyPhase === "Edit") &&
+        c_editingPhase === "Initialize"
       ) &&
-      (context.cursor === "Black" || context.cursor === "White")
+      (c_cursor === "Black" || c_cursor === "White")
     ) {
       return "Click";
     }
     if (
-      context.cursor === "BlackTerritory" ||
-      context.cursor === "WhiteTerritory" ||
-      context.cursor === "DeleteMark"
+      c_cursor === "BlackTerritory" ||
+      c_cursor === "WhiteTerritory" ||
+      c_cursor === "DeleteMark"
     ) {
       return "DragRectangle";
     }
     return "DragPlace";
-  };
+  }, [c_cursor, c_phase, c_editingPhase, c_studyPhase]);
 
   const get_coord = (
     e: React.MouseEvent<SVGSVGElement>,
   ): [number, number] | null => {
-    if (
-      board_svg.current === null ||
-      context.data === null ||
-      context.data === undefined
-    ) {
+    if (board_svg.current === null || c_data === null || c_data === undefined) {
       return null;
     }
     // get coord in board in [0, 1]
@@ -152,7 +162,7 @@ export default () => {
     i = (i - margin) / square_size;
     j = (j - margin) / square_size;
 
-    let [left, right, top, bottom] = context.window;
+    const [left, right, top, bottom] = c_window;
 
     // correction for partial boards
     i += left + (left > 0 ? -partial_border / square_size : 0);
@@ -171,32 +181,31 @@ export default () => {
       if ((i - si) * (i - si) + (j - sj) * (j - sj) > 0.25) {
         return null;
       }
-      if (context.data.game.stones[si][sj] !== null) {
+      if (c_data.game.stones[si][sj] !== null) {
         return null;
       }
     } else if (mode === "DragPlace") {
-      if (context.cursor === "Delete") {
-        //if (context.data.game.stones[si][sj] === null) {
+      if (c_cursor === "Delete") {
+        //if (c_data.game.stones[si][sj] === null) {
         //  return null;
         //}
-      } else if (context.cursor === "Black" || context.cursor === "White") {
-        if (context.data.game.stones[si][sj] === context.cursor) {
+      } else if (c_cursor === "Black" || c_cursor === "White") {
+        if (c_data.game.stones[si][sj] === c_cursor) {
           return null;
         }
-      } else if (context.cursor === "DeleteMark") {
-        if (context.data.game.marks[si][sj] === null) {
+      } else if (c_cursor === "DeleteMark") {
+        if (c_data.game.marks[si][sj] === null) {
           return null;
         }
-      } else if (context.cursor === "Label") {
-        if (label(context.data.game.marks[si][sj]) === context.nextLabel) {
+      } else if (c_cursor === "Label") {
+        if (label(c_data.game.marks[si][sj]) === c_nextLabel) {
           return null;
         }
       } else {
-        if (context.data.game.marks[si][sj] === context.cursor) {
+        if (c_data.game.marks[si][sj] === c_cursor) {
           return null;
         }
       }
-    } else if (mode === "DragRectangle") {
     }
     return [si, sj];
   };
@@ -212,15 +221,15 @@ export default () => {
       | { mode: "DragPlace" },
   ) => {
     if (wmode.mode === "Click") {
-      if (context.cursor !== "Black" && context.cursor !== "White") {
+      if (c_cursor !== "Black" && c_cursor !== "White") {
         console.log("invalid cursor in click mode");
         return;
       }
       commands
-        .play([wmode.w[0], wmode.w[1]], context.cursor)
+        .play([wmode.w[0], wmode.w[1]], c_cursor)
         .then(() => commands.getData())
         .then((data) => {
-          let contextdata = context.data;
+          const contextdata = c_data;
           if (
             contextdata !== null &&
             contextdata.game.stones[wmode.w[0]][wmode.w[1]] ===
@@ -228,14 +237,20 @@ export default () => {
           ) {
             return;
           }
-          context.setData(data);
-          if (context.phase === "Study" && context.studyPhase === "Guess") {
-            studyStep(data, context);
+          c_setData(data);
+          if (c_phase === "Study" && c_studyPhase === "Guess") {
+            studyStep(
+              data,
+              c_setData,
+              c_setFeedback,
+              c_setStudyPhase,
+              c_cursor,
+            );
           }
         })
         .catch((e) => handleError(e));
     } else if (wmode.mode === "DragPlace") {
-      let contextcursor = context.cursor;
+      const contextcursor = c_cursor;
       if (
         contextcursor === "Black" ||
         contextcursor === "White" ||
@@ -244,19 +259,19 @@ export default () => {
         commands
           .setStones(stones)
           .then(() => commands.getData())
-          .then((data) => context.setData(data));
+          .then((data) => c_setData(data));
       } else {
         commands
           .setMarks(marks)
           .then(() => commands.getData())
-          .then((data) => context.setData(data));
+          .then((data) => c_setData(data));
       }
     } else if (wmode.mode === "DragRectangle") {
       //if (dragStart === null) {
       //return;
       //}
 
-      let contextcursor = context.cursor;
+      const contextcursor = c_cursor;
       if (!(
         contextcursor === "BlackTerritory" ||
         contextcursor === "WhiteTerritory" ||
@@ -265,7 +280,7 @@ export default () => {
         console.log("Invalid cursor in dragRectangle mode");
         return;
       }
-      let start = dragStart === null ? [wmode.w[0], wmode.w[1]] : dragStart;
+      const start = dragStart === null ? [wmode.w[0], wmode.w[1]] : dragStart;
       commands
         .setMarksWindow(contextcursor === "DeleteMark" ? null : contextcursor, [
           start[0],
@@ -275,7 +290,7 @@ export default () => {
         ])
         .then(() => commands.getData())
         .then((data) => {
-          context.setData(data);
+          c_setData(data);
           setDragStart(null);
         });
       return;
@@ -283,7 +298,7 @@ export default () => {
   };
 
   const drag = (w: [number, number]) => {
-    let contextcursor = context.cursor;
+    const contextcursor = c_cursor;
     const mode = get_mode();
     if (mode === "DragPlace") {
       if (contextcursor === "Delete") {
@@ -296,9 +311,7 @@ export default () => {
         if (
           !stones.some(
             (stone) =>
-              w[0] === stone[0] &&
-              w[1] === stone[1] &&
-              context.cursor == stone[2],
+              w[0] === stone[0] && w[1] === stone[1] && c_cursor == stone[2],
           )
         ) {
           setStones((oldSet) => {
@@ -307,7 +320,7 @@ export default () => {
                 (stone) =>
                   w[0] === stone[0] &&
                   w[1] === stone[1] &&
-                  context.cursor == stone[2],
+                  c_cursor == stone[2],
               )
             ) {
               return [
@@ -322,7 +335,6 @@ export default () => {
           });
         }
       } else {
-        contextcursor;
         if (contextcursor === "DeleteMark") {
           console.log("cursor shouldn't be DeleteMark in DragPlace mode");
           return;
@@ -332,8 +344,7 @@ export default () => {
             ([i, j, mark]) =>
               i === w[0] &&
               j === w[1] &&
-              ((contextcursor === "Label" &&
-                label(mark) === context.nextLabel) ||
+              ((contextcursor === "Label" && label(mark) === c_nextLabel) ||
                 mark === contextcursor),
           )
         ) {
@@ -343,8 +354,7 @@ export default () => {
                 ([i, j, mark]) =>
                   i === w[0] &&
                   j === w[1] &&
-                  ((contextcursor === "Label" &&
-                    label(mark) === context.nextLabel) ||
+                  ((contextcursor === "Label" && label(mark) === c_nextLabel) ||
                     mark === contextcursor),
               )
             ) {
@@ -356,7 +366,7 @@ export default () => {
                   w[0],
                   w[1],
                   contextcursor === "Label"
-                    ? { Label: context.nextLabel }
+                    ? { Label: c_nextLabel }
                     : cursorMark(contextcursor),
                 ],
               ];
@@ -375,20 +385,20 @@ export default () => {
       return;
     }
 
-    let [left, right, top, bottom] = context.window;
+    const [left, right, top, bottom] = c_window;
     console.log("aah!");
 
     // Offset viewBox.
 
     //maybe add bigger margin for edges or letters on every side
-    let vbleft = square_size * left + (left > 0 ? -partial_border : 0);
-    let vbtop = square_size * top + (top > 0 ? -partial_border : 0);
-    let vbwidth =
+    const vbleft = square_size * left + (left > 0 ? -partial_border : 0);
+    const vbtop = square_size * top + (top > 0 ? -partial_border : 0);
+    const vbwidth =
       2 * margin +
       (right - left) * square_size +
       (left > 0 ? partial_border : 0) +
       (right < 18 ? partial_border : 0);
-    let vbheight =
+    const vbheight =
       2 * margin +
       (bottom - top) * square_size +
       (top > 0 ? partial_border : 0) +
@@ -405,9 +415,9 @@ export default () => {
         paper.current.offsetWidth,
         paper.current.offsetHeight,
       ];
-      let [width, height] = current_size;
+      const [width, height] = current_size;
 
-      let ratio = Math.min(
+      const ratio = Math.min(
         (width - 2 * 20) / vbwidth,
         (height - 2 * 20) / vbheight,
       );
@@ -418,24 +428,24 @@ export default () => {
     return () => {
       observer.disconnect();
     };
-  }, [paper, context.window]);
+  }, [paper, c_window]);
 
   useEffect(() => {
-    if (context.data === null) {
+    if (c_data === null) {
       return;
     }
-    let new_stones: [number, number, Color][] = [];
-    let new_marks: [number, number, Mark][] = [];
-    let [left, right, top, bottom] = context.window;
+    const new_stones: [number, number, Color][] = [];
+    const new_marks: [number, number, Mark][] = [];
+    const [left, right, top, bottom] = c_window;
 
     for (let i = left; i <= right; i++) {
       for (let j = top; j <= bottom; j++) {
-        const w = context.data.game.stones[i][j];
+        const w = c_data.game.stones[i][j];
 
         if (w !== null) {
           new_stones.push([i, j, w]);
         }
-        let mark = context.data.game.marks[i][j];
+        const mark = c_data.game.marks[i][j];
         if (mark !== null) {
           new_marks.push([i, j, mark]);
         }
@@ -445,23 +455,23 @@ export default () => {
     setMarks(new_marks);
     setGhosts([]);
 
-    let mode = get_mode();
+    const mode = get_mode();
     if (mode === "Click") {
-      context.setCursor(
-        context.data.color === "Black" ? CursorType.White : CursorType.Black,
+      c_setCursor(
+        c_data.color === "Black" ? CursorType.White : CursorType.Black,
       );
     }
-  }, [context.window, context.data]);
+  }, [c_window, c_data, c_setCursor, get_mode]);
 
   useEffect(() => {
-    if (context.data === null || context.data === undefined) {
+    if (c_data === null || c_data === undefined) {
       return;
     }
 
-    let ch = context.nextLabel.charCodeAt(0);
+    const ch = c_nextLabel.charCodeAt(0);
 
     if (
-      context.nextLabel.length !== 1 ||
+      c_nextLabel.length !== 1 ||
       ch < "A".charCodeAt(0) ||
       ch >= "Z".charCodeAt(0)
     ) {
@@ -470,9 +480,9 @@ export default () => {
 
     // is(n't) there a better place for this?
     let seen_once = false;
-    for (const row of context.data.game.marks) {
+    for (const row of c_data.game.marks) {
       for (const mark of row) {
-        if (label(mark) === context.nextLabel) {
+        if (label(mark) === c_nextLabel) {
           if (seen_once) {
             return;
           }
@@ -481,10 +491,10 @@ export default () => {
       }
     }
     if (seen_once) {
-      context.setNextLabel(String.fromCharCode(ch + 1));
+      c_setNextLabel(String.fromCharCode(ch + 1));
       return;
     }
-  }, [context.data]);
+  }, [c_data, c_nextLabel, c_setNextLabel]);
 
   //maybe just always do 0..19?
   const [rows, setRows] = useState<number[]>([]);
@@ -493,15 +503,15 @@ export default () => {
   const [borders, setBorders] = useState<[number, number, string][]>([]);
 
   useEffect(() => {
-    let [left, right, top, bottom] = context.window;
+    const [left, right, top, bottom] = c_window;
 
-    let newRows: number[] = [];
+    const newRows: number[] = [];
     for (let i = left; i <= right; i++) {
       newRows.push(i);
     }
     setRows(newRows);
 
-    let newCols: number[] = [];
+    const newCols: number[] = [];
     for (let j = top; j <= bottom; j++) {
       newCols.push(j);
     }
@@ -509,19 +519,20 @@ export default () => {
 
     console.log("BBBB");
 
-    let stroke_width = 0; // but it's 1??
-    let hline_start =
+    const stroke_width = 0; // but it's 1??
+    const hline_start =
       margin +
       square_size * left +
       (left > 0 ? -partial : 0) -
       stroke_width / 2;
-    let hline_end =
+    const hline_end =
       margin +
       square_size * right +
       (right < 18 ? partial : 0) +
       stroke_width / 2;
-    let vline_start = margin + square_size * top + (top > 0 ? -partial : 0);
-    let vline_end = margin + square_size * bottom + (bottom < 18 ? partial : 0);
+    const vline_start = margin + square_size * top + (top > 0 ? -partial : 0);
+    const vline_end =
+      margin + square_size * bottom + (bottom < 18 ? partial : 0);
     setLines([hline_start, hline_end, vline_start, vline_end]);
     console.log(
       hline_start,
@@ -534,7 +545,8 @@ export default () => {
       bottom,
     );
 
-    let newBorders: [number, number, string][] = [];
+    const newBorders: [number, number, string][] = [];
+    const letters = "ABCDEFGHJKLMNOPQRST".split("");
     if (left == 0) {
       for (let j = top; j <= bottom; j++) {
         newBorders.push([
@@ -568,9 +580,7 @@ export default () => {
       }
     }
     setBorders(newBorders);
-  }, [context.window]);
-
-  let letters = "ABCDEFGHJKLMNOPQRST".split("");
+  }, [c_window]);
 
   return (
     <Paper
@@ -601,7 +611,7 @@ export default () => {
             const mode = get_mode();
             if (mode === "DragPlace") {
               setDragging(true);
-              if (context.cursor !== "Delete") {
+              if (c_cursor !== "Delete") {
                 setDragCurrent(null);
               }
               if (w !== null) {
@@ -618,7 +628,7 @@ export default () => {
           onMouseUp={(e) => {
             const mode = get_mode();
             if (mode === "Click") {
-              let w = get_coord(e);
+              const w = get_coord(e);
               if (w === null) {
                 return;
               }
@@ -627,7 +637,7 @@ export default () => {
               setDragging(false);
               dragEnd({ mode: mode });
             } else if (mode === "DragRectangle") {
-              let w = get_coord(e);
+              const w = get_coord(e);
               if (w === null) {
                 return;
               }
@@ -697,19 +707,19 @@ export default () => {
                       ([ii, jj]) =>
                         i === ii &&
                         j === jj &&
-                        (context.cursor === "BlackTerritory" ||
-                          context.cursor === "WhiteTerritory"),
+                        (c_cursor === "BlackTerritory" ||
+                          c_cursor === "WhiteTerritory"),
                     ) &&
                     (ghosts.some(
                       ([ii, jj]) =>
                         i === ii &&
                         j === jj &&
-                        context.cursor !== "BlackTerritory" &&
-                        context.cursor !== "WhiteTerritory" &&
-                        context.cursor !== "Black" &&
-                        context.cursor !== "White" &&
-                        context.cursor !== "Delete" &&
-                        context.cursor !== "DeleteMark",
+                        c_cursor !== "BlackTerritory" &&
+                        c_cursor !== "WhiteTerritory" &&
+                        c_cursor !== "Black" &&
+                        c_cursor !== "White" &&
+                        c_cursor !== "Delete" &&
+                        c_cursor !== "DeleteMark",
                     ) ||
                       marks.some(
                         ([ii, jj, type]) =>
@@ -788,7 +798,7 @@ export default () => {
               {[3, 9, 15]
                 .flatMap((i) => [3, 9, 15].map((j) => [i, j]))
                 .filter(([i, j]) => {
-                  let [left, right, top, bottom] = context.window;
+                  const [left, right, top, bottom] = c_window;
                   return top <= j && j <= bottom && left <= i && i <= right;
                 })
                 .map(([i, j]) => (
@@ -838,10 +848,10 @@ export default () => {
             {marks
               .filter(
                 ([i, j]) =>
-                  context.cursor === "Black" ||
-                  context.cursor === "White" ||
-                  context.cursor === "Delete" ||
-                  context.cursor === "DeleteMark" ||
+                  c_cursor === "Black" ||
+                  c_cursor === "White" ||
+                  c_cursor === "Delete" ||
+                  c_cursor === "DeleteMark" ||
                   !ghosts.some(([ii, jj]) => i === ii && j === jj),
               )
               .map(([i, j, mark]) =>
@@ -862,7 +872,7 @@ export default () => {
                         ) ||
                         ghosts.some(
                           ([ii, jj]) =>
-                            ii === i && jj === j && context.cursor === "Black",
+                            ii === i && jj === j && c_cursor === "Black",
                         )
                           ? "white"
                           : "black",
@@ -886,7 +896,7 @@ export default () => {
                       ) ||
                         ghosts.some(
                           ([ii, jj]) =>
-                            ii === i && jj === j && context.cursor === "Black",
+                            ii === i && jj === j && c_cursor === "Black",
                         )) &&
                       !(mark === "BlackTerritory" || mark === "WhiteTerritory")
                         ? "url(#invert-color)"
@@ -899,22 +909,20 @@ export default () => {
           </g>
           <g>
             {ghosts.map(([row, col]) => {
-              let label_color =
-                context.data?.game.stones[row][col] === "Black"
-                  ? "white"
-                  : "black";
+              const label_color =
+                c_data?.game.stones[row][col] === "Black" ? "white" : "black";
               let filter = label_color === "black" ? "" : "url(#invert-color)";
               let opacity = "0.6";
               if (
-                context.cursor === "BlackTerritory" ||
-                context.cursor === "WhiteTerritory" ||
-                context.cursor === "DeleteMark" ||
-                context.cursor === "Delete"
+                c_cursor === "BlackTerritory" ||
+                c_cursor === "WhiteTerritory" ||
+                c_cursor === "DeleteMark" ||
+                c_cursor === "Delete"
               ) {
                 filter = "";
                 opacity = "0.5";
               }
-              return context.cursor === "Label" ? (
+              return c_cursor === "Label" ? (
                 <text
                   x={margin + square_size * row}
                   y={margin + square_size * col}
@@ -928,9 +936,9 @@ export default () => {
                     WebkitUserSelect: "none",
                     font: "bold 40pt sans-serif",
                   }}
-                  key={JSON.stringify([row, col, context.cursor])}
+                  key={JSON.stringify([row, col, c_cursor])}
                 >
-                  {context.nextLabel}
+                  {c_nextLabel}
                 </text>
               ) : (
                 <image
@@ -938,10 +946,10 @@ export default () => {
                   y={square_size * col + margin - 0.5 * square_size}
                   width={square_size}
                   height={square_size}
-                  href={cursor_icons[context.cursor]}
+                  href={cursor_icons[c_cursor]}
                   filter={filter}
                   opacity={opacity}
-                  key={JSON.stringify([row, col, context.cursor])}
+                  key={JSON.stringify([row, col, c_cursor])}
                 />
               );
             })}
@@ -951,3 +959,5 @@ export default () => {
     </Paper>
   );
 };
+
+export default Board;

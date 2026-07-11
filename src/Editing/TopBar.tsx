@@ -3,6 +3,12 @@ const { useState, useContext } = await import("react");
 const ClearIcon = (await import("@mui/icons-material/Clear")).default;
 const DownloadIcon = (await import("@mui/icons-material/Download")).default;
 const FileUploadIcon = (await import("@mui/icons-material/FileUpload")).default;
+const KeyboardArrowDownOutlinedIcon = (
+  await import("@mui/icons-material/KeyboardArrowDownOutlined")
+).default;
+const KeyboardArrowRightOutlinedIcon = (
+  await import("@mui/icons-material/KeyboardArrowRightOutlined")
+).default;
 
 const Box = (await import("@mui/material/Box")).default;
 const Button = (await import("@mui/material/Button")).default;
@@ -18,24 +24,22 @@ const Tooltip = (await import("@mui/material/Tooltip")).default;
 await import("../App.css");
 
 await import("../AppContext");
-
+const AppContext = (await import("../AppContext")).default;
 const { CursorType, EditingPhaseType, PhaseType } =
   await import("../AppContext");
 const { commands } = await import("../bindings");
 
-const KeyboardArrowDownOutlinedIcon = (
-  await import("@mui/icons-material/KeyboardArrowDownOutlined")
-).default;
-const KeyboardArrowRightOutlinedIcon = (
-  await import("@mui/icons-material/KeyboardArrowRightOutlined")
-).default;
-
 const NumberSpinner = (await import("../components/NumberSpinner")).default;
 
-const AppContext = (await import("../AppContext")).default;
-
-export default () => {
-  let context = useContext(AppContext);
+const TopBar = () => {
+  const {
+    c_data,
+    c_setData,
+    c_setCursor,
+    c_setNextLabel,
+    c_setPhase,
+    c_setEditingPhase,
+  } = useContext(AppContext);
   const [dialogContent, setDialogContent] = useState("");
   const [savedMsgOpen, setSavedMsgOpen] = useState(false);
   //  useEffect(
@@ -75,33 +79,32 @@ export default () => {
           sx={{ height: "40px" }}
           onClick={async () => {
             commands.mainMenu().then(() => {
-              context.setPhase(PhaseType.Main);
-              //context.setConfig(null);
-              context.setNextLabel("A");
+              c_setPhase(PhaseType.Main);
+              //c_setConfig(null);
+              c_setNextLabel("A");
             });
           }}
         >
           Exit
         </Button>
         <NumberSpinner
-          label="Exercise"
           size="small"
-          value={(context.data?.current_location ?? 0) + 1}
+          value={(c_data?.current_location ?? 0) + 1}
           min={1}
-          max={context.data?.max_location ?? 1}
+          max={c_data?.max_location ?? 1}
           onValueChange={async (v) => {
-            if (context.data === null || v === null) {
+            if (c_data === null || v === null) {
               return;
             }
             commands
               .jumpToExercise(v - 1)
               .then(() => commands.getData())
               .then((data) => {
-                context.setData(data);
+                c_setData(data);
                 if (data.table.length === 1 && data.table[0].length === 1) {
-                  context.setEditingPhase(EditingPhaseType.Initialize);
+                  c_setEditingPhase(EditingPhaseType.Initialize);
                 } else {
-                  context.setEditingPhase(EditingPhaseType.MakeTree);
+                  c_setEditingPhase(EditingPhaseType.MakeTree);
                 }
               });
           }}
@@ -120,11 +123,11 @@ export default () => {
                   .then(() => commands.getData())
                   .then((data) => {
                     if (data.table.length === 1 && data.table[0].length === 1) {
-                      context.setEditingPhase(EditingPhaseType.Initialize);
+                      c_setEditingPhase(EditingPhaseType.Initialize);
                     } else {
-                      context.setEditingPhase(EditingPhaseType.MakeTree);
+                      c_setEditingPhase(EditingPhaseType.MakeTree);
                     }
-                    context.setData(data);
+                    c_setData(data);
                   });
               }}
             >
@@ -141,9 +144,9 @@ export default () => {
                   .newExercise(true)
                   .then(() => commands.getData())
                   .then((data) => {
-                    context.setData(data);
-                    context.setCursor(CursorType.Black);
-                    context.setEditingPhase(EditingPhaseType.Initialize);
+                    c_setData(data);
+                    c_setCursor(CursorType.Black);
+                    c_setEditingPhase(EditingPhaseType.Initialize);
                   });
               }}
             >
@@ -161,9 +164,9 @@ export default () => {
                   .newExercise(false)
                   .then(() => commands.getData())
                   .then((data) => {
-                    context.setData(data);
-                    context.setCursor(CursorType.Black);
-                    context.setEditingPhase(EditingPhaseType.Initialize);
+                    c_setData(data);
+                    c_setCursor(CursorType.Black);
+                    c_setEditingPhase(EditingPhaseType.Initialize);
                   });
               }}
             >
@@ -188,11 +191,11 @@ export default () => {
                         data.table.length === 1 &&
                         data.table[0].length === 1
                       ) {
-                        context.setEditingPhase(EditingPhaseType.Initialize);
+                        c_setEditingPhase(EditingPhaseType.Initialize);
                       } else {
-                        context.setEditingPhase(EditingPhaseType.MakeTree);
+                        c_setEditingPhase(EditingPhaseType.MakeTree);
                       }
-                      context.setData(data);
+                      c_setData(data);
                     })
                     .catch((e) => {
                       console.log(e);
@@ -261,3 +264,5 @@ export default () => {
     </Paper>
   );
 };
+
+export default TopBar;
