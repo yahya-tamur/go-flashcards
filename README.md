@@ -28,9 +28,11 @@ Notes
   [Box; 19; 19] array, box contains stone? and mark? (flat)
   - useReducer
 
-- Actually compile for phone!
-  - file situation
-  - perf?
+
+- also, need to meet 'generate initial app data' goal 
+  - so android app doesn't crash on startup
+
+- android file situation
 
 - histogram!
 
@@ -145,3 +147,21 @@ Finalizing
 - updater plugin
 - initialize app data with example usage?
 - add licence to all the files + make repo public
+
+Notes for android building process
+---------------
+- What worked:
+  - delete gen file
+  - cargo tauri android init
+  - cargo tauri android build
+    - works, but is unsigned
+  - run local file ../android-keystore/dev/insert
+    - (follow instructions to edit build.gradle.kts, signingconfigs *is* under android)
+  - cargo tauri android build
+    - works
+
+  - earlier I think I had to open gen project in android studio and edit build variant
+  
+  - also I added ANDROID_HOME to bash_rc, so that should be ok
+    - building once without this variable (and two others) probably means you need to
+    - delete src-tauri/gen and restart process

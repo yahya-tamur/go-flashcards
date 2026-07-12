@@ -81,12 +81,12 @@ export type Snapshot = {
 
 export type Variant = "Correct" | "Incorrect" | "None" | "New";
 
-/*/* Tauri Specta runtime */
-async function typedError<T, E>(result: Promise<T>): Promise<{ status: "ok"; data: T } | { status: "error"; error: E }> {*/
+/* Tauri Specta runtime */
+/*async function typedError<T, E>(result: Promise<T>): Promise<{ status: "ok"; data: T } | { status: "error"; error: E }> {
     try {
         return { status: "ok", data: await result };
     } catch (e) {
         if (e instanceof Error) throw e;
         return { status: "error", error: e as any };
     }
-}
+}*/

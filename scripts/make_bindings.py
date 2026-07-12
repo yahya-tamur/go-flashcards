@@ -39,7 +39,7 @@ def make_bindings():
             continue
         if 'typedError' in line:
             if 'async function' in line:
-                lll = i
+                lll = len(lines)
             else:
                 line = re.sub(r'=> typedError<(.*), string>\(__TAURI_INVOKE\("', r': Promise<\1> => (__TAURI_INVOKE("', line, count=1)
         lines.append(line)

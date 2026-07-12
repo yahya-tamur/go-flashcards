@@ -6,7 +6,7 @@
   "build": {
     "beforeDevCommand": "python ./scripts/make_bindings.py && npm run dev",
     "devUrl": "http://localhost:1420",
-    "beforeBuildCommand": "python ./scripts/make_bindings.py && npm run build",
+    "beforeBuildCommand": "npm install && python ./scripts/make_bindings.py && npm run build",
     "frontendDist": "../dist"
   },
   "app": {
