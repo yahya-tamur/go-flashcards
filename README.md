@@ -21,22 +21,16 @@ UI overhaul
         - see tablet:
           - [  |  |  | ] graph on mobile. Maybe on desktop too.
 
-Notes
+Current Actual Goal
 --------------
-
-- redo board state:
-  [Box; 19; 19] array, box contains stone? and mark? (flat)
-  - useReducer
-
-
-- also, need to meet 'generate initial app data' goal 
-  - so android app doesn't crash on startup
+- Fix all bugs in Board
+- setup app data initialization (rust include dir crate)
+- compile to android
+- actually add histogram, nicer study screen
+  - segues into porting study screen to mobile
 
 - android file situation
 
-- histogram!
-
-- continue with ui
 
 things that popped up:
 ----------------------------------

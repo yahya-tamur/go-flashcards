@@ -1,3 +1,5 @@
+import { clickMode } from "./utils";
+
 const { useEffect, useState, useContext } = await import("react");
 
 const CheckIcon = (await import("@mui/icons-material/Check")).default;
@@ -14,11 +16,7 @@ const ToggleButtonGroup = (await import("@mui/material/ToggleButtonGroup"))
 await import("./App.css");
 
 const AppContext = (await import("./AppContext")).default;
-const { CursorType, EditingPhaseType } = await import("./AppContext");
 const { commands } = await import("./bindings");
-
-const black_image = (await import("./assets/black_night.png")).default;
-const white_image = (await import("./assets/white_anime.png")).default;
 
 const BoardSlider = (await import("./components/BoardSlider")).default;
 const DragLabelGroup = (await import("./components/DragLabelGroup")).default;
@@ -29,7 +27,8 @@ const MakeTreeMenu = () => {
     c_data,
     c_setData,
     c_cursor,
-    c_setCursor,
+    c_cursorDispatch,
+    c_images,
     c_nextLabel,
     c_setNextLabel,
     c_setEditingPhase,
@@ -86,13 +85,25 @@ const MakeTreeMenu = () => {
           value={c_nextLabel}
           onChange={(e) => {
             c_setNextLabel(e.target.value);
-            c_setCursor(CursorType.Label);
+            c_cursorDispatch({
+              type: "set_mode",
+              mode: {
+                type: "mark",
+                value: "Label",
+              },
+            });
           }}
           onFocus={() => {
-            c_setCursor(CursorType.Label);
+            c_cursorDispatch({
+              type: "set_mode",
+              mode: {
+                type: "mark",
+                value: "Label",
+              },
+            });
           }}
         ></TextField>
-        <DragLabelGroup />
+        <DragLabelGroup default="click" />
       </Box>
       <Box
         sx={{
@@ -108,19 +119,20 @@ const MakeTreeMenu = () => {
           color="toggle"
           exclusive
           size="small"
-          onChange={(_e, newValue) => {
-            if (newValue === null) {
-              c_setCursor(
-                c_data?.color === "Black" ? CursorType.White : CursorType.Black,
-              );
-            } else {
-              c_setCursor(newValue);
-            }
+          onChange={() => {
+            c_cursorDispatch({
+              type: "set_mode",
+              mode: clickMode(c_data),
+            });
           }}
         >
           <ToggleButton value={c_data?.color === "Black" ? "White" : "Black"}>
             <img
-              src={c_data?.color === "Black" ? white_image : black_image}
+              src={
+                c_data?.color === "Black"
+                  ? c_images["White"]
+                  : c_images["Black"]
+              }
               style={{ height: "25px", width: "25px" }}
             />
           </ToggleButton>
@@ -134,13 +146,7 @@ const MakeTreeMenu = () => {
               return;
             }
             commands
-              .play(
-                null,
-                contextdata.table[contextdata.row][contextdata.col]?.color ===
-                  "Black"
-                  ? "White"
-                  : "Black",
-              )
+              .play(null)
               .then(() => commands.getData())
               .then((data) => {
                 c_setData(data);
@@ -178,7 +184,7 @@ const MakeTreeMenu = () => {
           </ToggleButton>
         </ToggleButtonGroup>
 
-        <RectLabelGroup />
+        <RectLabelGroup default="click" />
       </Box>
 
       <Box
@@ -197,8 +203,14 @@ const MakeTreeMenu = () => {
               .then(() => commands.getData())
               .then((data) => {
                 c_setData(data);
-                c_setEditingPhase(EditingPhaseType.Initialize);
-                c_setCursor(CursorType.Black);
+                c_setEditingPhase("Initialize");
+                c_cursorDispatch({
+                  type: "set_mode",
+                  mode: {
+                    type: "stone",
+                    value: "Black",
+                  },
+                });
               });
           }}
           color="button"

@@ -1,11 +1,13 @@
 use crate::config::{ActiveConfig, ShowRecent};
-use crate::game_state::{Color, GameState, Mark};
+use crate::game_state::{other_color, Color, GameState, Mark};
 
 use crate::problem::{Move, Problem, Variant};
 use std::hash::{DefaultHasher, Hash, Hasher};
 use std::sync::Arc;
 
 use rand::{random_bool, random_range};
+use serde::Deserialize;
+use specta::Type;
 
 #[derive(Clone, Debug)]
 pub struct MoveTree {
@@ -16,6 +18,38 @@ pub struct MoveTree {
     new_branches: Vec<u64>,
     pub orientation: usize,
     pub color_swap: bool,
+}
+
+#[derive(Deserialize, Type)]
+pub enum StonePaint {
+    Black,
+    White,
+    Delete,
+}
+
+#[derive(Deserialize, Type)]
+pub enum MarkPaint {
+    Circle,
+    Triangle,
+    Cross,
+    Square,
+    Label,
+}
+
+#[derive(Deserialize, Type)]
+#[serde(tag = "type", content = "value")]
+pub enum Paint {
+    #[serde(rename = "stone")]
+    Stone(StonePaint),
+    #[serde(rename = "mark")]
+    Mark(MarkPaint),
+}
+
+#[derive(Deserialize, Type)]
+pub enum RectangleMark {
+    BlackTerritory,
+    WhiteTerritory,
+    DeleteMark,
 }
 
 impl MoveTree {
@@ -101,13 +135,14 @@ impl MoveTree {
         }
     }
 
-    pub fn play(&mut self, mut loc: Option<(usize, usize)>, color: Color, study: bool) -> bool {
+    pub fn play(&mut self, mut loc: Option<(usize, usize)>, study: bool) -> bool {
         if let Some((i, j)) = loc {
             loc = Some(self.recv(i, j));
         }
-        let color = self.send_recv_color(color);
 
         let (r, c) = self.tree_loc;
+        let color = other_color(self.problem.table[r][c].as_ref().unwrap().color);
+
         // check if step is on table
 
         for r_ in r..self.problem.table.len() {
@@ -375,6 +410,7 @@ impl MoveTree {
         self.problem.table[r][c].as_ref().unwrap()
     }
 
+    /*
     pub fn set_marks(&mut self, marks: Vec<(usize, usize, Mark)>) {
         self.current_mut().marks.clear();
         self.game.marks = [const { [const { None }; 21] }; 21];
@@ -392,7 +428,8 @@ impl MoveTree {
             self.current_mut().marks.push((i, j, mark));
         }
     }
-
+    */
+    /*
     pub fn set_marks_window(&mut self, mark: Option<Mark>, window: (usize, usize, usize, usize)) {
         let (row_start, row_end, col_start, col_end) = self.recv_window(window);
 
@@ -426,6 +463,93 @@ impl MoveTree {
                     self.game.marks[i][j] = Some(mark.clone());
                 } else {
                     self.game.marks[i][j] = None;
+                }
+            }
+        }
+    }*/
+
+    pub fn paint(&mut self, paint: Paint, locs: Vec<(usize, usize)>, label: String) {
+        match paint {
+            Paint::Stone(stone) => {
+                for (i, j) in locs.into_iter() {
+                    let (i, j) = self.recv(i, j);
+                    self.game.stones[i][j] = match stone {
+                        StonePaint::Black => Some(Color::Black),
+                        StonePaint::White => Some(Color::White),
+                        StonePaint::Delete => None,
+                    };
+                }
+            }
+            Paint::Mark(mark) => {
+                let mark = match mark {
+                    MarkPaint::Circle => Mark::Circle,
+                    MarkPaint::Cross => Mark::Cross,
+                    MarkPaint::Square => Mark::Square,
+                    MarkPaint::Triangle => Mark::Triangle,
+                    MarkPaint::Label => Mark::Label(label),
+                };
+                for (i, j) in locs.into_iter() {
+                    let (i, j) = self.recv(i, j);
+                    if match self.config.show_recent {
+                        ShowRecent::Number => self.game.numbers[i][j].is_some(),
+                        ShowRecent::Circle => self.game.numbers[i][j] == Some(self.tree_loc.1),
+                        ShowRecent::None => false,
+                    } {
+                        continue;
+                    }
+                    self.game.marks[i][j] = Some(mark.clone());
+                    self.current_mut().marks.push((i, j, mark.clone()));
+                }
+            }
+        }
+    }
+
+    pub fn mark_rectangle(
+        &mut self,
+        mark: RectangleMark,
+        start: (usize, usize),
+        end: (usize, usize),
+    ) {
+        let (row_start, row_end, col_start, col_end) =
+            self.recv_window((start.0, end.0, start.1, end.1));
+
+        let (r, c) = self.tree_loc;
+        self.problem.table[r][c]
+            .as_mut()
+            .unwrap()
+            .marks
+            .retain(|&(i, j, ref _mark)| {
+                if i > row_end || i < row_start || j < col_start || j > col_end {
+                    return true;
+                }
+                match self.config.show_recent {
+                    ShowRecent::Number => self.game.numbers[i][j].is_some(),
+                    ShowRecent::Circle => self.game.numbers[i][j] == Some(self.tree_loc.1),
+                    ShowRecent::None => false,
+                }
+            });
+
+        for i in row_start..=row_end {
+            for j in col_start..=col_end {
+                if match self.config.show_recent {
+                    ShowRecent::Number => self.game.numbers[i][j].is_some(),
+                    ShowRecent::Circle => self.game.numbers[i][j] == Some(self.tree_loc.1),
+                    ShowRecent::None => false,
+                } {
+                    continue;
+                }
+                match mark {
+                    RectangleMark::BlackTerritory => {
+                        self.current_mut().marks.push((i, j, Mark::BlackTerritory));
+                        self.game.marks[i][j] = Some(Mark::BlackTerritory);
+                    }
+                    RectangleMark::WhiteTerritory => {
+                        self.current_mut().marks.push((i, j, Mark::WhiteTerritory));
+                        self.game.marks[i][j] = Some(Mark::WhiteTerritory);
+                    }
+                    RectangleMark::DeleteMark => {
+                        self.game.marks[i][j] = None;
+                    }
                 }
             }
         }

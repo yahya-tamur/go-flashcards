@@ -1,11 +1,13 @@
-const { useEffect, useContext } = await import("react");
+import { clickMode } from "../utils";
+import type { EditingPhaseType } from "../AppContext";
+
+const { useEffect, useContext, useEffectEvent } = await import("react");
 
 const Box = (await import("@mui/material/Box")).default;
 
 await import("../App.css");
 
 const AppContext = (await import("../AppContext")).default;
-const { EditingPhaseType } = await import("../AppContext");
 const Board = (await import("../Board")).default;
 const CommentBox = (await import("../CommentBox")).default;
 const InitializeMenu = (await import("../InitializeMenu")).default;
@@ -17,17 +19,45 @@ const TopBar = (await import("./TopBar")).default;
 
 const Screen = () => {
   // useEffect: load exercise.
-  const { c_setData, c_setEditingPhase, c_editingPhase } =
-    useContext(AppContext);
+  const {
+    c_data,
+    c_setData,
+    c_setEditingPhase,
+    c_cursorDispatch,
+    c_editingPhase,
+  } = useContext(AppContext);
+
+  const setInitialCursor = useEffectEvent(
+    (c_editingPhase: EditingPhaseType) => {
+      if (c_editingPhase === "Initialize") {
+        c_cursorDispatch({
+          type: "set_mode",
+          mode: {
+            type: "stone",
+            value: "Black",
+          },
+        });
+      } else {
+        c_cursorDispatch({
+          type: "set_mode",
+          mode: clickMode(c_data),
+        });
+      }
+    },
+  );
+
+  useEffect(() => {
+    setInitialCursor(c_editingPhase);
+  }, [c_editingPhase]);
 
   useEffect(() => {
     commands
       .getData()
       .then((data) => {
         if (data.table.length === 1 && data.table[0].length === 1) {
-          c_setEditingPhase(EditingPhaseType.Initialize);
+          c_setEditingPhase("Initialize");
         } else {
-          c_setEditingPhase(EditingPhaseType.MakeTree);
+          c_setEditingPhase("MakeTree");
         }
         c_setData(data);
       })

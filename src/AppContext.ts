@@ -1,40 +1,102 @@
 import type { Dispatch, SetStateAction } from "react";
 
-import type { Snapshot } from "./bindings";
+import type {
+  MarkPaint,
+  RectangleMark,
+  Snapshot,
+  StonePaint,
+} from "./bindings";
 
 const { createContext } = await import("react");
 
-export const enum PhaseType {
-  Main = "Main",
-  Editing = "Editing",
-  Study = "Study",
-}
+export type PhaseType = "Main" | "Editing" | "Study";
 
-export const enum EditingPhaseType {
-  Initialize = "Initialize",
-  MakeTree = "MakeTree",
-}
+export type EditingPhaseType = "Initialize" | "MakeTree";
 
-export const enum StudyPhaseType {
-  Guess = "Guess",
-  UnknownGuess = "UnknownGuess",
-  View = "View",
-  Edit = "Edit",
-}
+export type StudyPhaseType = "Guess" | "UnknownGuess" | "View" | "Edit";
 
-export const enum CursorType {
-  Delete = "Delete",
-  DeleteMark = "DeleteMark",
-  Black = "Black",
-  White = "White",
-  Triangle = "Triangle",
-  Circle = "Circle",
-  Cross = "Cross",
-  Square = "Square",
-  BlackTerritory = "BlackTerritory",
-  WhiteTerritory = "WhiteTerritory",
-  Label = "Label",
-}
+export type ImageVariant =
+  | "Board"
+  | "Delete"
+  | "DeleteMark"
+  | "Black"
+  | "White"
+  | "Triangle"
+  | "Circle"
+  | "Cross"
+  | "Square"
+  | "BlackTerritory"
+  | "WhiteTerritory";
+
+export type Icon =
+  | {
+      type: "image";
+      var: ImageVariant;
+    }
+  | {
+      type: "label";
+    };
+
+export type Click = {
+  type: "Click";
+  ghosts: [number, number][];
+  icon: Icon;
+};
+
+export type Place = {
+  type: "Place";
+  ghosts: [number, number][];
+  icon: Icon;
+  dragging: [number, number][] | null;
+  layer:
+    | {
+        type: "stone";
+        value: StonePaint;
+      }
+    | {
+        type: "mark";
+        value: MarkPaint;
+      };
+};
+export type Drag = {
+  type: "Drag";
+  ghosts: [number, number][];
+  icon: Icon;
+  start: [number, number] | null;
+  end: [number, number] | null;
+  mark: RectangleMark;
+};
+
+export type CursorType = Click | Place | Drag;
+
+export type CursorAction =
+  | {
+      type: "set_mode";
+      mode:
+        | {
+            type: "click";
+            color: "Black" | "White";
+          }
+        | {
+            type: "mark";
+            value: MarkPaint | RectangleMark;
+          }
+        | {
+            type: "stone";
+            value: StonePaint;
+          };
+    }
+  | {
+      type: "down";
+      w: [number, number] | null;
+    }
+  | {
+      type: "move";
+      w: [number, number] | null;
+    }
+  | {
+      type: "up";
+    };
 
 export interface AppContextType {
   c_phase: PhaseType;
@@ -48,11 +110,13 @@ export interface AppContextType {
   c_data: Snapshot | null;
   c_setData: Dispatch<SetStateAction<Snapshot | null>>;
   c_cursor: CursorType;
-  c_setCursor: Dispatch<SetStateAction<CursorType>>;
+  c_cursorDispatch: Dispatch<CursorAction>;
   c_nextLabel: string;
   c_setNextLabel: Dispatch<SetStateAction<string>>;
   c_window: [number, number, number, number];
   c_setWindow: Dispatch<SetStateAction<[number, number, number, number]>>;
+  c_images: Record<ImageVariant, string>;
+  c_setImages: Dispatch<SetStateAction<Record<ImageVariant, string>>>;
 }
 
 // ??? is eslint really okay with this?? what to do instead??

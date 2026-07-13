@@ -1,3 +1,6 @@
+import { StonePaint } from "../bindings";
+import { clickMode } from "../utils";
+
 const { useContext } = await import("react");
 
 const ClearIcon = (await import("@mui/icons-material/Clear")).default;
@@ -10,13 +13,14 @@ const ToggleButtonGroup = (await import("@mui/material/ToggleButtonGroup"))
 await import("../App.css");
 
 const AppContext = (await import("../AppContext")).default;
-const { CursorType } = await import("../AppContext");
 
-const black_image = (await import("../assets/black_night.png")).default;
-const white_image = (await import("../assets/white_anime.png")).default;
+type PlaceStoneGroupProps = {
+  default: "click" | "place";
+};
 
-const PlaceStoneGroup = () => {
-  const { c_data, c_cursor, c_setCursor } = useContext(AppContext);
+const PlaceStoneGroup = (props: PlaceStoneGroupProps) => {
+  const { c_data, c_images, c_cursor, c_cursorDispatch } =
+    useContext(AppContext);
 
   const img_size = "25px";
 
@@ -27,25 +31,38 @@ const PlaceStoneGroup = () => {
         value={c_cursor}
         exclusive
         size="small"
-        onChange={(_e, newValue) => {
+        onChange={(_e, newValue: StonePaint) => {
           if (newValue === null) {
-            c_setCursor(
-              c_data?.color === "Black" ? CursorType.White : CursorType.Black,
-            );
+            c_cursorDispatch({
+              type: "set_mode",
+              mode:
+                props.default === "click"
+                  ? clickMode(c_data)
+                  : {
+                      type: "stone",
+                      value: "Black",
+                    },
+            });
           } else {
-            c_setCursor(newValue);
+            c_cursorDispatch({
+              type: "set_mode",
+              mode: {
+                type: "stone",
+                value: newValue,
+              },
+            });
           }
         }}
       >
         <ToggleButton value="Black">
           <img
-            src={black_image}
+            src={c_images["Black"]}
             style={{ height: img_size, width: img_size }}
           />
         </ToggleButton>
         <ToggleButton value="White">
           <img
-            src={white_image}
+            src={c_images["White"]}
             style={{ height: img_size, width: img_size }}
           />
         </ToggleButton>

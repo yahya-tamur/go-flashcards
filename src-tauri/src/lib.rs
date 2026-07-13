@@ -14,10 +14,11 @@ pub mod study_data;
 pub mod transform;
 
 use config::ActiveConfig;
-use game_state::Mark;
 use move_tree::MoveTree;
 use problem::Variant;
-use snapshot::Snapshot;
+use snapshot::{Grid, Snapshot};
+
+use move_tree::{Paint, RectangleMark};
 
 use tauri::{Builder, Manager};
 
@@ -92,10 +93,9 @@ async fn set_window(
 async fn play(
     state: tauri::State<'_, Mutex<AppData>>,
     loc: Option<(u32, u32)>,
-    color: Color,
 ) -> Result<bool, String> {
     Ok(apply_to_move_tree(state, |move_tree, study| {
-        move_tree.play(loc.map(|(i, j)| (i as usize, j as usize)), color, study)
+        move_tree.play(loc.map(|(i, j)| (i as usize, j as usize)), study)
     })
     .await)
 }
@@ -175,16 +175,19 @@ async fn comment(state: tauri::State<'_, Mutex<AppData>>, comment: String) -> Re
 
 #[tauri::command]
 #[specta::specta]
-async fn set_marks(
+async fn paint(
     state: tauri::State<'_, Mutex<AppData>>,
-    marks: Vec<(u32, u32, Mark)>,
+    paint: Paint,
+    locs: Vec<(u32, u32)>,
+    label: String,
 ) -> Result<(), String> {
     apply_to_move_tree(state, |move_tree, _| {
-        move_tree.set_marks(
-            marks
-                .into_iter()
-                .map(|(i, j, m)| (i as usize, j as usize, m))
+        move_tree.paint(
+            paint,
+            locs.into_iter()
+                .map(|(i, j)| (i as usize, j as usize))
                 .collect(),
+            label,
         );
     })
     .await;
@@ -194,14 +197,18 @@ async fn set_marks(
 
 #[tauri::command]
 #[specta::specta]
-async fn set_marks_window(
+async fn mark_rectangle(
     state: tauri::State<'_, Mutex<AppData>>,
-    mark: Option<Mark>,
-    window: (u32, u32, u32, u32),
+    mark: RectangleMark,
+    start: (u32, u32),
+    end: (u32, u32),
 ) -> Result<(), String> {
-    let (a, b, c, d) = window;
     apply_to_move_tree(state, |move_tree, _| {
-        move_tree.set_marks_window(mark, (a as usize, b as usize, c as usize, d as usize));
+        move_tree.mark_rectangle(
+            mark,
+            (start.0 as usize, start.1 as usize),
+            (end.0 as usize, end.1 as usize),
+        );
     })
     .await;
     Ok(())
@@ -443,6 +450,13 @@ async fn import_sgf(
     Ok(())
 }
 
+#[tauri::command]
+#[specta::specta]
+async fn set_grid(state: tauri::State<'_, Mutex<AppData>>, grid: Grid) -> Result<(), String> {
+    apply_to_move_tree(state, |move_tree, _| move_tree.set_grid(grid)).await;
+    Ok(())
+}
+
 macro_rules! apply_fns {
     ($macr:ident) => {{
         $macr![
@@ -473,10 +487,11 @@ macro_rules! apply_fns {
             answer,
             get_history,
             stop_editing,
-            set_marks,
-            set_marks_window,
+            paint,
+            mark_rectangle,
             import_sgf,
             export_sgf,
+            set_grid,
         ]
     }};
 }

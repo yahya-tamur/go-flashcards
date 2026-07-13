@@ -6,7 +6,6 @@ const Paper = (await import("@mui/material/Paper")).default;
 await import("../App.css");
 
 const AppContext = (await import("../AppContext")).default;
-const { StudyPhaseType } = await import("../AppContext");
 const Board = (await import("../Board")).default;
 const CommentBox = (await import("../CommentBox")).default;
 const Tree = (await import("../Tree")).default;
@@ -21,7 +20,7 @@ const Screen = () => {
     commands
       .getData()
       .then((data) => {
-        c_setStudyPhase(StudyPhaseType.Guess);
+        c_setStudyPhase("Guess");
         c_setData(data);
       })
       .catch((e) => {

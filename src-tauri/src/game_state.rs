@@ -5,6 +5,7 @@ use std::hash::Hash;
 use crate::problem::Move;
 
 #[derive(Clone, PartialEq, Eq, Debug, Serialize, Deserialize, Type)]
+#[serde(tag = "type", content = "label")]
 pub enum Mark {
     Triangle,
     Circle,

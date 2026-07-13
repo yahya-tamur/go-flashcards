@@ -10,11 +10,8 @@ await import("./App.css");
 const AppContext = (await import("./AppContext")).default;
 const { commands } = await import("./bindings");
 
-const black_image = (await import("./assets/black_night.png")).default;
-const white_image = (await import("./assets/white_anime.png")).default;
-
 const Tree = () => {
-  const { c_data, c_setData } = useContext(AppContext);
+  const { c_data, c_images, c_setData } = useContext(AppContext);
   const treeBox = useRef<HTMLDivElement>(null);
   const [tableWidth, setTableWidth] = useState(100);
   const [tableHeight, setTableHeight] = useState(100);
@@ -350,7 +347,9 @@ const Tree = () => {
                   y={margin + gap_size * r}
                   width={square_size}
                   height={square_size}
-                  href={color === "Black" ? black_image : white_image}
+                  href={
+                    color === "Black" ? c_images["Black"] : c_images["White"]
+                  }
                   key={key}
                 />
               ))}

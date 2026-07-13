@@ -22,6 +22,8 @@ import os
 #       out of beforeDevCommand and beforeBuildCommand in src-tauri/tauri.conf.json, as long as you don't
 #       make any changes to the backend.
 
+signature = "// edited by ./scripts/make_bindings.py"
+
 def make_bindings():
     os.system("cd ./src-tauri && cargo run make-bindings")
 
@@ -30,10 +32,13 @@ def make_bindings():
 
     file = open("./src/bindings.ts").read()
 
+    if signature in file:
+        return
+
     lll = 0
 
     # will need to add here if using more tauri features!!
-    lines = [r'const { invoke : __TAURI_INVOKE, } = await import("@tauri-apps/api/core");', '']
+    lines = [r'const { invoke : __TAURI_INVOKE, } = await import("@tauri-apps/api/core");', '', signature]
     for i, line in enumerate(file.splitlines()):
         if line[:6] == "import":
             continue

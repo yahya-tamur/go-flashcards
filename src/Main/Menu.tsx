@@ -23,7 +23,6 @@ const TextField = (await import("@mui/material/TextField")).default;
 await import("../App.css");
 
 const AppContext = (await import("../AppContext")).default;
-const { PhaseType } = await import("../AppContext");
 const { commands } = await import("../bindings");
 
 interface MenuProps {
@@ -134,7 +133,7 @@ const Menu = (props: MenuProps) => {
                       //.then(() => invoke("get_config"))
                       .then(() => {
                         //c_setConfig(config);
-                        c_setPhase(PhaseType.Editing);
+                        c_setPhase("Editing");
                       });
                   }}
                 >
@@ -150,7 +149,7 @@ const Menu = (props: MenuProps) => {
                   //.then(() => invoke("get_config"))
                   .then(() => {
                     //c_setConfig(config);
-                    c_setPhase(PhaseType.Editing);
+                    c_setPhase("Editing");
                   });
               }}
             >
@@ -228,7 +227,7 @@ const Menu = (props: MenuProps) => {
                       //.then(() => invoke("get_config"))
                       .then(() => {
                         //c_setConfig(config);
-                        c_setPhase(PhaseType.Study);
+                        c_setPhase("Study");
                       });
                   }}
                 >

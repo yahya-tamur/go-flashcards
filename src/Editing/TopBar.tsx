@@ -25,8 +25,6 @@ await import("../App.css");
 
 await import("../AppContext");
 const AppContext = (await import("../AppContext")).default;
-const { CursorType, EditingPhaseType, PhaseType } =
-  await import("../AppContext");
 const { commands } = await import("../bindings");
 
 const NumberSpinner = (await import("../components/NumberSpinner")).default;
@@ -35,7 +33,7 @@ const TopBar = () => {
   const {
     c_data,
     c_setData,
-    c_setCursor,
+    c_cursorDispatch,
     c_setNextLabel,
     c_setPhase,
     c_setEditingPhase,
@@ -79,7 +77,7 @@ const TopBar = () => {
           sx={{ height: "40px" }}
           onClick={async () => {
             commands.mainMenu().then(() => {
-              c_setPhase(PhaseType.Main);
+              c_setPhase("Main");
               //c_setConfig(null);
               c_setNextLabel("A");
             });
@@ -102,9 +100,9 @@ const TopBar = () => {
               .then((data) => {
                 c_setData(data);
                 if (data.table.length === 1 && data.table[0].length === 1) {
-                  c_setEditingPhase(EditingPhaseType.Initialize);
+                  c_setEditingPhase("Initialize");
                 } else {
-                  c_setEditingPhase(EditingPhaseType.MakeTree);
+                  c_setEditingPhase("MakeTree");
                 }
               });
           }}
@@ -123,9 +121,9 @@ const TopBar = () => {
                   .then(() => commands.getData())
                   .then((data) => {
                     if (data.table.length === 1 && data.table[0].length === 1) {
-                      c_setEditingPhase(EditingPhaseType.Initialize);
+                      c_setEditingPhase("Initialize");
                     } else {
-                      c_setEditingPhase(EditingPhaseType.MakeTree);
+                      c_setEditingPhase("MakeTree");
                     }
                     c_setData(data);
                   });
@@ -145,8 +143,14 @@ const TopBar = () => {
                   .then(() => commands.getData())
                   .then((data) => {
                     c_setData(data);
-                    c_setCursor(CursorType.Black);
-                    c_setEditingPhase(EditingPhaseType.Initialize);
+                    c_cursorDispatch({
+                      type: "set_mode",
+                      mode: {
+                        type: "stone",
+                        value: "Black",
+                      },
+                    });
+                    c_setEditingPhase("Initialize");
                   });
               }}
             >
@@ -165,8 +169,7 @@ const TopBar = () => {
                   .then(() => commands.getData())
                   .then((data) => {
                     c_setData(data);
-                    c_setCursor(CursorType.Black);
-                    c_setEditingPhase(EditingPhaseType.Initialize);
+                    c_setEditingPhase("Initialize");
                   });
               }}
             >
@@ -191,9 +194,9 @@ const TopBar = () => {
                         data.table.length === 1 &&
                         data.table[0].length === 1
                       ) {
-                        c_setEditingPhase(EditingPhaseType.Initialize);
+                        c_setEditingPhase("Initialize");
                       } else {
-                        c_setEditingPhase(EditingPhaseType.MakeTree);
+                        c_setEditingPhase("MakeTree");
                       }
                       c_setData(data);
                     })

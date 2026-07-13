@@ -1,3 +1,6 @@
+import { MarkPaint } from "../bindings";
+import { clickMode } from "../utils";
+
 const { useContext } = await import("react");
 
 const Box = (await import("@mui/material/Box")).default;
@@ -8,15 +11,14 @@ const ToggleButtonGroup = (await import("@mui/material/ToggleButtonGroup"))
 await import("../App.css");
 
 const AppContext = (await import("../AppContext")).default;
-const { CursorType } = await import("../AppContext");
 
-const circle_icon = (await import("../assets/circle.svg")).default;
-const cross_icon = (await import("../assets/cross.svg")).default;
-const square_icon = (await import("../assets/square.svg")).default;
-const triangle_icon = (await import("../assets/triangle.svg")).default;
+type DragLabelGroupProps = {
+  default: "click" | "place";
+};
 
-const DragLabelGroup = () => {
-  const { c_data, c_cursor, c_setCursor, c_nextLabel } = useContext(AppContext);
+const DragLabelGroup = (props: DragLabelGroupProps) => {
+  const { c_data, c_images, c_cursor, c_cursorDispatch, c_nextLabel } =
+    useContext(AppContext);
 
   const img_size = "25px";
 
@@ -27,36 +29,52 @@ const DragLabelGroup = () => {
         value={c_cursor}
         exclusive
         size="small"
-        onChange={(_e, newValue) => {
+        onChange={(_e, newValue: MarkPaint) => {
           if (newValue === null) {
-            c_setCursor(
-              c_data?.color === "Black" ? CursorType.White : CursorType.Black,
-            );
+            c_cursorDispatch({
+              type: "set_mode",
+              mode:
+                props.default === "click"
+                  ? clickMode(c_data)
+                  : {
+                      type: "stone",
+                      value: "Black",
+                    },
+            });
           } else {
-            c_setCursor(newValue);
+            c_cursorDispatch({
+              type: "set_mode",
+              mode: {
+                type: "mark",
+                value: newValue,
+              },
+            });
           }
         }}
       >
         <ToggleButton value="Triangle">
           <img
-            src={triangle_icon}
+            src={c_images["Triangle"]}
             style={{ height: img_size, width: img_size }}
           />
         </ToggleButton>
         <ToggleButton value="Square">
           <img
-            src={square_icon}
+            src={c_images["Square"]}
             style={{ height: img_size, width: img_size }}
           />
         </ToggleButton>
         <ToggleButton value="Circle">
           <img
-            src={circle_icon}
+            src={c_images["Circle"]}
             style={{ height: img_size, width: img_size }}
           />
         </ToggleButton>
         <ToggleButton value="Cross">
-          <img src={cross_icon} style={{ height: img_size, width: img_size }} />
+          <img
+            src={c_images["Cross"]}
+            style={{ height: img_size, width: img_size }}
+          />
         </ToggleButton>
         <ToggleButton
           value={"Label"}

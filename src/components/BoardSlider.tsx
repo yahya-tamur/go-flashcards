@@ -7,10 +7,10 @@ await import("../App.css");
 const AppContext = (await import("../AppContext")).default;
 const { commands } = await import("../bindings");
 
-interface BoardSliderProps {
+type BoardSliderProps = {
   side: "row" | "column";
   force: boolean;
-}
+};
 
 const BoardSlider = (props: BoardSliderProps) => {
   const { c_data, c_setData, c_window, c_setWindow } = useContext(AppContext);

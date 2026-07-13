@@ -28,7 +28,7 @@ if "lint" in sys.argv:
     print("\nRunning cargo clippy.\n")
     os.system("cd src-tauri && cargo clippy")
 
-    print("\nRunning cargo clippy in release mode.")
+    print("\nRunning cargo clippy in release mode.\n")
     os.system("cd src-tauri && cargo clippy --release")
 
 if "status" in sys.argv:

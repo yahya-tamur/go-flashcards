@@ -11,13 +11,8 @@ await import("./App.css");
 const AppContext = (await import("./AppContext")).default;
 const { commands } = await import("./bindings");
 
-const circle_icon = (await import("./assets/circle.svg")).default;
-const cross_icon = (await import("./assets/cross.svg")).default;
-const square_icon = (await import("./assets/square.svg")).default;
-const triangle_icon = (await import("./assets/triangle.svg")).default;
-
 const CommentBox = () => {
-  const { c_phase, c_studyPhase, c_data } = useContext(AppContext);
+  const { c_phase, c_studyPhase, c_data, c_images } = useContext(AppContext);
 
   const [comment, setComment] = useState("");
   useEffect(() => {
@@ -91,7 +86,7 @@ const CommentBox = () => {
               }}
             >
               <img
-                src={triangle_icon}
+                src={c_images["Triangle"]}
                 style={{
                   height: img_size,
                   width: img_size,
@@ -106,7 +101,7 @@ const CommentBox = () => {
               }}
             >
               <img
-                src={square_icon}
+                src={c_images["Square"]}
                 style={{
                   height: img_size,
                   width: img_size,
@@ -121,7 +116,7 @@ const CommentBox = () => {
               }}
             >
               <img
-                src={circle_icon}
+                src={c_images["Circle"]}
                 style={{
                   height: img_size,
                   width: img_size,
@@ -136,7 +131,7 @@ const CommentBox = () => {
               }}
             >
               <img
-                src={cross_icon}
+                src={c_images["Cross"]}
                 style={{
                   height: img_size,
                   width: img_size,

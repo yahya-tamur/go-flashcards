@@ -1,3 +1,5 @@
+import { cursorColor } from "../utils";
+
 const { useEffect, useState, useContext } = await import("react");
 
 const Box = (await import("@mui/material/Box")).default;
@@ -7,7 +9,6 @@ const Paper = (await import("@mui/material/Paper")).default;
 await import("../App.css");
 
 const AppContext = (await import("../AppContext")).default;
-const { StudyPhaseType } = await import("../AppContext");
 const InitializeMenu = (await import("../InitializeMenu")).default;
 const MakeTreeMenu = (await import("../MakeTreeMenu")).default;
 const { commands } = await import("../bindings");
@@ -63,7 +64,9 @@ const Menu = () => {
             justifyContent: "start",
           }}
         >
-          <Box sx={{ marginBottom: "20px" }}>{c_cursor} to play.</Box>
+          <Box sx={{ marginBottom: "20px" }}>
+            {cursorColor(c_cursor)} to play.
+          </Box>
           <Box>
             <Button
               onClick={async () => {
@@ -72,23 +75,11 @@ const Menu = () => {
                   return;
                 }
                 commands
-                  .play(
-                    null,
-                    contextdata.table[contextdata.row][contextdata.col]
-                      ?.color === "Black"
-                      ? "White"
-                      : "Black",
-                  )
+                  .play(null)
                   .then(() => commands.getData())
                   .then((data) => {
                     c_setData(data);
-                    studyStep(
-                      data,
-                      c_setData,
-                      c_setFeedback,
-                      c_setStudyPhase,
-                      c_cursor,
-                    );
+                    studyStep(data, c_setData, c_setFeedback, c_setStudyPhase);
                   });
               }}
               variant="contained"
@@ -138,7 +129,7 @@ const Menu = () => {
                   .then(() => commands.getData())
                   .then((data) => {
                     c_setData(data);
-                    c_setStudyPhase(StudyPhaseType.Guess);
+                    c_setStudyPhase("Guess");
                   })
                   .catch((e) => {
                     console.log(e);
@@ -154,7 +145,7 @@ const Menu = () => {
                   .getData()
                   .then((data) => {
                     c_setData(data);
-                    c_setStudyPhase(StudyPhaseType.View);
+                    c_setStudyPhase("View");
                     c_setFeedback("");
                   })
                   .catch((e) => {

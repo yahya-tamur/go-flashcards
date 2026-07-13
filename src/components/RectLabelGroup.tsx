@@ -1,3 +1,6 @@
+import { RectangleMark } from "../bindings";
+import { clickMode } from "../utils";
+
 const { useContext } = await import("react");
 
 const Box = (await import("@mui/material/Box")).default;
@@ -8,16 +11,14 @@ const ToggleButtonGroup = (await import("@mui/material/ToggleButtonGroup"))
 await import("../App.css");
 
 const AppContext = (await import("../AppContext")).default;
-const { CursorType } = await import("../AppContext");
 
-const black_territory_icon = (await import("../assets/black_territory.svg"))
-  .default;
-const delete_mark_icon = (await import("../assets/delete_mark.svg")).default;
-const white_territory_icon = (await import("../assets/white_territory.svg"))
-  .default;
+type RectLabelGroupProps = {
+  default: "click" | "place";
+};
 
-const RectLabelGroup = () => {
-  const { c_data, c_cursor, c_setCursor } = useContext(AppContext);
+const RectLabelGroup = (props: RectLabelGroupProps) => {
+  const { c_data, c_images, c_cursor, c_cursorDispatch } =
+    useContext(AppContext);
 
   const img_size = "25px";
 
@@ -28,31 +29,44 @@ const RectLabelGroup = () => {
         value={c_cursor}
         exclusive
         size="small"
-        onChange={(_e, newValue) => {
+        onChange={(_e, newValue: RectangleMark | null) => {
           if (newValue === null) {
-            c_setCursor(
-              c_data?.color === "Black" ? CursorType.White : CursorType.Black,
-            );
+            c_cursorDispatch({
+              type: "set_mode",
+              mode:
+                props.default === "click"
+                  ? clickMode(c_data)
+                  : {
+                      type: "stone",
+                      value: "Black",
+                    },
+            });
           } else {
-            c_setCursor(newValue);
+            c_cursorDispatch({
+              type: "set_mode",
+              mode: {
+                type: "mark",
+                value: newValue,
+              },
+            });
           }
         }}
       >
         <ToggleButton value="BlackTerritory">
           <img
-            src={black_territory_icon}
+            src={c_images["Black"]}
             style={{ height: img_size, width: img_size }}
           />
         </ToggleButton>
         <ToggleButton value="WhiteTerritory">
           <img
-            src={white_territory_icon}
+            src={c_images["White"]}
             style={{ height: img_size, width: img_size }}
           />
         </ToggleButton>
         <ToggleButton value="DeleteMark">
           <img
-            src={delete_mark_icon}
+            src={c_images["DeleteMark"]}
             style={{ height: img_size, width: img_size }}
           />
         </ToggleButton>

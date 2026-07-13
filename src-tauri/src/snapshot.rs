@@ -1,4 +1,4 @@
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use specta::Type;
 use specta_typescript::Number;
 
@@ -19,13 +19,21 @@ pub struct MoveSnapshot {
 
 #[derive(Serialize, Type)]
 pub struct GameSnapshot {
-    pub stones: [[Option<Color>; 19]; 19],
+    pub grid: Grid,
     #[specta(type = (Number, Number))]
     pub captures: (usize, usize),
     #[specta(type = Option<(Number, Number)>)]
     pub ko: Option<(usize, usize)>,
-    pub marks: [[Option<Mark>; 19]; 19],
 }
+
+#[derive(Deserialize, Serialize, Type, Debug, Default, Clone)]
+pub struct Loc {
+    stone: Option<Color>,
+    mark: Option<Mark>,
+}
+
+#[derive(Deserialize, Serialize, Type, Debug)]
+pub struct Grid([[Loc; 19]; 19]);
 
 #[derive(Serialize, Type)]
 pub struct Snapshot {
@@ -88,14 +96,20 @@ impl MoveTree {
     }
 
     fn snapshot_game(&self) -> GameSnapshot {
-        let mut stones = [[None; 19]; 19];
-        let mut marks = [const { [const { None }; 19] }; 19];
+        let mut grid = [const {
+            [const {
+                Loc {
+                    stone: None,
+                    mark: None,
+                }
+            }; 19]
+        }; 19];
 
-        for i in 0..19 {
-            for j in 0..19 {
+        for (i, line) in grid.iter_mut().enumerate() {
+            for (j, loc) in line.iter_mut().enumerate() {
                 let (i_, j_) = self.recv(i, j);
-                stones[i][j] = self.game.stones[i_][j_].map(|c| self.send_recv_color(c));
-                marks[i][j] = self.game.marks[i_][j_].clone();
+                loc.stone = self.game.stones[i_][j_].map(|c| self.send_recv_color(c));
+                loc.mark = self.game.marks[i_][j_].clone();
             }
         }
 
@@ -103,22 +117,22 @@ impl MoveTree {
             ShowRecent::None => {}
             ShowRecent::Circle => {
                 let n = Some(self.tree_loc.1);
-                'a: for (i, line) in marks.iter_mut().enumerate() {
-                    for (j, mark) in line.iter_mut().enumerate() {
+                'a: for (i, line) in grid.iter_mut().enumerate() {
+                    for (j, loc) in line.iter_mut().enumerate() {
                         let (i_, j_) = self.recv(i, j);
                         if self.game.numbers[i_][j_] == n {
-                            *mark = Some(Mark::Circle);
+                            loc.mark = Some(Mark::Circle);
                             break 'a;
                         }
                     }
                 }
             }
             ShowRecent::Number => {
-                for (i, line) in marks.iter_mut().enumerate() {
-                    for (j, mark) in line.iter_mut().enumerate() {
+                for (i, line) in grid.iter_mut().enumerate() {
+                    for (j, loc) in line.iter_mut().enumerate() {
                         let (i_, j_) = self.recv(i, j);
                         if let Some(n) = self.game.numbers[i_][j_] {
-                            *mark = Some(Mark::Label(n.to_string()));
+                            loc.mark = Some(Mark::Label(n.to_string()));
                         }
                     }
                 }
@@ -126,10 +140,15 @@ impl MoveTree {
         }
 
         GameSnapshot {
-            stones,
-            marks,
+            grid: Grid(grid),
             captures: self.game.captures,
             ko: self.game.ko,
         }
+    }
+
+    pub fn set_grid(&mut self, grid: Grid) {
+        let grid = grid.0;
+        println!("{:?} {:?} {:?}", grid, grid[0][0].mark, grid[0][0].stone);
+        todo!()
     }
 }

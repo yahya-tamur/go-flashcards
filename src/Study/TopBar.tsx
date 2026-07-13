@@ -8,8 +8,6 @@ await import("../App.css");
 
 await import("../AppContext");
 const AppContext = (await import("../AppContext")).default;
-const { EditingPhaseType, PhaseType, StudyPhaseType } =
-  await import("../AppContext");
 const { commands } = await import("../bindings");
 
 const NumberSpinner = (await import("../components/NumberSpinner")).default;
@@ -57,7 +55,7 @@ const TopBar = () => {
           sx={{ height: "40px" }}
           onClick={async () => {
             commands.mainMenu().then(() => {
-              c_setPhase(PhaseType.Main);
+              c_setPhase("Main");
               //c_setConfig(null);
             });
           }}
@@ -96,7 +94,7 @@ const TopBar = () => {
                   //c_setExerciseColor(
                   //  data.color === "Black" ? CursorType.White : CursorType.Black,
                   //);
-                  c_setStudyPhase(StudyPhaseType.View);
+                  c_setStudyPhase("View");
                   c_setNextLabel("A");
                 })
                 .catch((e) => {
@@ -112,8 +110,8 @@ const TopBar = () => {
             disabled={c_studyPhase !== "View"}
             sx={{ height: "40px" }}
             onClick={async () => {
-              c_setStudyPhase(StudyPhaseType.Edit);
-              c_setEditingPhase(EditingPhaseType.MakeTree);
+              c_setStudyPhase("Edit");
+              c_setEditingPhase("MakeTree");
               c_setFeedback("");
             }}
           >
@@ -133,7 +131,7 @@ const TopBar = () => {
                   //c_setExerciseColor(
                   //data.color === "Black" ? "White" : "Black",
                   //);
-                  c_setStudyPhase(StudyPhaseType.View);
+                  c_setStudyPhase("View");
                   c_setNextLabel("A");
                 })
                 .catch((e) => {
@@ -157,7 +155,7 @@ const TopBar = () => {
                   //c_setExerciseColor(
                   //data.color === "Black" ? "White" : "Black",
                   //);
-                  c_setStudyPhase(StudyPhaseType.Guess);
+                  c_setStudyPhase("Guess");
                 })
                 .catch((e) => {
                   console.log(e);

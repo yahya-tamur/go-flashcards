@@ -1,3 +1,5 @@
+import { cursorColor } from "./utils";
+
 const { useContext } = await import("react");
 
 const Box = (await import("@mui/material/Box")).default;
@@ -8,7 +10,6 @@ const TextField = (await import("@mui/material/TextField")).default;
 await import("./App.css");
 
 const AppContext = (await import("./AppContext")).default;
-const { CursorType, EditingPhaseType } = await import("./AppContext");
 const { commands } = await import("./bindings");
 
 const BoardSlider = (await import("./components/BoardSlider")).default;
@@ -20,7 +21,7 @@ const InitializeMenu = () => {
   const {
     c_setData,
     c_cursor,
-    c_setCursor,
+    c_cursorDispatch,
     c_nextLabel,
     c_setNextLabel,
     c_setEditingPhase,
@@ -70,10 +71,22 @@ const InitializeMenu = () => {
           value={c_nextLabel}
           onChange={(e) => {
             c_setNextLabel(e.target.value);
-            c_setCursor(CursorType.Label);
+            c_cursorDispatch({
+              type: "set_mode",
+              mode: {
+                type: "mark",
+                value: "Label",
+              },
+            });
           }}
           onFocus={() => {
-            c_setCursor(CursorType.Label);
+            c_cursorDispatch({
+              type: "set_mode",
+              mode: {
+                type: "mark",
+                value: "Label",
+              },
+            });
           }}
         ></TextField>
         <DragLabelGroup />
@@ -101,15 +114,18 @@ const InitializeMenu = () => {
         <Button
           variant="outlined"
           color="button"
-          disabled={c_cursor !== "Black" && c_cursor !== "White"}
+          disabled={cursorColor(c_cursor) !== null}
           onClick={async () => {
-            commands
-              .finishSetup(c_cursor === "Black" ? "White" : "Black")
-              .then(() => commands.getData())
-              .then((data) => {
-                c_setData(data);
-                c_setEditingPhase(EditingPhaseType.MakeTree);
-              });
+            const color = cursorColor(c_cursor);
+            if (color !== null) {
+              commands
+                .finishSetup(color)
+                .then(() => commands.getData())
+                .then((data) => {
+                  c_setData(data);
+                  c_setEditingPhase("MakeTree");
+                });
+            }
           }}
         >
           Start
