@@ -1,3 +1,5 @@
+import { editNewExercise } from "../utils";
+
 const { useState, useContext } = await import("react");
 
 const ClearIcon = (await import("@mui/icons-material/Clear")).default;
@@ -120,11 +122,7 @@ const TopBar = () => {
                   .deleteExercise()
                   .then(() => commands.getData())
                   .then((data) => {
-                    if (data.table.length === 1 && data.table[0].length === 1) {
-                      c_setEditingPhase("Initialize");
-                    } else {
-                      c_setEditingPhase("MakeTree");
-                    }
+                    editNewExercise(data, c_cursorDispatch, c_setEditingPhase);
                     c_setData(data);
                   });
               }}
@@ -142,15 +140,8 @@ const TopBar = () => {
                   .newExercise(true)
                   .then(() => commands.getData())
                   .then((data) => {
+                    editNewExercise(data, c_cursorDispatch, c_setEditingPhase);
                     c_setData(data);
-                    c_cursorDispatch({
-                      type: "set_mode",
-                      mode: {
-                        type: "stone",
-                        value: "Black",
-                      },
-                    });
-                    c_setEditingPhase("Initialize");
                   });
               }}
             >
@@ -168,8 +159,8 @@ const TopBar = () => {
                   .newExercise(false)
                   .then(() => commands.getData())
                   .then((data) => {
+                    editNewExercise(data, c_cursorDispatch, c_setEditingPhase);
                     c_setData(data);
-                    c_setEditingPhase("Initialize");
                   });
               }}
             >
@@ -190,14 +181,7 @@ const TopBar = () => {
                     .importSgf()
                     .then(() => commands.getData())
                     .then((data) => {
-                      if (
-                        data.table.length === 1 &&
-                        data.table[0].length === 1
-                      ) {
-                        c_setEditingPhase("Initialize");
-                      } else {
-                        c_setEditingPhase("MakeTree");
-                      }
+                      editNewExercise(data, c_cursorDispatch, c_setEditingPhase);
                       c_setData(data);
                     })
                     .catch((e) => {

@@ -59,227 +59,186 @@ theme = createTheme(theme, {
   },
 });
 
-const setMode = (
-  cursor: CursorType,
-  action: Extract<CursorAction, { type: "set_mode" }>,
-): CursorType => {
-  if (
-    (action.mode.type === "click" && cursor.type === "Click") ||
-    (action.mode.type === "mark" &&
-      ((cursor.type === "Place" &&
-        cursor.layer.type === "mark" &&
-        cursor.layer.value === action.mode.value) ||
-        (cursor.type === "Drag" && cursor.mark === action.mode.value))) ||
-    (action.mode.type === "stone" &&
-      cursor.type === "Place" &&
-      cursor.layer.type === "stone" &&
-      action.mode.value === cursor.layer.value)
-  ) {
-    return cursor;
-  }
-  switch (action.mode.type) {
-    case "click": {
-      return {
-        type: "Click",
-        ghosts: [],
-        icon: {
-          type: "image",
-          var: action.mode.color,
-        },
-      };
-    }
-    case "stone": {
-      return {
-        type: "Place",
-        ghosts: [],
-        icon: {
-          type: "image",
-          var: action.mode.value,
-        },
-        dragging: null,
-        layer: {
-          type: "stone",
-          value: action.mode.value,
-        },
-      };
-    }
-    case "mark": {
-      if (
-        action.mode.value === "DeleteMark" ||
-        action.mode.value === "BlackTerritory" ||
-        action.mode.value === "WhiteTerritory"
-      ) {
-        return {
-          type: "Drag",
-          ghosts: [],
-          icon: {
-            type: "image",
-            var: action.mode.value,
-          },
-          start: null,
-          end: null,
-          mark: action.mode.value,
-        };
-      } else {
-        return {
-          type: "Place",
-          ghosts: [],
-          icon:
-            action.mode.value === "Label"
-              ? { type: "label" }
-              : { type: "image", var: action.mode.value },
-          dragging: null,
-          layer: {
-            type: "mark",
-            value: action.mode.value,
-          },
-        };
-      }
-    }
-  }
-};
-
-const down = (
-  cursor: CursorType,
-  action: Extract<CursorAction, { type: "down" }>,
-): CursorType => {
-  switch (cursor.type) {
-    case "Click": {
-      return cursor;
-    }
-    case "Place": {
-      if (
-        cursor.dragging !== null &&
-        cursor.dragging.length <= 1 &&
-        wEquals(cursor.dragging[0] ?? null, action.w)
-      ) {
-        return cursor;
-      }
-      const cursor_ = structuredClone(cursor);
-      cursor_.dragging = action.w === null ? [] : [action.w];
-      cursor_.ghosts = [];
-      return cursor_;
-    }
-    case "Drag": {
-      if (wEquals(cursor.start, action.w) && wEquals(cursor.end, action.w)) {
-        return cursor;
-      }
-      const cursor_ = structuredClone(cursor);
-      cursor_.start = action.w;
-      cursor_.end = action.w;
-      cursor_.ghosts = action.w === null ? [] : [action.w];
-      return cursor_;
-    }
-  }
-};
-
-const move = (
-  cursor: CursorType,
-  action: Extract<CursorAction, { type: "move" }>,
-): CursorType => {
-  switch (cursor.type) {
-    case "Click": {
-      if (wEquals(action.w, cursor.ghosts[0] ?? null)) {
-        return cursor;
-      }
-      const cursor_ = structuredClone(cursor);
-      cursor_.ghosts = action.w === null ? [] : [action.w];
-      return cursor_;
-    }
-    case "Place": {
-      if (cursor.dragging || wEquals(action.w, cursor.ghosts[0] ?? null)) {
-        return cursor;
-      }
-      const cursor_ = structuredClone(cursor);
-      if (
-        action.w !== null &&
-        cursor.ghosts.some((w) => wEquals(w, action.w))
-      ) {
-        cursor_.ghosts.push(action.w);
-      }
-      cursor_.ghosts = action.w === null ? [] : [action.w];
-      return cursor_;
-    }
-    case "Drag": {
-      if (wEquals(action.w, cursor.end)) {
-        return cursor;
-      }
-      if (action.w === null) {
-        const cursor_ = structuredClone(cursor);
-        cursor_.end = null;
-        cursor_.ghosts = [];
-        return cursor_;
-      }
-      if (cursor.start === null) {
-        const cursor_ = structuredClone(cursor);
-        cursor_.end = action.w;
-        cursor_.ghosts = [action.w];
-        return cursor_;
-      }
-      const [r, rr] = [cursor.start[0], action.w[0]].toSorted();
-      const [c, cc] = [cursor.start[1], action.w[1]].toSorted();
-      const ghosts: [number, number][] = [];
-      for (let row = r; row <= rr; row++) {
-        for (let col = c; col <= cc; col++) {
-          ghosts.push([row, col]);
-        }
-      }
-      const cursor_ = structuredClone(cursor);
-      cursor_.end = action.w;
-      cursor_.ghosts = ghosts;
-      return cursor_;
-    }
-  }
-};
-
-const up = (
-  cursor: CursorType /*, _action: Extract<CursorAction, {type: "up"}>*/,
-): CursorType => {
-  switch (cursor.type) {
-    case "Click": {
-      if (cursor.ghosts.length === 0) {
-        return cursor;
-      }
-      const cursor_ = structuredClone(cursor);
-      cursor_.ghosts = [];
-      return cursor_;
-    }
-    case "Place": {
-      if (!cursor.dragging) {
-        return cursor;
-      }
-      const cursor_ = structuredClone(cursor);
-      cursor_.dragging = [];
-      return cursor_;
-    }
-    case "Drag": {
-      if (wEquals(cursor.start, null)) {
-        return cursor;
-      }
-      const cursor_ = structuredClone(cursor);
-      cursor_.start = null;
-      cursor_.ghosts = cursor.end === null ? [] : [cursor.end];
-      return cursor_;
-    }
-  }
-};
-
 const cursorReducer = (
   cursor: CursorType,
   action: CursorAction,
 ): CursorType => {
   switch (action.type) {
-    case "set_mode": {
-      return setMode(cursor, action);
+    case "set_click": {
+      if (cursor.type === "Click" && action.value === cursor.holding.value) {
+        return cursor;
+      }
+      return {
+        type: "Click",
+        ghosts: [],
+        holding: { value: action.value, layer: "stone" },
+      };
+    }
+    case "set_paint": {
+      if (cursor.type !== "Click" && action.value === cursor.holding.value) {
+        // maybe not if cursor is holding some data?
+        return cursor;
+      }
+      switch (action.value) {
+        case "BlackTerritory":
+        case "WhiteTerritory":
+        case "DeleteMark": {
+          return {
+            type: "Drag",
+            ghosts: [],
+            start: null,
+            end: null,
+            holding: { value: action.value, layer: "mark" },
+          };
+        }
+        case "Black":
+        case "White":
+        case "Delete": {
+          return {
+            type: "Place",
+            ghosts: [],
+            dragging: null,
+            holding: {
+              value: action.value,
+              layer: "stone",
+            },
+          };
+        }
+        default: {
+          return {
+            type: "Place",
+            ghosts: [],
+            dragging: null,
+            holding: {
+              value: action.value,
+              layer: "mark",
+            },
+          };
+        }
+      }
     }
     case "down": {
-      return down(cursor, action);
+      switch (cursor.type) {
+        case "Click": {
+          return cursor;
+        }
+        case "Place": {
+          if (
+            cursor.dragging !== null &&
+            cursor.dragging.length <= 1 &&
+            wEquals(cursor.dragging[0] ?? null, action.w)
+          ) {
+            return cursor;
+          }
+          const cursor_ = structuredClone(cursor);
+          cursor_.dragging = action.w === null ? [] : [action.w];
+          cursor_.ghosts = [];
+          return cursor_;
+        }
+        case "Drag": {
+          if (
+            wEquals(cursor.start, action.w) &&
+            wEquals(cursor.end, action.w)
+          ) {
+            return cursor;
+          }
+          const cursor_ = structuredClone(cursor);
+          cursor_.start = action.w;
+          cursor_.end = action.w;
+          cursor_.ghosts = action.w === null ? [] : [action.w];
+          return cursor_;
+        }
+      }
     }
     case "move": {
-      return move(cursor, action);
+      switch (cursor.type) {
+        case "Click": {
+          if (wEquals(action.w, cursor.ghosts[0] ?? null)) {
+            return cursor;
+          }
+          const cursor_ = structuredClone(cursor);
+          cursor_.ghosts = action.w === null ? [] : [action.w];
+          return cursor_;
+        }
+        case "Place": {
+          if (cursor.dragging || wEquals(action.w, cursor.ghosts[0] ?? null)) {
+            return cursor;
+          }
+          const cursor_ = structuredClone(cursor);
+          if (
+            action.w !== null &&
+            cursor.ghosts.some((w) => wEquals(w, action.w))
+          ) {
+            cursor_.ghosts.push(action.w);
+          }
+          cursor_.ghosts = action.w === null ? [] : [action.w];
+          return cursor_;
+        }
+        case "Drag": {
+          console.log(cursor, action);
+          if (wEquals(action.w, cursor.end)) {
+            return cursor;
+          }
+          if (action.w === null) {
+            const cursor_ = structuredClone(cursor);
+            cursor_.end = null;
+            cursor_.ghosts = [];
+            return cursor_;
+          }
+          if (cursor.start === null) {
+            const cursor_ = structuredClone(cursor);
+            cursor_.end = action.w;
+            cursor_.ghosts = [action.w];
+            return cursor_;
+          }
+          const [r, rr] = [cursor.start[0], action.w[0]].toSorted(
+            (a, b) => a - b,
+          );
+          const [c, cc] = [cursor.start[1], action.w[1]].toSorted(
+            (a, b) => a - b,
+          );
+          const ghosts: [number, number][] = [];
+          for (let row = r; row <= rr; row++) {
+            for (let col = c; col <= cc; col++) {
+              ghosts.push([row, col]);
+            }
+          }
+          let cursor_ = structuredClone(cursor);
+          cursor_.end = action.w;
+          cursor_.ghosts = ghosts;
+          console.log(r, rr, c, cc, ghosts, cursor_);
+          return cursor_;
+        }
+      }
     }
     case "up": {
-      return up(cursor);
+      switch (cursor.type) {
+        case "Click": {
+          if (cursor.ghosts.length === 0) {
+            return cursor;
+          }
+          const cursor_ = structuredClone(cursor);
+          cursor_.ghosts = [];
+          return cursor_;
+        }
+        case "Place": {
+          if (!cursor.dragging) {
+            return cursor;
+          }
+          const cursor_ = structuredClone(cursor);
+          cursor_.dragging = [];
+          return cursor_;
+        }
+        case "Drag": {
+          if (wEquals(cursor.start, null)) {
+            return cursor;
+          }
+          const cursor_ = structuredClone(cursor);
+          cursor_.start = null;
+          cursor_.ghosts = cursor.end === null ? [] : [cursor.end];
+          return cursor_;
+        }
+      }
     }
   }
 };
@@ -315,12 +274,8 @@ function App() {
   const [c_cursor, c_cursorDispatch] = useReducer(cursorReducer, {
     type: "Place",
     ghosts: [],
-    icon: {
-      type: "image",
-      var: "Black",
-    },
     dragging: null,
-    layer: { type: "stone", value: "Black" },
+    holding: { value: "Black", layer: "stone" },
   });
 
   return (

@@ -17,7 +17,7 @@ const letters = "ABCDEFGHJKLMNOPQRST".split("");
 
 type GridAction =
   | {
-      type: "click";
+      type: "set_temp";
       w: [number, number];
       cursor: Place | Drag;
       label: string;
@@ -33,7 +33,7 @@ const empty_grid = Array.from({ length: 19 }, () =>
 
 const gridReducer = (grid: Grid, action: GridAction): Grid => {
   switch (action.type) {
-    case "click": {
+    case "set_temp": {
       const [r, c] = action.w;
       if (action.cursor.type === "Place") {
         if (action.cursor.layer.type === "stone") {
@@ -58,29 +58,6 @@ const gridReducer = (grid: Grid, action: GridAction): Grid => {
             return grid_;
           }
         }
-      } else if (action.cursor.type === "Drag") {
-        if (action.cursor.start === null) {
-          return grid;
-        }
-        const [r, rr] = [action.cursor.start[0], action.w[0]].toSorted();
-        const [c, cc] = [action.cursor.start[1], action.w[1]].toSorted();
-        const grid_ = structuredClone(grid);
-        let changed = false;
-        for (let i = r; i <= rr; i++) {
-          for (let j = c; c <= cc; j++) {
-            if (
-              !markEqualsCursor(
-                grid[i][j].mark,
-                action.cursor.mark,
-                action.label,
-              )
-            ) {
-              grid_[i][j].mark = { type: "Label", label: action.label };
-              changed = true;
-            }
-          }
-        }
-        return changed ? grid_ : grid;
       }
       return grid;
     }
@@ -178,6 +155,7 @@ const Board = () => {
       const si = Math.round(i);
       const sj = Math.round(j);
 
+      console.log(si, sj);
       if (!(si >= left && si <= right && sj >= top && sj <= bottom)) {
         return null;
       }
@@ -374,7 +352,7 @@ const Board = () => {
             if (c_cursor.type === "Place") {
               if (w !== null) {
                 gridDispatch({
-                  type: "click",
+                  type: "set_temp",
                   w: w,
                   cursor: c_cursor,
                   label: c_nextLabel,
@@ -385,12 +363,12 @@ const Board = () => {
           onPointerMove={async (e) => {
             const w = get_coord(e);
             c_cursorDispatch({
-              type: "down",
+              type: "move",
               w: w,
             });
             if (c_cursor.type === "Place" && c_cursor.dragging && w !== null) {
               gridDispatch({
-                type: "click",
+                type: "set_temp",
                 w: w,
                 cursor: c_cursor,
                 label: c_nextLabel,
@@ -426,6 +404,7 @@ const Board = () => {
               }
             } else if (c_cursor.type === "Place") {
               commands.setGrid(grid);
+              commands.paint(c_cursor.icon, c_cursor.dragging, c_nextLabel);
             } else if (c_cursor.type === "Drag") {
               if (w !== null && c_cursor.start !== null) {
                 commands

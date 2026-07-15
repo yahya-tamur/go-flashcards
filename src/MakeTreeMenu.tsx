@@ -1,4 +1,4 @@
-import { clickMode } from "./utils";
+import { setClick } from "./utils";
 
 const { useEffect, useState, useContext } = await import("react");
 
@@ -86,20 +86,14 @@ const MakeTreeMenu = () => {
           onChange={(e) => {
             c_setNextLabel(e.target.value);
             c_cursorDispatch({
-              type: "set_mode",
-              mode: {
-                type: "mark",
-                value: "Label",
-              },
+              type: "set_paint",
+              value: "Label",
             });
           }}
           onFocus={() => {
             c_cursorDispatch({
-              type: "set_mode",
-              mode: {
-                type: "mark",
-                value: "Label",
-              },
+              type: "set_paint",
+              value: "Label",
             });
           }}
         ></TextField>
@@ -120,10 +114,7 @@ const MakeTreeMenu = () => {
           exclusive
           size="small"
           onChange={() => {
-            c_cursorDispatch({
-              type: "set_mode",
-              mode: clickMode(c_data),
-            });
+            setClick(c_data, c_cursorDispatch)
           }}
         >
           <ToggleButton value={c_data?.color === "Black" ? "White" : "Black"}>
@@ -205,11 +196,8 @@ const MakeTreeMenu = () => {
                 c_setData(data);
                 c_setEditingPhase("Initialize");
                 c_cursorDispatch({
-                  type: "set_mode",
-                  mode: {
-                    type: "stone",
-                    value: "Black",
-                  },
+                  type: "set_paint",
+                  value: "Black",
                 });
               });
           }}

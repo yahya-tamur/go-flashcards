@@ -1,6 +1,6 @@
 import type { Dispatch, SetStateAction } from "react";
 
-import type { CursorAction, CursorType, StudyPhaseType } from "./AppContext";
+import type { CursorAction, CursorType, EditingPhaseType, StudyPhaseType } from "./AppContext";
 import type { Mark, MarkPaint, RectangleMark, Snapshot } from "./bindings";
 
 const { commands } = await import("./bindings");
@@ -8,19 +8,15 @@ const { commands } = await import("./bindings");
 // label(Triangle) = label(Square)
 //
 
-export const clickMode = (
-  c_data: Snapshot | null,
-): Extract<CursorAction, { type: "set_mode" }>["mode"] => ({
-  type: "click",
-  color: c_data?.color === "Black" ? "White" : "Black",
-});
+export const setClick = (c_data: Snapshot | null, c_cursorDispatch: Dispatch<CursorAction>) =>
+  c_cursorDispatch({
+    type: "set_click",
+    value: c_data?.color === "Black" ? "White" : "Black"
+  });
 
 export const cursorColor = (cursor: CursorType): "Black" | "White" | null => {
-  // works for Click variant
-  if (cursor.icon.type === "image") {
-    if (cursor.icon.var === "Black" || cursor.icon.var === "White") {
-      return cursor.icon.var;
-    }
+  if (cursor.holding.value === "Black" || cursor.holding.value === "White") {
+    return cursor.holding.value;
   }
   return null;
 };
@@ -58,6 +54,23 @@ export const markEqualsCursor = (
 export const handleError = async <T>(error: T) => {
   console.log("backend error", error);
 };
+
+export const editNewExercise = (
+  data: Snapshot,
+  c_cursorDispatch: Dispatch<CursorAction>,
+  c_setEditingPhase: Dispatch<SetStateAction<EditingPhaseType>>,
+) => {
+  if (data.table.length === 1 && data.table[0].length === 1) {
+    c_setEditingPhase("Initialize");
+        c_cursorDispatch({
+          type: "set_paint",
+          value: "Black",
+        });
+  } else {
+    c_setEditingPhase("MakeTree");
+    setClick(data, c_cursorDispatch);
+  }
+}
 
 export const studyStep = (
   data: Snapshot,

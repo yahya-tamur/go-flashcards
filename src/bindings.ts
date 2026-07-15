@@ -37,7 +37,6 @@ export const commands = {
 	markRectangle: (mark: RectangleMark, start: [number, number], end: [number, number]) : Promise<null> => (__TAURI_INVOKE("mark_rectangle", { mark, start, end })),
 	importSgf: () : Promise<null> => (__TAURI_INVOKE("import_sgf")),
 	exportSgf: () : Promise<null> => (__TAURI_INVOKE("export_sgf")),
-	setGrid: (grid: Grid) : Promise<null> => (__TAURI_INVOKE("set_grid", { grid })),
 };
 
 /* Types */

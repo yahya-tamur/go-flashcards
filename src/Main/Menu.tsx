@@ -1,4 +1,5 @@
 import type { Dispatch, SetStateAction } from "react";
+import { editNewExercise } from "../utils";
 
 const { useState, useContext } = await import("react");
 
@@ -35,7 +36,7 @@ interface MenuProps {
 }
 
 const Menu = (props: MenuProps) => {
-  const { c_setPhase } = useContext(AppContext);
+  const { c_setData, c_setPhase, c_cursorDispatch, c_setEditingPhase } = useContext(AppContext);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [fileToDelete, setFileToDelete] = useState("");
 
@@ -131,9 +132,12 @@ const Menu = (props: MenuProps) => {
                     commands
                       .loadExercises(e)
                       //.then(() => invoke("get_config"))
-                      .then(() => {
+                      .then(() => commands.getData())
+                      .then((data) => {
                         //c_setConfig(config);
+                        editNewExercise(data, c_cursorDispatch, c_setEditingPhase);
                         c_setPhase("Editing");
+                        c_setData(data);
                       });
                   }}
                 >

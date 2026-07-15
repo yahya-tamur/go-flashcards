@@ -16,7 +16,7 @@ pub mod transform;
 use config::ActiveConfig;
 use move_tree::MoveTree;
 use problem::Variant;
-use snapshot::{Grid, Snapshot};
+use snapshot::Snapshot;
 
 use move_tree::{Paint, RectangleMark};
 
@@ -450,13 +450,6 @@ async fn import_sgf(
     Ok(())
 }
 
-#[tauri::command]
-#[specta::specta]
-async fn set_grid(state: tauri::State<'_, Mutex<AppData>>, grid: Grid) -> Result<(), String> {
-    apply_to_move_tree(state, |move_tree, _| move_tree.set_grid(grid)).await;
-    Ok(())
-}
-
 macro_rules! apply_fns {
     ($macr:ident) => {{
         $macr![
@@ -491,7 +484,6 @@ macro_rules! apply_fns {
             mark_rectangle,
             import_sgf,
             export_sgf,
-            set_grid,
         ]
     }};
 }

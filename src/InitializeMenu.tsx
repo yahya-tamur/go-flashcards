@@ -72,24 +72,18 @@ const InitializeMenu = () => {
           onChange={(e) => {
             c_setNextLabel(e.target.value);
             c_cursorDispatch({
-              type: "set_mode",
-              mode: {
-                type: "mark",
-                value: "Label",
-              },
+              type: "set_paint",
+              value: "Label",
             });
           }}
           onFocus={() => {
             c_cursorDispatch({
-              type: "set_mode",
-              mode: {
-                type: "mark",
-                value: "Label",
-              },
+              type: "set_paint",
+              value: "Label",
             });
           }}
         ></TextField>
-        <DragLabelGroup />
+        <DragLabelGroup default="place" />
       </Box>
       <Box
         sx={{
@@ -99,8 +93,8 @@ const InitializeMenu = () => {
           justifyContent: "space-around",
         }}
       >
-        <PlaceStoneGroup />
-        <RectLabelGroup />
+        <PlaceStoneGroup default="place" />
+        <RectLabelGroup default="place" />
       </Box>
 
       <Box

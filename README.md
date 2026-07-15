@@ -32,6 +32,13 @@ Current Actual Goal
 - android file situation
 
 
+- custom theme goal:
+  - (convertfilesync)
+  - editable values:
+    - theme, all images
+    papers? elevations? no?
+    mode ?!
+
 things that popped up:
 ----------------------------------
 

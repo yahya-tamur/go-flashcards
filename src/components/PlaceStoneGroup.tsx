@@ -1,5 +1,5 @@
 import { StonePaint } from "../bindings";
-import { clickMode } from "../utils";
+import { setClick } from "../utils";
 
 const { useContext } = await import("react");
 
@@ -33,23 +33,18 @@ const PlaceStoneGroup = (props: PlaceStoneGroupProps) => {
         size="small"
         onChange={(_e, newValue: StonePaint) => {
           if (newValue === null) {
-            c_cursorDispatch({
-              type: "set_mode",
-              mode:
-                props.default === "click"
-                  ? clickMode(c_data)
-                  : {
-                      type: "stone",
-                      value: "Black",
-                    },
-            });
+            if (props.default === "click") {
+              setClick(c_data, c_cursorDispatch)
+            } else {
+              c_cursorDispatch({
+                type: "set_paint",
+                value: "Black",
+              });
+            }
           } else {
             c_cursorDispatch({
-              type: "set_mode",
-              mode: {
-                type: "stone",
-                value: newValue,
-              },
+              type: "set_paint",
+              value: newValue,
             });
           }
         }}

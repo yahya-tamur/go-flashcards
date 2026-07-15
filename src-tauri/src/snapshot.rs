@@ -145,10 +145,4 @@ impl MoveTree {
             ko: self.game.ko,
         }
     }
-
-    pub fn set_grid(&mut self, grid: Grid) {
-        let grid = grid.0;
-        println!("{:?} {:?} {:?}", grid, grid[0][0].mark, grid[0][0].stone);
-        todo!()
-    }
 }

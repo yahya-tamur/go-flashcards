@@ -28,63 +28,54 @@ export type ImageVariant =
   | "BlackTerritory"
   | "WhiteTerritory";
 
-export type Icon =
-  | {
-      type: "image";
-      var: ImageVariant;
-    }
-  | {
-      type: "label";
-    };
+export type ColorHolding =
+  { value: "Black"; layer: "stone" } | { value: "White"; layer: "stone" };
+
+export type RectHolding =
+  | { value: "BlackTerritory"; layer: "mark" }
+  | { value: "WhiteTerritory"; layer: "mark" }
+  | { value: "DeleteMark"; layer: "mark" };
+
+export type OtherHolding =
+  | { value: "Triangle"; layer: "mark" }
+  | { value: "Cross"; layer: "mark" }
+  | { value: "Square"; layer: "mark" }
+  | { value: "Circle"; layer: "mark" }
+  | { value: "Delete"; layer: "stone" }
+  | { value: "Label"; layer: "mark" };
+
+export type Holding = ColorHolding | RectHolding | OtherHolding;
 
 export type Click = {
   type: "Click";
   ghosts: [number, number][];
-  icon: Icon;
+  holding: ColorHolding;
 };
 
 export type Place = {
   type: "Place";
   ghosts: [number, number][];
-  icon: Icon;
   dragging: [number, number][] | null;
-  layer:
-    | {
-        type: "stone";
-        value: StonePaint;
-      }
-    | {
-        type: "mark";
-        value: MarkPaint;
-      };
+  holding: ColorHolding | OtherHolding;
 };
 export type Drag = {
   type: "Drag";
   ghosts: [number, number][];
-  icon: Icon;
+  holding: RectHolding;
   start: [number, number] | null;
   end: [number, number] | null;
-  mark: RectangleMark;
 };
 
 export type CursorType = Click | Place | Drag;
 
 export type CursorAction =
   | {
-      type: "set_mode";
-      mode:
-        | {
-            type: "click";
-            color: "Black" | "White";
-          }
-        | {
-            type: "mark";
-            value: MarkPaint | RectangleMark;
-          }
-        | {
-            type: "stone";
-            value: StonePaint;
-          };
+      type: "set_click";
+      value: "Black" | "White";
+    }
+  | {
+      type: "set_paint";
+      value: MarkPaint | RectangleMark | StonePaint;
     }
   | {
       type: "down";
