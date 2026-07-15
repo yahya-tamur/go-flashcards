@@ -72,7 +72,7 @@ export type MoveSnapshot = {
 	variant: Variant,
 };
 
-export type Paint = { type: "stone"; value: StonePaint } | { type: "mark"; value: MarkPaint };
+export type Paint = { layer: "stone"; value: StonePaint } | { layer: "mark"; value: MarkPaint };
 
 export type RectangleMark = "BlackTerritory" | "WhiteTerritory" | "DeleteMark";
 

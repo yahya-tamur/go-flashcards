@@ -37,7 +37,7 @@ pub enum MarkPaint {
 }
 
 #[derive(Deserialize, Type)]
-#[serde(tag = "type", content = "value")]
+#[serde(tag = "layer", content = "value")]
 pub enum Paint {
     #[serde(rename = "stone")]
     Stone(StonePaint),

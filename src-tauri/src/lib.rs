@@ -490,6 +490,8 @@ macro_rules! apply_fns {
 
 use tauri::generate_handler;
 
+use crate::fs::initialize;
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     #[cfg(debug_assertions)]
@@ -511,6 +513,7 @@ pub fn run() {
         //.any_thread()
         .plugin(tauri_plugin_dialog::init())
         .setup(|app| {
+            initialize(&app.path().app_data_dir().unwrap()).unwrap();
             app.manage(Mutex::new(AppData::default()));
             Ok(())
         })

@@ -28,13 +28,13 @@ const PlaceStoneGroup = (props: PlaceStoneGroupProps) => {
     <Box>
       <ToggleButtonGroup
         color="toggle"
-        value={c_cursor}
+        value={c_cursor.paint.value}
         exclusive
         size="small"
         onChange={(_e, newValue: StonePaint) => {
           if (newValue === null) {
             if (props.default === "click") {
-              setClick(c_data, c_cursorDispatch)
+              setClick(c_data, c_cursorDispatch);
             } else {
               c_cursorDispatch({
                 type: "set_paint",

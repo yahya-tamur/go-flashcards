@@ -254,9 +254,9 @@ pub async fn add_exercise(app_data: &Path, name: &str) -> bool {
         .map_or(old_config.len(), |m| m.start());
 
     let mut i = 0;
-    if !old_config.is_empty() && old_config[n - 1..n] == *"\n" {
+    if !old_config.is_empty() && (n == 0 || old_config[n - 1..n] == *"\n") {
         i += 1;
-        if old_config.len() > 1 && old_config[n - 2..n - 1] == *"\n" {
+        if old_config.len() > 1 && (n <= 1 || old_config[n - 2..n - 1] == *"\n") {
             i += 1;
         }
     }

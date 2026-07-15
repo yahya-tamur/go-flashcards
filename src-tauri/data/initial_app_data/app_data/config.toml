@@ -1,0 +1,9 @@
+[flashcard_set.sda]
+sources = ["sda"]
+
+[default]
+show_recent = "circle"
+random_orientation = false
+random_color = false
+algorithm = 3
+transfer_marks = true

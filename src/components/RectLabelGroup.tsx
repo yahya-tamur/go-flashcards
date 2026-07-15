@@ -26,13 +26,13 @@ const RectLabelGroup = (props: RectLabelGroupProps) => {
     <Box>
       <ToggleButtonGroup
         color="toggle"
-        value={c_cursor}
+        value={c_cursor.paint.value}
         exclusive
         size="small"
         onChange={(_e, newValue: RectangleMark | null) => {
           if (newValue === null) {
             if (props.default === "click") {
-              setClick(c_data, c_cursorDispatch)
+              setClick(c_data, c_cursorDispatch);
             } else {
               c_cursorDispatch({
                 type: "set_paint",
@@ -49,13 +49,13 @@ const RectLabelGroup = (props: RectLabelGroupProps) => {
       >
         <ToggleButton value="BlackTerritory">
           <img
-            src={c_images["Black"]}
+            src={c_images["BlackTerritory"]}
             style={{ height: img_size, width: img_size }}
           />
         </ToggleButton>
         <ToggleButton value="WhiteTerritory">
           <img
-            src={c_images["White"]}
+            src={c_images["WhiteTerritory"]}
             style={{ height: img_size, width: img_size }}
           />
         </ToggleButton>

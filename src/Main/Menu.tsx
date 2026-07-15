@@ -1,4 +1,5 @@
 import type { Dispatch, SetStateAction } from "react";
+
 import { editNewExercise } from "../utils";
 
 const { useState, useContext } = await import("react");
@@ -36,7 +37,8 @@ interface MenuProps {
 }
 
 const Menu = (props: MenuProps) => {
-  const { c_setData, c_setPhase, c_cursorDispatch, c_setEditingPhase } = useContext(AppContext);
+  const { c_setData, c_setPhase, c_cursorDispatch, c_setEditingPhase } =
+    useContext(AppContext);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [fileToDelete, setFileToDelete] = useState("");
 
@@ -129,13 +131,19 @@ const Menu = (props: MenuProps) => {
               >
                 <ListItemButton
                   onClick={() => {
+                    console.log("asdf");
                     commands
                       .loadExercises(e)
                       //.then(() => invoke("get_config"))
                       .then(() => commands.getData())
                       .then((data) => {
+                        console.log(data);
                         //c_setConfig(config);
-                        editNewExercise(data, c_cursorDispatch, c_setEditingPhase);
+                        editNewExercise(
+                          data,
+                          c_cursorDispatch,
+                          c_setEditingPhase,
+                        );
                         c_setPhase("Editing");
                         c_setData(data);
                       });
@@ -150,10 +158,11 @@ const Menu = (props: MenuProps) => {
                 e.preventDefault();
                 commands
                   .loadExercises(newExercise)
-                  //.then(() => invoke("get_config"))
-                  .then(() => {
-                    //c_setConfig(config);
+                  .then(() => commands.getData())
+                  .then((data) => {
+                    c_setData(data);
                     c_setPhase("Editing");
+                    editNewExercise(data, c_cursorDispatch, c_setEditingPhase);
                   });
               }}
             >

@@ -24,11 +24,12 @@ import os
 
 signature = "// edited by ./scripts/make_bindings.py"
 
+
 def make_bindings():
     os.system("cd ./src-tauri && cargo run make-bindings")
 
     # to help the indent heuristic at the end be more robust
-    os.system("npx prettier -w ./src/bindings.ts")
+    os.system("npx --quiet prettier -w ./src/bindings.ts")
 
     file = open("./src/bindings.ts").read()
 
@@ -38,24 +39,31 @@ def make_bindings():
     lll = 0
 
     # will need to add here if using more tauri features!!
-    lines = [r'const { invoke : __TAURI_INVOKE, } = await import("@tauri-apps/api/core");', '', signature]
+    lines = [
+        r'const { invoke : __TAURI_INVOKE, } = await import("@tauri-apps/api/core");',
+        "",
+        signature,
+    ]
     for i, line in enumerate(file.splitlines()):
         if line[:6] == "import":
             continue
-        if 'typedError' in line:
-            if 'async function' in line:
+        if "typedError" in line:
+            if "async function" in line:
                 lll = len(lines)
             else:
-                line = re.sub(r'=> typedError<(.*), string>\(__TAURI_INVOKE\("', r': Promise<\1> => (__TAURI_INVOKE("', line, count=1)
+                line = re.sub(
+                    r'=> typedError<(.*), string>\(__TAURI_INVOKE\("',
+                    r': Promise<\1> => (__TAURI_INVOKE("',
+                    line,
+                    count=1,
+                )
         lines.append(line)
 
-
-
-
-    indent = lambda s: len(s) - len(s.lstrip())
+    def indent(s):
+        return len(s) - len(s.lstrip())
 
     startindent = indent(lines[lll])
-    for rrr in range(lll+1, len(lines)):
+    for rrr in range(lll + 1, len(lines)):
         if indent(lines[rrr]) == startindent:
             break
 
@@ -65,10 +73,10 @@ def make_bindings():
     lines[lll] = "/*" + lines[lll]
     lines[rrr] = lines[rrr] + "*/"
 
-
     open("./src/bindings.ts", "w").write("\n".join(lines))
 
-    os.system("npx prettier -w ./src/bindings.ts")
+    os.system("npx --quiet prettier -w ./src/bindings.ts")
+
 
 if __name__ == "__main__":
     make_bindings()

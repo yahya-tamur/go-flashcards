@@ -114,7 +114,7 @@ const MakeTreeMenu = () => {
           exclusive
           size="small"
           onChange={() => {
-            setClick(c_data, c_cursorDispatch)
+            setClick(c_data, c_cursorDispatch);
           }}
         >
           <ToggleButton value={c_data?.color === "Black" ? "White" : "Black"}>

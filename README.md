@@ -23,25 +23,24 @@ UI overhaul
 
 Current Actual Goal
 --------------
-- Fix all bugs in Board
-- setup app data initialization (rust include dir crate)
+
 - compile to android
 - actually add histogram, nicer study screen
   - segues into porting study screen to mobile
 
 - android file situation
 
-
 - custom theme goal:
   - (convertfilesync)
   - editable values:
     - theme, all images
-    papers? elevations? no?
-    mode ?!
+      papers? elevations? no?
+      mode ?!
 
 things that popped up:
 ----------------------------------
 
+- disable exercise loading when invalid config.
 - menus can be dragged??
 - import from sgf ignored AB property in example sgf file!!
 - there's a fontsource: roboto??! what is it, why is it, and do I still need the local font?
@@ -151,18 +150,19 @@ Finalizing
 
 Notes for android building process
 ---------------
+
 - What worked:
   - delete gen file
   - cargo tauri android init
   - cargo tauri android build
     - works, but is unsigned
   - run local file ../android-keystore/dev/insert
-    - (follow instructions to edit build.gradle.kts, signingconfigs *is* under android)
+    - (follow instructions to edit build.gradle.kts, signingconfigs _is_ under android)
   - cargo tauri android build
     - works
 
   - earlier I think I had to open gen project in android studio and edit build variant
-  
+
   - also I added ANDROID_HOME to bash_rc, so that should be ok
     - building once without this variable (and two others) probably means you need to
     - delete src-tauri/gen and restart process

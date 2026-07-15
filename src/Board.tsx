@@ -1,7 +1,7 @@
-import type { Drag, Place } from "./AppContext";
+import type { Holding } from "./AppContext";
 import type { Grid } from "./bindings";
 
-import { cursorColor, markEqualsCursor } from "./utils";
+import { cursorColor, markEqualsCursor, setClick } from "./utils";
 
 await import("react");
 const { useEffect, useState, useRef, useContext, useCallback, useReducer } =
@@ -19,7 +19,7 @@ type GridAction =
   | {
       type: "set_temp";
       w: [number, number];
-      cursor: Place | Drag;
+      holding: Holding;
       label: string;
     }
   | {
@@ -35,28 +35,25 @@ const gridReducer = (grid: Grid, action: GridAction): Grid => {
   switch (action.type) {
     case "set_temp": {
       const [r, c] = action.w;
-      if (action.cursor.type === "Place") {
-        if (action.cursor.layer.type === "stone") {
-          if (grid[r][c].stone !== action.cursor.layer.value) {
-            const grid_ = structuredClone(grid);
-            grid_[r][c].stone =
-              action.cursor.layer.value === "Delete"
-                ? null
-                : action.cursor.layer.value;
-            return grid_;
-          }
-        } else {
-          if (
-            !markEqualsCursor(
-              grid[r][c].mark,
-              action.cursor.layer.value,
-              action.label,
-            )
-          ) {
-            const grid_ = structuredClone(grid);
-            grid_[r][c].mark = { type: "Label", label: action.label };
-            return grid_;
-          }
+      if (action.holding.layer === "stone") {
+        if (grid[r][c].stone ?? "Delete" !== action.holding.value) {
+          const grid_ = structuredClone(grid);
+          grid_[r][c].stone =
+            action.holding.value === "Delete" ? null : action.holding.value;
+          return grid_;
+        }
+      } else {
+        if (
+          !markEqualsCursor(grid[r][c].mark, action.holding.value, action.label)
+        ) {
+          const grid_ = structuredClone(grid);
+          grid_[r][c].mark =
+            action.holding.value === "DeleteMark"
+              ? null
+              : action.holding.value !== "Label"
+                ? { type: action.holding.value }
+                : { type: "Label", label: action.label };
+          return grid_;
         }
       }
       return grid;
@@ -154,8 +151,6 @@ const Board = () => {
 
       const si = Math.round(i);
       const sj = Math.round(j);
-
-      console.log(si, sj);
       if (!(si >= left && si <= right && sj >= top && sj <= bottom)) {
         return null;
       }
@@ -168,15 +163,15 @@ const Board = () => {
           return null;
         }
       } else if (c_cursor.type === "Place") {
-        if (c_cursor.layer.type === "stone") {
-          if (grid[si][sj].stone === c_cursor.layer.value) {
+        if (c_cursor.paint.layer === "stone") {
+          if (grid[si][sj].stone === c_cursor.paint.value) {
             return null;
           }
         } else {
           if (
             markEqualsCursor(
               grid[si][sj].mark,
-              c_cursor.layer.value,
+              c_cursor.paint.value,
               c_nextLabel,
             )
           ) {
@@ -216,7 +211,6 @@ const Board = () => {
     setViewBox([vbleft, vbtop, vbwidth, vbheight]);
 
     const observer = new ResizeObserver(() => {
-      console.log("oh noo");
       if (paper.current === null) {
         return;
       }
@@ -354,7 +348,7 @@ const Board = () => {
                 gridDispatch({
                   type: "set_temp",
                   w: w,
-                  cursor: c_cursor,
+                  holding: c_cursor.paint,
                   label: c_nextLabel,
                 });
               }
@@ -362,6 +356,7 @@ const Board = () => {
           }}
           onPointerMove={async (e) => {
             const w = get_coord(e);
+
             c_cursorDispatch({
               type: "move",
               w: w,
@@ -370,7 +365,7 @@ const Board = () => {
               gridDispatch({
                 type: "set_temp",
                 w: w,
-                cursor: c_cursor,
+                holding: c_cursor.paint,
                 label: c_nextLabel,
               });
             }
@@ -390,6 +385,7 @@ const Board = () => {
                     ) {
                       return;
                     }
+                    setClick(data, c_cursorDispatch);
                     c_setData(data);
                     if (c_phase === "Study" && c_studyPhase === "Guess") {
                       studyStep(
@@ -403,12 +399,19 @@ const Board = () => {
                   .catch((e) => handleError(e));
               }
             } else if (c_cursor.type === "Place") {
-              commands.setGrid(grid);
-              commands.paint(c_cursor.icon, c_cursor.dragging, c_nextLabel);
+              if (c_cursor.dragging !== null && c_cursor.dragging.length > 0) {
+                commands
+                  .paint(c_cursor.paint, c_cursor.dragging, c_nextLabel)
+                  .then(() => commands.getData())
+                  .then((data) => c_setData(data));
+              }
             } else if (c_cursor.type === "Drag") {
               if (w !== null && c_cursor.start !== null) {
                 commands
-                  .markRectangle(c_cursor.mark, c_cursor.start, [w[0], w[1]])
+                  .markRectangle(c_cursor.paint.value, c_cursor.start, [
+                    w[0],
+                    w[1],
+                  ])
                   .then(() => commands.getData())
                   .then((data) => c_setData(data));
               }
@@ -421,7 +424,7 @@ const Board = () => {
             if (c_cursor.type === "Place") {
               if (c_cursor.dragging !== null && c_cursor.dragging.length > 0) {
                 commands
-                  .paint(c_cursor.layer, c_cursor.dragging, c_nextLabel)
+                  .paint(c_cursor.paint, c_cursor.dragging, c_nextLabel)
                   .then(() => commands.getData())
                   .then((data) => c_setData(data));
               }
@@ -432,7 +435,7 @@ const Board = () => {
             if (c_cursor.type === "Place") {
               if (c_cursor.dragging !== null && c_cursor.dragging.length > 0) {
                 commands
-                  .paint(c_cursor.layer, c_cursor.dragging, c_nextLabel)
+                  .paint(c_cursor.paint, c_cursor.dragging, c_nextLabel)
                   .then(() => commands.getData())
                   .then((data) => c_setData(data));
               }
@@ -646,16 +649,16 @@ const Board = () => {
               let filter = label_color === "black" ? "" : "url(#invert-color)";
               let opacity = "0.6";
               if (
-                c_cursor.icon.type === "image" &&
-                (c_cursor.icon.var === "BlackTerritory" ||
-                  c_cursor.icon.var === "WhiteTerritory" ||
-                  c_cursor.icon.var === "DeleteMark" ||
-                  c_cursor.icon.var === "Delete")
+                c_cursor.paint.value !== "Label" &&
+                (c_cursor.paint.value === "BlackTerritory" ||
+                  c_cursor.paint.value === "WhiteTerritory" ||
+                  c_cursor.paint.value === "DeleteMark" ||
+                  c_cursor.paint.value === "Delete")
               ) {
                 filter = "";
                 opacity = "0.5";
               }
-              return c_cursor.icon.type === "label" ? (
+              return c_cursor.paint.value === "Label" ? (
                 <text
                   x={margin + square_size * row}
                   y={margin + square_size * col}
@@ -679,7 +682,7 @@ const Board = () => {
                   y={square_size * col + margin - 0.5 * square_size}
                   width={square_size}
                   height={square_size}
-                  href={c_images[c_cursor.icon.var]}
+                  href={c_images[c_cursor.paint.value]}
                   filter={filter}
                   opacity={opacity}
                   key={JSON.stringify([row, col, c_cursor])}

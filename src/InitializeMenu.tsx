@@ -108,14 +108,19 @@ const InitializeMenu = () => {
         <Button
           variant="outlined"
           color="button"
-          disabled={cursorColor(c_cursor) !== null}
+          disabled={cursorColor(c_cursor) === null}
           onClick={async () => {
             const color = cursorColor(c_cursor);
             if (color !== null) {
               commands
-                .finishSetup(color)
+                .finishSetup(color === "Black" ? "White" : "Black")
                 .then(() => commands.getData())
                 .then((data) => {
+                  c_cursorDispatch({
+                    type: "set_click",
+                    value: color,
+                  });
+                  // setClick(data, c_cursorDispatch);
                   c_setData(data);
                   c_setEditingPhase("MakeTree");
                 });

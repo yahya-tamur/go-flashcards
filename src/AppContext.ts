@@ -28,15 +28,15 @@ export type ImageVariant =
   | "BlackTerritory"
   | "WhiteTerritory";
 
-export type ColorHolding =
+export type ClickPaint =
   { value: "Black"; layer: "stone" } | { value: "White"; layer: "stone" };
 
-export type RectHolding =
+export type RectPaint =
   | { value: "BlackTerritory"; layer: "mark" }
   | { value: "WhiteTerritory"; layer: "mark" }
   | { value: "DeleteMark"; layer: "mark" };
 
-export type OtherHolding =
+export type OtherPaint =
   | { value: "Triangle"; layer: "mark" }
   | { value: "Cross"; layer: "mark" }
   | { value: "Square"; layer: "mark" }
@@ -44,29 +44,29 @@ export type OtherHolding =
   | { value: "Delete"; layer: "stone" }
   | { value: "Label"; layer: "mark" };
 
-export type Holding = ColorHolding | RectHolding | OtherHolding;
+export type Holding = ClickPaint | RectPaint | OtherPaint;
 
 export type Click = {
   type: "Click";
   ghosts: [number, number][];
-  holding: ColorHolding;
+  paint: ClickPaint;
 };
 
 export type Place = {
   type: "Place";
   ghosts: [number, number][];
   dragging: [number, number][] | null;
-  holding: ColorHolding | OtherHolding;
+  paint: ClickPaint | OtherPaint;
 };
 export type Drag = {
   type: "Drag";
   ghosts: [number, number][];
-  holding: RectHolding;
+  paint: RectPaint;
   start: [number, number] | null;
   end: [number, number] | null;
 };
 
-export type CursorType = Click | Place | Drag;
+export type Cursor = Click | Place | Drag;
 
 export type CursorAction =
   | {
@@ -100,7 +100,7 @@ export interface AppContextType {
   c_setFeedback: Dispatch<SetStateAction<string>>;
   c_data: Snapshot | null;
   c_setData: Dispatch<SetStateAction<Snapshot | null>>;
-  c_cursor: CursorType;
+  c_cursor: Cursor;
   c_cursorDispatch: Dispatch<CursorAction>;
   c_nextLabel: string;
   c_setNextLabel: Dispatch<SetStateAction<string>>;

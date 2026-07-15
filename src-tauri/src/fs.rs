@@ -1,4 +1,6 @@
 use flate2::{read::GzDecoder, write::GzEncoder, Compression};
+use include_dir::{include_dir, Dir};
+//use std::fs::File;
 use std::{io::Result, path::Path, time::SystemTime};
 use tokio::fs;
 
@@ -14,9 +16,20 @@ use serde_json;
 //              prob.(json?).(gz?)
 //          config.?
 //
-pub async fn create_directory_structure(app_data: &Path) -> Result<()> {
-    fs::create_dir_all(app_data.join("app_data").join("exercises")).await?;
-    fs::create_dir_all(app_data.join("app_data").join("history")).await?;
+
+static INITIAL_APP_DATA: Dir<'_> = include_dir!("$CARGO_MANIFEST_DIR/data/initial_app_data");
+
+pub fn initialize(app_data: &Path) -> Result<()> {
+    // if statement ...
+    if !Path::new(app_data).join("app_data").try_exists()? {
+        INITIAL_APP_DATA.extract(app_data)?;
+    }
+    let config = Path::new(app_data).join("app_data").join("config.toml");
+    if !config.try_exists()? {
+        std::fs::File::create(config)?;
+    }
+    std::fs::create_dir_all(app_data.join("app_data").join("exercises"))?;
+    std::fs::create_dir_all(app_data.join("app_data").join("history"))?;
     Ok(())
 }
 
@@ -25,7 +38,6 @@ pub async fn save_exercises(
     vec: &Vec<Problem>,
     exercise_file: &str,
 ) -> Result<()> {
-    create_directory_structure(app_data).await?;
     let mut gz = GzEncoder::new(Vec::new(), Compression::best());
     serde_json::to_writer(&mut gz, &vec)?;
     fs::write(
@@ -88,7 +100,6 @@ pub async fn load_history(app_data: &Path, exercise_file: &str) -> Result<Vec<Hi
 }
 
 pub async fn save_history(app_data: &Path, vec: &Vec<History>, exercise_file: &str) -> Result<()> {
-    create_directory_structure(app_data).await?;
     let mut gz = GzEncoder::new(Vec::new(), Compression::best());
     serde_json::to_writer(&mut gz, &vec)?;
     fs::write(

@@ -1,11 +1,8 @@
 import os
-import sys
 from pathlib import Path
-if (Path.cwd().name != "go-flashcards"):
-    print("Script must be called from the go-flashcards folder!")
-    exit()
 
-if "format" in sys.argv:
+
+def format():
     from sort_imports import sort_imports
     from make_bindings import make_bindings
 
@@ -15,25 +12,53 @@ if "format" in sys.argv:
     print("\nSorting imports.\n")
     sort_imports()
 
-    print("\nRunning prettier.\n")
-    os.system("npx prettier ./src -w")
+    print("\nFormatting python.\n")
+    os.system("ruff format ./scripts/*.py")
 
-    print("\nRunning cargo format.\n")
+    print("\nFormatting javascript.\n")
+    os.system("npx --quiet prettier ./src -w")
+
+    print("\nFormatting rust.\n")
     os.system("cd src-tauri && cargo fmt")
 
-if "lint" in sys.argv:
-    print("\nRunning ESLint.\n")
-    os.system("npx eslint . --fix")
 
-    print("\nRunning cargo clippy.\n")
+def lint():
+    print("\nLinting python.\n")
+    os.system("ruff check ./scripts/*.py --fix")
+
+    print("\nLinting javascript.\n")
+    os.system("npx --quiet eslint . --fix")
+
+    print("\nLinting rust.\n")
     os.system("cd src-tauri && cargo clippy")
 
-    print("\nRunning cargo clippy in release mode.\n")
+    print("\nLinting rust in release mode.\n")
     os.system("cd src-tauri && cargo clippy --release")
 
-if "status" in sys.argv:
+
+def status():
     print("\nRunning git status.\n")
     os.system("git status")
 
     print("\nCounting lines of code.\n")
     os.system("cloc ./src/ ./src-tauri/src/ ./scripts")
+
+
+commands = ["format", "lint", "status"]
+
+if __name__ == "__main__":
+    import sys
+
+    if Path.cwd().name != "go-flashcards":
+        print("This script is designed to be called from the project root folder.")
+        if input("Type 'continue' to run anyway. ") != "continue":
+            exit()
+
+    if sum(comm in sys.argv for comm in commands) != 1:
+        print(
+            f"The available commands are: {', '.join(commands)}. Only run one at a time."
+        )
+    else:
+        for comm in commands:
+            if comm in sys.argv:
+                eval(f"{comm}()")

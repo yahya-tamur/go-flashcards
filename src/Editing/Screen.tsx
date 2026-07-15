@@ -1,7 +1,4 @@
-import { clickColor, setClick } from "../utils";
-import type { EditingPhaseType } from "../AppContext";
-
-const { useEffect, useContext, useEffectEvent } = await import("react");
+const { useContext } = await import("react");
 
 const Box = (await import("@mui/material/Box")).default;
 
@@ -13,19 +10,12 @@ const CommentBox = (await import("../CommentBox")).default;
 const InitializeMenu = (await import("../InitializeMenu")).default;
 const MakeTreeMenu = (await import("../MakeTreeMenu")).default;
 const Tree = (await import("../Tree")).default;
-const { commands } = await import("../bindings");
 
 const TopBar = (await import("./TopBar")).default;
 
 const Screen = () => {
   // useEffect: load exercise.
-  const {
-    c_data,
-    c_setData,
-    c_setEditingPhase,
-    c_cursorDispatch,
-    c_editingPhase,
-  } = useContext(AppContext);
+  const { c_editingPhase } = useContext(AppContext);
 
   return (
     <main style={{ display: "flex", flexDirection: "column" }}>

@@ -100,12 +100,8 @@ const TopBar = () => {
               .jumpToExercise(v - 1)
               .then(() => commands.getData())
               .then((data) => {
+                editNewExercise(data, c_cursorDispatch, c_setEditingPhase);
                 c_setData(data);
-                if (data.table.length === 1 && data.table[0].length === 1) {
-                  c_setEditingPhase("Initialize");
-                } else {
-                  c_setEditingPhase("MakeTree");
-                }
               });
           }}
         />
@@ -181,7 +177,11 @@ const TopBar = () => {
                     .importSgf()
                     .then(() => commands.getData())
                     .then((data) => {
-                      editNewExercise(data, c_cursorDispatch, c_setEditingPhase);
+                      editNewExercise(
+                        data,
+                        c_cursorDispatch,
+                        c_setEditingPhase,
+                      );
                       c_setData(data);
                     })
                     .catch((e) => {
