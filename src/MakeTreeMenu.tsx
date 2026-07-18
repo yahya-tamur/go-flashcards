@@ -1,5 +1,3 @@
-import { setClick } from "./utils";
-
 const { useEffect, useState, useContext } = await import("react");
 
 const CheckIcon = (await import("@mui/icons-material/Check")).default;
@@ -17,6 +15,7 @@ await import("./App.css");
 
 const AppContext = (await import("./AppContext")).default;
 const { commands } = await import("./bindings");
+const { handleError, setClick } = await import("./utils");
 
 const BoardSlider = (await import("./components/BoardSlider")).default;
 const DragLabelGroup = (await import("./components/DragLabelGroup")).default;
@@ -32,6 +31,8 @@ const MakeTreeMenu = () => {
     c_nextLabel,
     c_setNextLabel,
     c_setEditingPhase,
+    c_setErrorMessage,
+    c_setErrorWindowOpen,
   } = useContext(AppContext);
   const [variant, setVariant] = useState("None");
 
@@ -141,7 +142,10 @@ const MakeTreeMenu = () => {
               .then(() => commands.getData())
               .then((data) => {
                 c_setData(data);
-              });
+              })
+              .catch((e) =>
+                handleError(e, c_setErrorMessage, c_setErrorWindowOpen),
+              );
           }}
           color="button"
           variant="outlined"
@@ -164,7 +168,10 @@ const MakeTreeMenu = () => {
               .then(() => commands.getData())
               .then((data) => {
                 c_setData(data);
-              });
+              })
+              .catch((e) =>
+                handleError(e, c_setErrorMessage, c_setErrorWindowOpen),
+              );
           }}
         >
           <ToggleButton value="Correct">
@@ -199,7 +206,10 @@ const MakeTreeMenu = () => {
                   type: "set_paint",
                   value: "Black",
                 });
-              });
+              })
+              .catch((e) =>
+                handleError(e, c_setErrorMessage, c_setErrorWindowOpen),
+              );
           }}
           color="button"
           variant="outlined"
@@ -217,7 +227,10 @@ const MakeTreeMenu = () => {
               .then(() => commands.getData())
               .then((data) => {
                 c_setData(data);
-              });
+              })
+              .catch((e) =>
+                handleError(e, c_setErrorMessage, c_setErrorWindowOpen),
+              );
           }}
         >
           Delete Branch

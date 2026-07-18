@@ -1,5 +1,4 @@
-import { StonePaint } from "../bindings";
-import { setClick } from "../utils";
+import type { StonePaint } from "../bindings";
 
 const { useContext } = await import("react");
 
@@ -13,6 +12,7 @@ const ToggleButtonGroup = (await import("@mui/material/ToggleButtonGroup"))
 await import("../App.css");
 
 const AppContext = (await import("../AppContext")).default;
+const { setClick } = await import("../utils");
 
 type PlaceStoneGroupProps = {
   default: "click" | "place";

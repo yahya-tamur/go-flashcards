@@ -1,5 +1,4 @@
-import { MarkPaint } from "../bindings";
-import { setClick } from "../utils";
+import type { MarkPaint } from "../bindings";
 
 const { useContext } = await import("react");
 
@@ -11,6 +10,7 @@ const ToggleButtonGroup = (await import("@mui/material/ToggleButtonGroup"))
 await import("../App.css");
 
 const AppContext = (await import("../AppContext")).default;
+const { setClick } = await import("../utils");
 
 type DragLabelGroupProps = {
   default: "click" | "place";

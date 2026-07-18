@@ -9,9 +9,16 @@ await import("./App.css");
 
 const AppContext = (await import("./AppContext")).default;
 const { commands } = await import("./bindings");
+const { handleError } = await import("./utils");
 
 const Tree = () => {
-  const { c_data, c_images, c_setData } = useContext(AppContext);
+  const {
+    c_data,
+    c_images,
+    c_setData,
+    c_setErrorMessage,
+    c_setErrorWindowOpen,
+  } = useContext(AppContext);
   const treeBox = useRef<HTMLDivElement>(null);
   const [tableWidth, setTableWidth] = useState(100);
   const [tableHeight, setTableHeight] = useState(100);
@@ -86,9 +93,9 @@ const Tree = () => {
           .then((data) => {
             c_setData(data);
           })
-          .catch((e) => {
-            console.log(e);
-          });
+          .catch((e) =>
+            handleError(e, c_setErrorMessage, c_setErrorWindowOpen),
+          );
       }
     };
 
@@ -97,7 +104,7 @@ const Tree = () => {
     return () => {
       window.removeEventListener("keydown", handle_key);
     };
-  }, [c_data, c_setData]);
+  }, [c_data, c_setData, c_setErrorMessage, c_setErrorWindowOpen]);
 
   const get_coord = (e: React.MouseEvent<SVGSVGElement>) => {
     if (treeBox.current === null) {
@@ -257,9 +264,9 @@ const Tree = () => {
                 .then((data) => {
                   c_setData(data);
                 })
-                .catch((e) => {
-                  console.log(e);
-                });
+                .catch((e) =>
+                  handleError(e, c_setErrorMessage, c_setErrorWindowOpen),
+                );
             }
           }}
         >

@@ -13,15 +13,13 @@ use sgf_parse::{
     SgfNode, SimpleText, Text,
 };
 
+use crate::Result;
 use std::collections::HashSet;
 use uuid::Uuid;
 
-use crate::{
-    game_state::{Color::*, Mark::*},
-    problem::{Move, Problem, Variant},
-};
+use crate::game::{Color::*, Mark::*, Move, Problem, Variant};
 
-pub fn sgf_to_problem(mut start: SgfNode<Prop>) -> Problem {
+pub fn sgf_to_problem(mut start: SgfNode<Prop>) -> Result<Problem> {
     let x = |p: &go::Point| p.x as usize + 1;
     let y = |p: &go::Point| p.y as usize + 1;
 
@@ -212,13 +210,13 @@ pub fn sgf_to_problem(mut start: SgfNode<Prop>) -> Problem {
         }
     }
 
-    Problem {
+    Ok(Problem {
         initial_black,
         initial_white,
         id,
         table,
         window: (min_row, max_row, min_col, max_col),
-    }
+    })
 }
 
 #[derive(Default)]
@@ -282,7 +280,7 @@ impl NodeBuilder {
     }
 }
 
-pub fn problem_to_sgf(problem: &Problem) -> SgfNode<Prop> {
+pub fn problem_to_sgf(problem: &Problem) -> Result<SgfNode<Prop>> {
     let pt = |i: usize, j: usize| Point {
         x: (i - 1) as u8,
         y: (j - 1) as u8,
@@ -470,5 +468,5 @@ pub fn problem_to_sgf(problem: &Problem) -> SgfNode<Prop> {
         }
     }
 
-    node_table[0][0].take().unwrap()
+    Ok(node_table[0][0].take().unwrap())
 }

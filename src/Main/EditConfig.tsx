@@ -2,7 +2,9 @@ import type { Dispatch, SetStateAction } from "react";
 
 import type { ReactCodeMirrorRef } from "@uiw/react-codemirror";
 
-const { useEffect, useState, useRef } = await import("react");
+import type { ValidationResult } from "../bindings";
+
+const { useEffect, useState, useRef, useContext } = await import("react");
 
 const { StreamLanguage } = await import("@codemirror/language");
 const { StateField, StateEffect } = await import("@codemirror/state");
@@ -19,7 +21,9 @@ const CodeMirror = (await import("@uiw/react-codemirror")).default;
 
 await import("../App.css");
 
+const AppContext = (await import("../AppContext")).default;
 const { commands } = await import("../bindings");
+const { configStatusEquals, handleError } = await import("../utils");
 
 interface HighlightPayload {
   from: number;
@@ -73,35 +77,32 @@ const scrollStyle = EditorView.theme({
 });
 
 interface EditConfigProps {
-  initialConfig: string;
   setStudies: Dispatch<SetStateAction<string[]>>;
   configSignal: number;
 }
 
-const EditConfig = (props: EditConfigProps) => {
-  //let context = useContext(AppContext);
-  const [code, setCode] = useState(props.initialConfig);
-  const [lastSaved, setLastSaved] = useState(props.initialConfig);
-  const [error, setError] = useState<[string, number, number] | null>(null);
+const EditConfig = ({ setStudies, configSignal }: EditConfigProps) => {
+  const { c_setErrorMessage, c_setErrorWindowOpen } = useContext(AppContext);
+  const [code, setCode] = useState<string | null>(null);
+  const [lastSaved, setLastSaved] = useState<string | null>(null);
+  const [configStatus, setConfigStatus] = useState<ValidationResult>({
+    result: "Valid",
+  });
   const editorRef = useRef<ReactCodeMirrorRef>(null);
 
   useEffect(() => {
-    commands.setConfigStr(props.initialConfig).then((errobj) => {
-      if (errobj === null) {
-        return;
-      }
-      setError((error) => {
-        if (
-          (error === null && errobj === null) ||
-          (error !== null &&
-            errobj !== null &&
-            error[0] == errobj[0] &&
-            error[1] == errobj[1] &&
-            error[2] === errobj[2])
-        ) {
-          return error;
-        }
-        let [, left, right] = errobj;
+    if (configStatus.result === "Valid") {
+      editorRef.current?.view?.dispatch({
+        effects: removeHighlight.of(null),
+      });
+      commands
+        .listStudies()
+        .then((studies) => setStudies(studies))
+        .catch((e) => handleError(e, c_setErrorMessage, c_setErrorWindowOpen));
+    } else {
+      setStudies([]);
+      if (configStatus.range !== null) {
+        let [left, right] = configStatus.range;
         if (left == right) {
           left = left - 2; // out of bounds seems to be ok
           right = right + 2;
@@ -111,10 +112,27 @@ const EditConfig = (props: EditConfigProps) => {
             effects: addHighlight.of({ from: left, to: right }),
           });
         }
-        return errobj;
-      });
-    });
-  }, [props.configSignal, props.initialConfig, setError]);
+      }
+    }
+  }, [configStatus, setStudies, c_setErrorMessage, c_setErrorWindowOpen]);
+
+  useEffect(() => {
+    commands
+      .getConfigStr()
+      .then((config) => {
+        setCode(config);
+        setLastSaved(config);
+        return commands.setConfigStr(config);
+      })
+      .then((newConfigStatus) => {
+        setConfigStatus((oldConfigStatus) =>
+          configStatusEquals(oldConfigStatus, newConfigStatus)
+            ? oldConfigStatus
+            : newConfigStatus,
+        );
+      })
+      .catch((e) => handleError(e, c_setErrorMessage, c_setErrorWindowOpen));
+  }, [configSignal, setConfigStatus, c_setErrorMessage, c_setErrorWindowOpen]);
 
   return (
     <>
@@ -141,7 +159,7 @@ const EditConfig = (props: EditConfigProps) => {
           }}
           elevation={2}
         >
-          {
+          {code && (
             <CodeMirror
               className="editor"
               value={code}
@@ -157,7 +175,7 @@ const EditConfig = (props: EditConfigProps) => {
                 setCode(e);
               }}
             />
-          }
+          )}
         </Paper>
 
         <Box
@@ -182,43 +200,34 @@ const EditConfig = (props: EditConfigProps) => {
               marginTop: "10px",
             }}
           >
-            {error !== null ? error[0] : ""}
+            {configStatus.result === "Invalid" ? configStatus.error : ""}
           </Box>
           <Button
             disabled={code === lastSaved}
             variant="contained"
             sx={{ height: "40px", margin: "15px" }}
-            onClick={async () => {
-              await commands.setConfigStr(code).then((errobj) => {
-                if (errobj === null) {
-                  setError(null);
+            onClick={() => {
+              if (code === null) {
+                return;
+              }
+              commands
+                .setConfigStr(code)
+                .then((newConfigStatus) => {
                   setLastSaved(code);
-                  editorRef.current?.view?.dispatch({
-                    effects: removeHighlight.of(null),
-                  });
-                  commands
-                    .listStudies()
-                    .then((studies) => props.setStudies(studies));
-                } else {
-                  let [, left, right] = errobj;
-                  if (left == right) {
-                    left = Math.max(0, left - 2);
-                    right = Math.min(code.length, right + 2);
-                  }
-                  if (left < right) {
-                    editorRef.current?.view?.dispatch({
-                      effects: addHighlight.of({ from: left, to: right }),
-                    });
-                  }
-                  setLastSaved(code);
-
-                  setError(errobj);
-                  props.setStudies([]);
-                }
-              });
+                  setConfigStatus((oldConfigStatus) =>
+                    configStatusEquals(oldConfigStatus, newConfigStatus)
+                      ? oldConfigStatus
+                      : newConfigStatus,
+                  );
+                })
+                .catch((e) =>
+                  handleError(e, c_setErrorMessage, c_setErrorWindowOpen),
+                );
             }}
           >
-            {code === lastSaved && error === undefined ? "Saved." : "Save"}
+            {code === lastSaved && configStatus.result === "Valid"
+              ? "Saved."
+              : "Save"}
           </Button>
         </Box>
       </Paper>

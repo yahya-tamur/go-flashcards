@@ -2,7 +2,7 @@ use serde::{Deserialize, Serialize};
 use specta::Type;
 use std::hash::Hash;
 
-use crate::problem::Move;
+use super::problem::Move;
 
 #[derive(Clone, PartialEq, Eq, Debug, Serialize, Deserialize, Type)]
 #[serde(tag = "type", content = "label")]

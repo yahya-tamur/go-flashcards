@@ -1,7 +1,5 @@
 import type { Dispatch, SetStateAction } from "react";
 
-import { editNewExercise } from "../utils";
-
 const { useState, useContext } = await import("react");
 
 const AddIcon = (await import("@mui/icons-material/Add")).default;
@@ -26,6 +24,7 @@ await import("../App.css");
 
 const AppContext = (await import("../AppContext")).default;
 const { commands } = await import("../bindings");
+const { editNewExercise, handleError, setClick } = await import("../utils");
 
 interface MenuProps {
   drawerWidth: string;
@@ -37,8 +36,15 @@ interface MenuProps {
 }
 
 const Menu = (props: MenuProps) => {
-  const { c_setData, c_setPhase, c_cursorDispatch, c_setEditingPhase } =
-    useContext(AppContext);
+  const {
+    c_setData,
+    c_setPhase,
+    c_cursorDispatch,
+    c_setEditingPhase,
+    c_setStudyPhase,
+    c_setErrorMessage,
+    c_setErrorWindowOpen,
+  } = useContext(AppContext);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [fileToDelete, setFileToDelete] = useState("");
 
@@ -131,13 +137,11 @@ const Menu = (props: MenuProps) => {
               >
                 <ListItemButton
                   onClick={() => {
-                    console.log("asdf");
                     commands
                       .loadExercises(e)
                       //.then(() => invoke("get_config"))
                       .then(() => commands.getData())
                       .then((data) => {
-                        console.log(data);
                         //c_setConfig(config);
                         editNewExercise(
                           data,
@@ -146,7 +150,10 @@ const Menu = (props: MenuProps) => {
                         );
                         c_setPhase("Editing");
                         c_setData(data);
-                      });
+                      })
+                      .catch((e) =>
+                        handleError(e, c_setErrorMessage, c_setErrorWindowOpen),
+                      );
                   }}
                 >
                   <ListItemText primary={e} />
@@ -163,7 +170,10 @@ const Menu = (props: MenuProps) => {
                     c_setData(data);
                     c_setPhase("Editing");
                     editNewExercise(data, c_cursorDispatch, c_setEditingPhase);
-                  });
+                  })
+                  .catch((e) =>
+                    handleError(e, c_setErrorMessage, c_setErrorWindowOpen),
+                  );
               }}
             >
               <ListItem
@@ -238,10 +248,17 @@ const Menu = (props: MenuProps) => {
                     commands
                       .loadStudy(e)
                       //.then(() => invoke("get_config"))
-                      .then(() => {
+                      .then(() => commands.getData())
+                      .then((data) => {
+                        c_setData(data);
+                        setClick(data, c_cursorDispatch);
+                        c_setStudyPhase("Guess");
                         //c_setConfig(config);
                         c_setPhase("Study");
-                      });
+                      })
+                      .catch((e) =>
+                        handleError(e, c_setErrorMessage, c_setErrorWindowOpen),
+                      );
                   }}
                 >
                   <ListItemText primary={e} />
@@ -288,13 +305,16 @@ const Menu = (props: MenuProps) => {
               commands
                 .deleteExerciseFile(fileToDelete)
 
-                .then(() => {
-                  commands.listExercises().then((a) => {
+                .then(async () => {
+                  return commands.listExercises().then((a) => {
                     props.setExercises(a);
                     setDeleteDialogOpen(false);
                     props.setConfigSignal(props.configSignal + 1);
                   });
-                });
+                })
+                .catch((e) =>
+                  handleError(e, c_setErrorMessage, c_setErrorWindowOpen),
+                );
             }}
           >
             Yes

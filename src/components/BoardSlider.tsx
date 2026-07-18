@@ -6,6 +6,7 @@ await import("../App.css");
 
 const AppContext = (await import("../AppContext")).default;
 const { commands } = await import("../bindings");
+const { handleError } = await import("../utils");
 
 type BoardSliderProps = {
   side: "row" | "column";
@@ -13,7 +14,14 @@ type BoardSliderProps = {
 };
 
 const BoardSlider = (props: BoardSliderProps) => {
-  const { c_data, c_setData, c_window, c_setWindow } = useContext(AppContext);
+  const {
+    c_data,
+    c_setData,
+    c_window,
+    c_setWindow,
+    c_setErrorMessage,
+    c_setErrorWindowOpen,
+  } = useContext(AppContext);
 
   const [l, r] = props.side === "row" ? [0, 1] : [2, 3];
 
@@ -35,7 +43,7 @@ const BoardSlider = (props: BoardSliderProps) => {
           });
         }
       }}
-      onChangeCommitted={async () => {
+      onChangeCommitted={() => {
         const contextdata = c_data;
         if (contextdata === null) {
           return;
@@ -60,15 +68,15 @@ const BoardSlider = (props: BoardSliderProps) => {
           }
           return;
         }
-        await commands
+        commands
           .setWindow(new_window)
           .then(() => commands.getData())
           .then((data) => {
             c_setData(data);
           })
-          .catch((e) => {
-            console.log(e);
-          });
+          .catch((e) =>
+            handleError(e, c_setErrorMessage, c_setErrorWindowOpen),
+          );
       }}
       step={1}
       min={0}

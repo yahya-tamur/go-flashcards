@@ -7,10 +7,9 @@ def sort_imports():
     from collections import defaultdict
     import re
     from time import perf_counter_ns
+    import os
 
-    if Path.cwd().name != "go-flashcards":
-        print("Script must be called from the go-flashcards folder!")
-        exit()
+    os.system("npx --loglevel silent prettier -w ./src")
 
     mod_priorities = {
         "react": -2,

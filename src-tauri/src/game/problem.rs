@@ -1,4 +1,4 @@
-use crate::game_state::{Color, Mark};
+use super::{Color, Mark};
 
 use specta::Type;
 use uuid::Uuid;

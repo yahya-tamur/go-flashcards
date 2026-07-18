@@ -1,4 +1,4 @@
-const { useEffect, useContext } = await import("react");
+const { useContext } = await import("react");
 
 const Box = (await import("@mui/material/Box")).default;
 const Paper = (await import("@mui/material/Paper")).default;
@@ -9,24 +9,12 @@ const AppContext = (await import("../AppContext")).default;
 const Board = (await import("../Board")).default;
 const CommentBox = (await import("../CommentBox")).default;
 const Tree = (await import("../Tree")).default;
-const { commands } = await import("../bindings");
 
 const Menu = (await import("./Menu")).default;
 const TopBar = (await import("./TopBar")).default;
 
 const Screen = () => {
-  const { c_studyPhase, c_setStudyPhase, c_setData } = useContext(AppContext);
-  useEffect(() => {
-    commands
-      .getData()
-      .then((data) => {
-        c_setStudyPhase("Guess");
-        c_setData(data);
-      })
-      .catch((e) => {
-        console.log(e);
-      });
-  }, [c_setData, c_setStudyPhase]);
+  const { c_studyPhase } = useContext(AppContext);
 
   return (
     <main style={{ display: "flex", flexDirection: "row" }}>

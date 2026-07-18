@@ -108,6 +108,12 @@ export interface AppContextType {
   c_setWindow: Dispatch<SetStateAction<[number, number, number, number]>>;
   c_images: Record<ImageVariant, string>;
   c_setImages: Dispatch<SetStateAction<Record<ImageVariant, string>>>;
+  c_errorMessage: string;
+  c_setErrorMessage: Dispatch<SetStateAction<string>>;
+  c_errorWindowOpen: boolean;
+  c_setErrorWindowOpen: Dispatch<SetStateAction<boolean>>;
+  c_answerMessage: string;
+  c_setAnswerMessage: Dispatch<SetStateAction<string>>;
 }
 
 // ??? is eslint really okay with this?? what to do instead??

@@ -12,11 +12,11 @@ def format():
     print("\nSorting imports.\n")
     sort_imports()
 
-    print("\nFormatting python.\n")
-    os.system("ruff format ./scripts/*.py")
-
     print("\nFormatting javascript.\n")
     os.system("npx --quiet prettier ./src -w")
+
+    print("\nFormatting python.\n")
+    os.system("ruff format ./scripts/*.py")
 
     print("\nFormatting rust.\n")
     os.system("cd src-tauri && cargo fmt")

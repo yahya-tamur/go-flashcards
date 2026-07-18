@@ -1,5 +1,3 @@
-import { cursorColor } from "./utils";
-
 const { useContext } = await import("react");
 
 const Box = (await import("@mui/material/Box")).default;
@@ -11,6 +9,7 @@ await import("./App.css");
 
 const AppContext = (await import("./AppContext")).default;
 const { commands } = await import("./bindings");
+const { cursorColor, handleError } = await import("./utils");
 
 const BoardSlider = (await import("./components/BoardSlider")).default;
 const DragLabelGroup = (await import("./components/DragLabelGroup")).default;
@@ -25,6 +24,8 @@ const InitializeMenu = () => {
     c_nextLabel,
     c_setNextLabel,
     c_setEditingPhase,
+    c_setErrorMessage,
+    c_setErrorWindowOpen,
   } = useContext(AppContext);
 
   return (
@@ -123,7 +124,10 @@ const InitializeMenu = () => {
                   // setClick(data, c_cursorDispatch);
                   c_setData(data);
                   c_setEditingPhase("MakeTree");
-                });
+                })
+                .catch((e) =>
+                  handleError(e, c_setErrorMessage, c_setErrorWindowOpen),
+                );
             }
           }}
         >

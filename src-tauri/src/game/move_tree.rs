@@ -1,11 +1,13 @@
+use super::{other_color, Color, GameState, Mark};
 use crate::config::{ActiveConfig, ShowRecent};
-use crate::game_state::{other_color, Color, GameState, Mark};
 
-use crate::problem::{Move, Problem, Variant};
+use super::{Move, Problem, Variant};
+use crate::interop::Transform;
 use std::hash::{DefaultHasher, Hash, Hasher};
 use std::sync::Arc;
 
-use rand::{random_bool, random_range};
+use rand::rng;
+use rand::RngExt;
 use serde::Deserialize;
 use specta::Type;
 
@@ -16,7 +18,7 @@ pub struct MoveTree {
     pub game: GameState,
     pub tree_loc: (usize, usize),
     new_branches: Vec<u64>,
-    pub orientation: usize,
+    pub orientation: Transform,
     pub color_swap: bool,
 }
 
@@ -68,12 +70,12 @@ impl MoveTree {
             config.transfer_marks,
         );
         let orientation = if config.random_orientation {
-            random_range(0..8)
+            rng().random()
         } else {
-            0
+            Transform::Id
         };
         let color_swap = if config.random_color {
-            random_bool(0.5)
+            rng().random_bool(0.5)
         } else {
             false
         };
@@ -410,72 +412,14 @@ impl MoveTree {
         self.problem.table[r][c].as_ref().unwrap()
     }
 
-    /*
-    pub fn set_marks(&mut self, marks: Vec<(usize, usize, Mark)>) {
-        self.current_mut().marks.clear();
-        self.game.marks = [const { [const { None }; 21] }; 21];
-
-        for (i, j, mark) in marks.into_iter() {
-            let (i, j) = self.recv(i, j);
-            if match self.config.show_recent {
-                ShowRecent::Number => self.game.numbers[i][j].is_some(),
-                ShowRecent::Circle => self.game.numbers[i][j] == Some(self.tree_loc.1),
-                ShowRecent::None => false,
-            } {
-                continue;
-            }
-            self.game.marks[i][j] = Some(mark.clone());
-            self.current_mut().marks.push((i, j, mark));
-        }
-    }
-    */
-    /*
-    pub fn set_marks_window(&mut self, mark: Option<Mark>, window: (usize, usize, usize, usize)) {
-        let (row_start, row_end, col_start, col_end) = self.recv_window(window);
-
-        let (r, c) = self.tree_loc;
-        self.problem.table[r][c]
-            .as_mut()
-            .unwrap()
-            .marks
-            .retain(|&(i, j, ref _mark)| {
-                if i > row_end || i < row_start || j < col_start || j > col_end {
-                    return true;
-                }
-                match self.config.show_recent {
-                    ShowRecent::Number => self.game.numbers[i][j].is_some(),
-                    ShowRecent::Circle => self.game.numbers[i][j] == Some(self.tree_loc.1),
-                    ShowRecent::None => false,
-                }
-            });
-
-        for i in row_start..=row_end {
-            for j in col_start..=col_end {
-                if match self.config.show_recent {
-                    ShowRecent::Number => self.game.numbers[i][j].is_some(),
-                    ShowRecent::Circle => self.game.numbers[i][j] == Some(self.tree_loc.1),
-                    ShowRecent::None => false,
-                } {
-                    continue;
-                }
-                if let Some(ref mark) = mark {
-                    self.current_mut().marks.push((i, j, mark.clone()));
-                    self.game.marks[i][j] = Some(mark.clone());
-                } else {
-                    self.game.marks[i][j] = None;
-                }
-            }
-        }
-    }*/
-
     pub fn paint(&mut self, paint: Paint, locs: Vec<(usize, usize)>, label: String) {
         match paint {
             Paint::Stone(stone) => {
                 for (i, j) in locs.into_iter() {
                     let (i, j) = self.recv(i, j);
                     self.game.stones[i][j] = match stone {
-                        StonePaint::Black => Some(Color::Black),
-                        StonePaint::White => Some(Color::White),
+                        StonePaint::Black => Some(self.send_recv_color(Color::Black)),
+                        StonePaint::White => Some(self.send_recv_color(Color::White)),
                         StonePaint::Delete => None,
                     };
                 }

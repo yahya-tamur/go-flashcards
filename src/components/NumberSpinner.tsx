@@ -1,20 +1,21 @@
 // Copied (as suggested) from https://mui.com/material-ui/react-number-field/
 // with minimal changes
 // Accessed on 7/11/2026
-const React = (await import("react")).default;
+import type { NumberField as NF } from "@base-ui/react/number-field";
 
-//import { NumberField as BaseNumberField } from '@base-ui/react/number-field';
 const { NumberField: BaseNumberField } =
   await import("@base-ui/react/number-field");
 const Box = (await import("@mui/material/Box")).default;
-const Button = (await import("@mui/material/Button")).default;
-const FormControl = (await import("@mui/material/FormControl")).default;
+
+const React = (await import("react")).default;
+
 const AddIcon = (await import("@mui/icons-material/Add")).default;
 const RemoveIcon = (await import("@mui/icons-material/Remove")).default;
-const OutlinedInput = (await import("@mui/material/OutlinedInput")).default;
-const InputAdornment = (await import("@mui/material/InputAdornment")).default;
 
-import type { NumberField as NF } from "@base-ui/react/number-field";
+const Button = (await import("@mui/material/Button")).default;
+const FormControl = (await import("@mui/material/FormControl")).default;
+const InputAdornment = (await import("@mui/material/InputAdornment")).default;
+const OutlinedInput = (await import("@mui/material/OutlinedInput")).default;
 
 export default function NumberSpinner({
   id: idProp,

@@ -9,6 +9,7 @@ await import("../App.css");
 await import("../AppContext");
 const AppContext = (await import("../AppContext")).default;
 const { commands } = await import("../bindings");
+const { handleError, setClick } = await import("../utils");
 
 const NumberSpinner = (await import("../components/NumberSpinner")).default;
 
@@ -21,7 +22,10 @@ const TopBar = () => {
     c_setStudyPhase,
     c_setPhase,
     c_setFeedback,
+    c_cursorDispatch,
     c_setEditingPhase,
+    c_setErrorMessage,
+    c_setErrorWindowOpen,
   } = useContext(AppContext);
   return (
     <Paper
@@ -54,10 +58,16 @@ const TopBar = () => {
           variant="contained"
           sx={{ height: "40px" }}
           onClick={async () => {
-            commands.mainMenu().then(() => {
-              c_setPhase("Main");
-              //c_setConfig(null);
-            });
+            commands
+              .mainMenu()
+              .then(() => {
+                c_setPhase("Main");
+                //c_setConfig(null);
+                c_setNextLabel("A");
+              })
+              .catch((e) =>
+                handleError(e, c_setErrorMessage, c_setErrorWindowOpen),
+              );
           }}
         >
           Exit
@@ -78,7 +88,10 @@ const TopBar = () => {
               .then((data) => {
                 c_setData(data);
                 c_setFeedback("");
-              });
+              })
+              .catch((e) =>
+                handleError(e, c_setErrorMessage, c_setErrorWindowOpen),
+              );
           }}
         />
         {c_studyPhase === "Edit" ? (
@@ -97,9 +110,9 @@ const TopBar = () => {
                   c_setStudyPhase("View");
                   c_setNextLabel("A");
                 })
-                .catch((e) => {
-                  console.log(e);
-                });
+                .catch((e) =>
+                  handleError(e, c_setErrorMessage, c_setErrorWindowOpen),
+                );
             }}
           >
             Save
@@ -134,9 +147,9 @@ const TopBar = () => {
                   c_setStudyPhase("View");
                   c_setNextLabel("A");
                 })
-                .catch((e) => {
-                  console.log(e);
-                });
+                .catch((e) =>
+                  handleError(e, c_setErrorMessage, c_setErrorWindowOpen),
+                );
             }}
           >
             Discard
@@ -155,11 +168,12 @@ const TopBar = () => {
                   //c_setExerciseColor(
                   //data.color === "Black" ? "White" : "Black",
                   //);
+                  setClick(data, c_cursorDispatch);
                   c_setStudyPhase("Guess");
                 })
-                .catch((e) => {
-                  console.log(e);
-                });
+                .catch((e) =>
+                  handleError(e, c_setErrorMessage, c_setErrorWindowOpen),
+                );
             }}
           >
             Next

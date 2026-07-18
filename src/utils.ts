@@ -6,18 +6,39 @@ import type {
   EditingPhaseType,
   StudyPhaseType,
 } from "./AppContext";
-import type { Mark, MarkPaint, RectangleMark, Snapshot } from "./bindings";
+import type {
+  Mark,
+  MarkPaint,
+  RectangleMark,
+  Snapshot,
+  ValidationResult,
+} from "./bindings";
 
 const { commands } = await import("./bindings");
 
 // label(Triangle) = label(Square)
 //
 
+export const configStatusEquals = (
+  a: ValidationResult,
+  b: ValidationResult,
+): boolean => {
+  if (a.result === "Valid" || b.result === "Valid") {
+    return a.result === b.result;
+  }
+  if (a.error !== b.error) {
+    return false;
+  }
+  if (a.range === null || b.range === null) {
+    return a.range === b.range;
+  }
+  return a.range[0] === b.range[0] && a.range[1] === b.range[1];
+};
+
 export const setClick = (
   c_data: Snapshot | null,
   c_cursorDispatch: Dispatch<CursorAction>,
 ) => {
-  console.log(c_data, c_data?.color);
   return c_cursorDispatch({
     type: "set_click",
     value: c_data?.color === "Black" ? "White" : "Black",
@@ -61,8 +82,13 @@ export const markEqualsCursor = (
   }
 };
 
-export const handleError = async <T>(error: T) => {
-  console.log("backend error", error);
+export const handleError = async <T>(
+  error: T,
+  c_setErrorMessage: Dispatch<SetStateAction<string>>,
+  c_setErrorWindowOpen: Dispatch<SetStateAction<boolean>>,
+) => {
+  c_setErrorMessage(error as string);
+  c_setErrorWindowOpen(true);
 };
 
 export const editNewExercise = (
@@ -82,25 +108,28 @@ export const editNewExercise = (
   }
 };
 
-export const studyStep = (
+export const studyStep = async (
   data: Snapshot,
   c_setData: Dispatch<SetStateAction<Snapshot | null>>,
   c_setFeedback: Dispatch<SetStateAction<string>>,
   c_setStudyPhase: Dispatch<SetStateAction<StudyPhaseType>>,
+  c_setAnswerMessage: Dispatch<SetStateAction<string>>,
 ) => {
   switch (data.variant) {
     case "Correct":
-      commands
+      return commands
         .answer(true)
-        .then(() => commands.getData())
+        .then((answerMessage) => {
+          c_setAnswerMessage(answerMessage);
+          return commands.getData();
+        })
         .then((data) => {
           c_setData(data);
           c_setFeedback("Correct");
           c_setStudyPhase("View");
         });
-      break;
     case "Incorrect":
-      commands
+      return commands
         .answer(false)
         .then(() => commands.getData())
         .then((data) => {
@@ -108,10 +137,9 @@ export const studyStep = (
           c_setFeedback("Incorrect");
           c_setStudyPhase("View");
         });
-      break;
     case "New":
-      if (data?.table[0][0]?.color === data.color) {
-        commands
+      if (data?.table[0][0]?.color !== data.color) {
+        return commands
           .answer(false)
           .then(() => commands.getData())
           .then((data) => {
@@ -121,10 +149,7 @@ export const studyStep = (
           });
       } else {
         c_setStudyPhase("UnknownGuess");
+        return;
       }
-
-      break;
-    default:
-      break;
   }
 };

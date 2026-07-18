@@ -1,8 +1,6 @@
 import type { Holding } from "./AppContext";
 import type { Grid } from "./bindings";
 
-import { cursorColor, markEqualsCursor, setClick } from "./utils";
-
 await import("react");
 const { useEffect, useState, useRef, useContext, useCallback, useReducer } =
   await import("react");
@@ -11,7 +9,8 @@ const Paper = (await import("@mui/material/Paper")).default;
 
 const AppContext = (await import("./AppContext")).default;
 const { commands } = await import("./bindings");
-const { handleError, studyStep } = await import("./utils");
+const { handleError, studyStep, cursorColor, markEqualsCursor, setClick } =
+  await import("./utils");
 
 const letters = "ABCDEFGHJKLMNOPQRST".split("");
 
@@ -90,7 +89,10 @@ const Board = () => {
     c_window,
     c_setFeedback,
     c_setStudyPhase,
+    c_setAnswerMessage,
     c_setWindow,
+    c_setErrorMessage,
+    c_setErrorWindowOpen,
   } = useContext(AppContext);
   const board_svg = useRef<SVGSVGElement>(null);
   const paper = useRef<HTMLDivElement>(null);
@@ -388,22 +390,28 @@ const Board = () => {
                     setClick(data, c_cursorDispatch);
                     c_setData(data);
                     if (c_phase === "Study" && c_studyPhase === "Guess") {
-                      studyStep(
+                      return studyStep(
                         data,
                         c_setData,
                         c_setFeedback,
                         c_setStudyPhase,
+                        c_setAnswerMessage,
                       );
                     }
                   })
-                  .catch((e) => handleError(e));
+                  .catch((e) =>
+                    handleError(e, c_setErrorMessage, c_setErrorWindowOpen),
+                  );
               }
             } else if (c_cursor.type === "Place") {
               if (c_cursor.dragging !== null && c_cursor.dragging.length > 0) {
                 commands
                   .paint(c_cursor.paint, c_cursor.dragging, c_nextLabel)
                   .then(() => commands.getData())
-                  .then((data) => c_setData(data));
+                  .then((data) => c_setData(data))
+                  .catch((e) =>
+                    handleError(e, c_setErrorMessage, c_setErrorWindowOpen),
+                  );
               }
             } else if (c_cursor.type === "Drag") {
               if (w !== null && c_cursor.start !== null) {
@@ -413,7 +421,10 @@ const Board = () => {
                     w[1],
                   ])
                   .then(() => commands.getData())
-                  .then((data) => c_setData(data));
+                  .then((data) => c_setData(data))
+                  .catch((e) =>
+                    handleError(e, c_setErrorMessage, c_setErrorWindowOpen),
+                  );
               }
             }
             c_cursorDispatch({
@@ -426,7 +437,10 @@ const Board = () => {
                 commands
                   .paint(c_cursor.paint, c_cursor.dragging, c_nextLabel)
                   .then(() => commands.getData())
-                  .then((data) => c_setData(data));
+                  .then((data) => c_setData(data))
+                  .catch((e) =>
+                    handleError(e, c_setErrorMessage, c_setErrorWindowOpen),
+                  );
               }
             }
             c_cursorDispatch({ type: "up" });
@@ -437,7 +451,10 @@ const Board = () => {
                 commands
                   .paint(c_cursor.paint, c_cursor.dragging, c_nextLabel)
                   .then(() => commands.getData())
-                  .then((data) => c_setData(data));
+                  .then((data) => c_setData(data))
+                  .catch((e) =>
+                    handleError(e, c_setErrorMessage, c_setErrorWindowOpen),
+                  );
               }
             }
             c_cursorDispatch({ type: "up" });

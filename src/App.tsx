@@ -17,17 +17,22 @@ import type {
   StonePaint,
 } from "./bindings";
 
-import { wEquals } from "./utils";
-
 const { useState, useReducer } = await import("react");
 
+const Button = (await import("@mui/material/Button")).default;
 const CssBaseline = (await import("@mui/material/CssBaseline")).default;
+const Dialog = (await import("@mui/material/Dialog")).default;
+const DialogActions = (await import("@mui/material/DialogActions")).default;
+const DialogContent = (await import("@mui/material/DialogContent")).default;
+const DialogContentText = (await import("@mui/material/DialogContentText"))
+  .default;
 const { ThemeProvider, createTheme } = await import("@mui/material/styles");
 
 await import("./App.css");
 
 await import("./AppContext");
 const AppContext = (await import("./AppContext")).default;
+const { wEquals } = await import("./utils");
 
 const EditingScreen = (await import("./Editing/Screen")).default;
 
@@ -266,6 +271,9 @@ function App() {
   const [c_feedback, c_setFeedback] = useState("");
   const [c_data, c_setData] = useState<Snapshot | null>(null);
   const [c_nextLabel, c_setNextLabel] = useState<string>("A");
+  const [c_errorMessage, c_setErrorMessage] = useState<string>("");
+  const [c_errorWindowOpen, c_setErrorWindowOpen] = useState(false);
+  const [c_answerMessage, c_setAnswerMessage] = useState("");
   const [c_window, c_setWindow] = useState<[number, number, number, number]>([
     0, 18, 0, 18,
   ]);
@@ -314,8 +322,14 @@ function App() {
           c_setNextLabel,
           c_window,
           c_setWindow,
-          c_images: c_images,
-          c_setImages: c_setImages,
+          c_images,
+          c_setImages,
+          c_errorMessage,
+          c_setErrorMessage,
+          c_errorWindowOpen,
+          c_setErrorWindowOpen,
+          c_answerMessage,
+          c_setAnswerMessage,
         }}
       >
         {c_phase === "Main" ? (
@@ -325,6 +339,27 @@ function App() {
         ) : (
           <StudyScreen />
         )}
+        <Dialog
+          open={c_errorWindowOpen}
+          fullWidth
+          maxWidth="xs"
+          onClose={() => c_setErrorWindowOpen(false)}
+        >
+          <DialogContent>
+            <DialogContentText>{c_errorMessage}</DialogContentText>
+          </DialogContent>
+          <DialogActions>
+            <Button
+              variant="contained"
+              onClick={() => {
+                c_setErrorWindowOpen(false);
+                c_setErrorMessage("");
+              }}
+            >
+              Ok
+            </Button>
+          </DialogActions>
+        </Dialog>
       </AppContext>
     </ThemeProvider>
   );

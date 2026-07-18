@@ -1,15 +1,15 @@
 use indexmap::IndexMap;
 use regex::Regex;
 use specta::Type;
-use std::{
-    collections::{HashMap, HashSet},
-    path::Path,
-};
+use std::collections::{HashMap, HashSet};
 use toml::{Spanned, Value};
 
 use struct_patch::Patch;
 
+use crate::{error::error, Result};
 use serde::{Deserialize, Serialize};
+
+use crate::{file::FileSystem, flashcard_algorithm::algorithm_config::AlgorithmConfig};
 
 #[derive(PartialEq, Deserialize, Debug, Copy, Clone, Serialize, Type)]
 #[serde(rename_all = "snake_case")]
@@ -29,11 +29,12 @@ pub struct ActiveConfig {
     pub show_recent: ShowRecent,
 }
 
-#[derive(Deserialize, Patch, PartialEq, Debug, Clone)]
+#[derive(Deserialize, Patch, PartialEq, Debug, Clone, Serialize, Type)]
 #[patch(attribute(derive(Deserialize, Debug, Clone)))]
 #[patch(attribute(serde(deny_unknown_fields, rename_all = "snake_case")))]
 pub struct FlashcardSetConfig {
-    pub algorithm: u32,
+    pub algorithm: AlgorithmConfig,
+    pub shared: bool,
 }
 
 #[derive(Deserialize, Debug)]
@@ -86,22 +87,17 @@ struct StudyConfig {
     set_config: FlashcardSetConfigPatch,
 }
 
-use crate::fs;
+pub fn flashcard_sets(fs: &mut FileSystem) -> Result<Vec<String>> {
+    let input = fs.load_config()?;
 
-pub async fn flashcard_sets(app_data: &Path) -> Vec<String> {
-    let Ok(input) = fs::load_config(app_data).await else {
-        return Vec::new();
-    };
-    let Ok(config) = toml::from_str::<ConfigFile>(&input) else {
-        return Vec::new();
-    };
+    let config = toml::from_str::<ConfigFile>(&input)?;
 
-    config.study_sets.into_keys().collect()
+    Ok(config.study_sets.into_keys().collect())
 }
 
-pub async fn load_editing(app_data: &Path, name: &str) -> ActiveConfig {
-    let input = fs::load_config(app_data).await.unwrap();
-    let config: ConfigFile = toml::from_str(&input).unwrap();
+pub fn load_editing(fs: &mut FileSystem, name: &str) -> Result<ActiveConfig> {
+    let input = fs.load_config()?;
+    let config: ConfigFile = toml::from_str(&input)?;
 
     let mut active_config = config.default_config.config.clone();
 
@@ -111,25 +107,28 @@ pub async fn load_editing(app_data: &Path, name: &str) -> ActiveConfig {
             active_config = active_config << src_config.clone();
         }
     }
-    active_config
+    Ok(active_config)
 }
 
-pub async fn load_study(
-    app_data: &Path,
+pub fn load_study(
+    fs: &mut FileSystem,
     name: &str,
-) -> (FlashcardSetConfig, Vec<(String, ActiveConfig)>) {
-    let input = fs::load_config(app_data).await.unwrap();
-    let config: ConfigFile = toml::from_str(&input).unwrap();
+) -> Result<(FlashcardSetConfig, Vec<(String, ActiveConfig)>)> {
+    let input = fs.load_config()?;
+    let config: ConfigFile = toml::from_str(&input)?;
 
     let mut set_config = config.default_config.set_config.clone();
     let mut active_config = config.default_config.config.clone();
 
-    let study_config = config.study_sets.get(name).unwrap();
+    let study_config = config
+        .study_sets
+        .get(name)
+        .ok_or_else(|| error("configuration not found."))?;
 
     active_config = active_config << study_config.config.clone();
     set_config = set_config << study_config.set_config.clone();
 
-    (
+    Ok((
         set_config,
         study_config
             .sources
@@ -142,41 +141,44 @@ pub async fn load_study(
                 (source.as_ref().clone(), config)
             })
             .collect(),
-    )
+    ))
 }
 
-pub async fn validate(app_data: &Path, input: Option<&str>) -> Result<(), (String, u32, u32)> {
-    let input: &str = match input {
-        Some(input) => input,
-        None => &fs::load_config(app_data).await.unwrap(),
+#[derive(Serialize, Type)]
+#[serde(tag = "result")]
+pub enum ValidationResult {
+    Valid,
+    Invalid {
+        error: String,
+        range: Option<(u32, u32)>,
+    },
+}
+
+pub fn validate(fs: &mut FileSystem, input: &str) -> Result<ValidationResult> {
+    let config = match toml::from_str::<ConfigFile>(input) {
+        Err(e) => {
+            return Ok(ValidationResult::Invalid {
+                error: e.message().to_string(),
+                range: e.span().map(|r| (r.start as u32, r.end as u32)),
+            });
+        }
+        Ok(config) => config,
     };
 
-    let config: ConfigFile = toml::from_str(input).map_err(|err| {
-        if let Some(range) = err.span() {
-            (
-                err.message().to_string(),
-                range.start as u32,
-                range.end as u32,
-            )
-        } else {
-            (err.message().to_string(), 0u32, 0u32)
-        }
-    })?;
+    println!("ASDFASDFASDFASDF");
 
-    let exercise_files: HashSet<String> = fs::list_exercises(app_data)
-        .await
-        .unwrap()
-        .into_iter()
-        .collect();
+    println!("ASDFASDFASDFASDF");
+
+    println!("ASDFASDFASDFASDF");
+    let exercise_files: HashSet<String> = fs.list_exercises()?.into_iter().collect();
 
     if let Some(editing_config) = config.editing_config {
         for source in editing_config.source_config.keys() {
             if !exercise_files.contains(source.get_ref()) {
-                return Err((
-                    format!(r#"source "{}" not found."#, source.get_ref()),
-                    source.span().start as u32,
-                    source.span().end as u32,
-                ));
+                return Ok(ValidationResult::Invalid {
+                    error: format!(r#"source "{}" not found."#, source.get_ref()),
+                    range: Some((source.span().start as u32, source.span().end as u32)),
+                });
             }
         }
     }
@@ -185,35 +187,32 @@ pub async fn validate(app_data: &Path, input: Option<&str>) -> Result<(), (Strin
         let mut sources: HashSet<String> = HashSet::new();
         for source in study_set.sources.iter() {
             if !exercise_files.contains(source.get_ref()) {
-                return Err((
-                    format!(r#"source "{}" not found."#, source.get_ref()),
-                    source.span().start as u32,
-                    source.span().end as u32,
-                ));
+                return Ok(ValidationResult::Invalid {
+                    error: format!(r#"source "{}" not found."#, source.get_ref()),
+                    range: Some((source.span().start as u32, source.span().end as u32)),
+                });
             }
             if !sources.insert(source.get_ref().clone()) {
-                return Err((
-                    format!(r#"duplicate source "{}"."#, source.get_ref()),
-                    source.span().start as u32,
-                    source.span().end as u32,
-                ));
+                return Ok(ValidationResult::Invalid {
+                    error: format!(r#"duplicate source "{}"."#, source.get_ref()),
+                    range: Some((source.span().start as u32, source.span().end as u32)),
+                });
             }
         }
         for source in study_set.source_config.keys() {
             if !sources.contains(source.as_ref()) {
-                return Err((
-                    format!(r#"source "{}" not in this set."#, source.get_ref()),
-                    source.span().start as u32,
-                    source.span().end as u32,
-                ));
+                return Ok(ValidationResult::Invalid {
+                    error: format!(r#"source "{}" not in this set."#, source.get_ref()),
+                    range: Some((source.span().start as u32, source.span().end as u32)),
+                });
             }
         }
     }
 
-    Ok(())
+    Ok(ValidationResult::Valid)
 }
 
-pub async fn add_exercise(app_data: &Path, name: &str) -> bool {
+pub fn add_exercise(fs: &mut FileSystem, name: &str) -> Result<()> {
     let bare_key_re = Regex::new(r#"^[A-Za-z0-9_\-]*$"#).unwrap();
 
     let qname = &format!(
@@ -229,13 +228,10 @@ pub async fn add_exercise(app_data: &Path, name: &str) -> bool {
 
     let new_set = format!("[flashcard_set.{}]\nsources = [{}]", name, qname);
 
-    let old_config = fs::load_config(app_data).await.unwrap();
+    let old_config = fs.load_config()?;
 
-    let Ok(parsed_toml) =
-        toml::from_str::<IndexMap<Spanned<String>, IndexMap<Spanned<String>, Value>>>(&old_config)
-    else {
-        return false;
-    };
+    let parsed_toml =
+        toml::from_str::<IndexMap<Spanned<String>, IndexMap<Spanned<String>, Value>>>(&old_config)?;
 
     let start_of_last_flashcard_set = match parsed_toml.get("flashcard_set") {
         None => 0,
@@ -261,17 +257,12 @@ pub async fn add_exercise(app_data: &Path, name: &str) -> bool {
         }
     }
 
-    fs::save_config(
-        app_data,
-        &format!(
-            "{}{}{}\n\n{}",
-            &old_config[..n],
-            "\n".repeat(2 - i),
-            new_set,
-            &old_config[n..]
-        ),
-    )
-    .await
-    .unwrap();
-    true
+    fs.save_config(&format!(
+        "{}{}{}\n\n{}",
+        &old_config[..n],
+        "\n".repeat(2 - i),
+        new_set,
+        &old_config[n..]
+    ))?;
+    Ok(())
 }

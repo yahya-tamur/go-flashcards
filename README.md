@@ -24,22 +24,23 @@ UI overhaul
 Current Actual Goal
 --------------
 
+- app compiles, but a lot of errors!!!
+- remove all unwraps
+
+- finish file system updates for mobile (appdata, not public storage)
 - compile to android
-- actually add histogram, nicer study screen
-  - segues into porting study screen to mobile
-
-- android file situation
-
-- custom theme goal:
-  - (convertfilesync)
-  - editable values:
-    - theme, all images
-      papers? elevations? no?
-      mode ?!
+- study frontend (4 screens).:
+  - hide tree completely.
 
 things that popped up:
 ----------------------------------
 
+- 'created' !!
+- are boards sliders slow?
+  - always draw entire board.
+- occasional missing field default
+- Ctrl - S
+- right click to delete
 - disable exercise loading when invalid config.
 - menus can be dragged??
 - import from sgf ignored AB property in example sgf file!!
@@ -70,17 +71,32 @@ Remaining Goals
       as correct as it'll ever be.
     - boxes for <10 times correct, <50 times correct, <0infty times correct,
 
+-
+
 Small things that come to mind:
 -----------------
 
-- theme in config
-  - we will have to have this default theme in the public folder,
-    but you can probably import whatever ThemeOptions you want
+- (big thing actually)
+  - configurable app data dir.
+    - will publicstorage cause more problems?
+    - scaffold app data
+    - frontend
+  - go into re-orderable lists
 
-- break up backend into modules
+- custom theme goal:
+  - (convertfilesync)
+  - editable values:
+    - theme, all images
+      papers? elevations? no?
+      mode ?!
 
+  - theme in config
+    - we will have to have this default theme in the public folder,
+      but you can probably import whatever ThemeOptions you want
+
+- delete history file?
 - option to not put territory marks on stones
-- 'file system error' alert
+
 - tactility:
   - exit without saving? popup on edit
     - same on config
@@ -105,6 +121,7 @@ Small things that come to mind:
   - show comments : none, all, first
 
 - more options in export to sgf
+- CA[!= UTF-8]
 
 - do all buttons have tooltips?
 
@@ -121,6 +138,7 @@ Small things that come to mind:
 Small things, but do not do for now
 ------------
 
+- replace other hashmaps with indexmaps?
 - adding config per source file.
 - sgf parse followup
 
@@ -130,6 +148,7 @@ Small things, but do not do for now
 - timer?
 - sounds?
   - better (higher res, copyright ok) art too.
+- recursive exercise directory?
 
 Finalizing
 -------------

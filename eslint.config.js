@@ -4,6 +4,7 @@ import reactPlugin from "eslint-plugin-react";
 import reactHooks from "eslint-plugin-react-hooks";
 import globals from "globals";
 import { defineConfig } from "eslint/config";
+import promisePlugin from "eslint-plugin-promise";
 
 export default defineConfig(
   // 1. Globally ignore build artifacts and system files
@@ -34,6 +35,7 @@ export default defineConfig(
     plugins: {
       react: reactPlugin,
       "react-hooks": reactHooks,
+      promise: promisePlugin,
     },
     rules: {
       // Pull in standard configurations manually for plugins missing full Flat Config support
@@ -44,6 +46,7 @@ export default defineConfig(
       // Custom adjustments
       "react/react-in-jsx-scope": "off", // Unnecessary for modern React
       "react/jsx-uses-react": "off",
+      "promise/catch-or-return": "error",
     },
     settings: {
       react: {

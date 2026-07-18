@@ -1,5 +1,3 @@
-import { editNewExercise } from "../utils";
-
 const { useState, useContext } = await import("react");
 
 const ClearIcon = (await import("@mui/icons-material/Clear")).default;
@@ -28,6 +26,7 @@ await import("../App.css");
 await import("../AppContext");
 const AppContext = (await import("../AppContext")).default;
 const { commands } = await import("../bindings");
+const { editNewExercise, handleError } = await import("../utils");
 
 const NumberSpinner = (await import("../components/NumberSpinner")).default;
 
@@ -39,6 +38,8 @@ const TopBar = () => {
     c_setNextLabel,
     c_setPhase,
     c_setEditingPhase,
+    c_setErrorMessage,
+    c_setErrorWindowOpen,
   } = useContext(AppContext);
   const [dialogContent, setDialogContent] = useState("");
   const [savedMsgOpen, setSavedMsgOpen] = useState(false);
@@ -78,11 +79,16 @@ const TopBar = () => {
           color="button"
           sx={{ height: "40px" }}
           onClick={async () => {
-            commands.mainMenu().then(() => {
-              c_setPhase("Main");
-              //c_setConfig(null);
-              c_setNextLabel("A");
-            });
+            commands
+              .mainMenu()
+              .then(() => {
+                c_setPhase("Main");
+                //c_setConfig(null);
+                c_setNextLabel("A");
+              })
+              .catch((e) =>
+                handleError(e, c_setErrorMessage, c_setErrorWindowOpen),
+              );
           }}
         >
           Exit
@@ -102,7 +108,10 @@ const TopBar = () => {
               .then((data) => {
                 editNewExercise(data, c_cursorDispatch, c_setEditingPhase);
                 c_setData(data);
-              });
+              })
+              .catch((e) =>
+                handleError(e, c_setErrorMessage, c_setErrorWindowOpen),
+              );
           }}
         />
 
@@ -120,7 +129,10 @@ const TopBar = () => {
                   .then((data) => {
                     editNewExercise(data, c_cursorDispatch, c_setEditingPhase);
                     c_setData(data);
-                  });
+                  })
+                  .catch((e) =>
+                    handleError(e, c_setErrorMessage, c_setErrorWindowOpen),
+                  );
               }}
             >
               <ClearIcon color="error" />
@@ -138,7 +150,10 @@ const TopBar = () => {
                   .then((data) => {
                     editNewExercise(data, c_cursorDispatch, c_setEditingPhase);
                     c_setData(data);
-                  });
+                  })
+                  .catch((e) =>
+                    handleError(e, c_setErrorMessage, c_setErrorWindowOpen),
+                  );
               }}
             >
               <KeyboardArrowDownOutlinedIcon />
@@ -157,7 +172,10 @@ const TopBar = () => {
                   .then((data) => {
                     editNewExercise(data, c_cursorDispatch, c_setEditingPhase);
                     c_setData(data);
-                  });
+                  })
+                  .catch((e) =>
+                    handleError(e, c_setErrorMessage, c_setErrorWindowOpen),
+                  );
               }}
             >
               <KeyboardArrowRightOutlinedIcon />
@@ -184,9 +202,9 @@ const TopBar = () => {
                       );
                       c_setData(data);
                     })
-                    .catch((e) => {
-                      console.log(e);
-                    });
+                    .catch((e) =>
+                      handleError(e, c_setErrorMessage, c_setErrorWindowOpen),
+                    );
                 }}
               >
                 <DownloadIcon />
@@ -208,9 +226,9 @@ const TopBar = () => {
                       setDialogContent("Exported to sgf, under app_data/sgf.");
                       setSavedMsgOpen(true);
                     })
-                    .catch((e) => {
-                      console.log(e);
-                    });
+                    .catch((e) =>
+                      handleError(e, c_setErrorMessage, c_setErrorWindowOpen),
+                    );
                 }}
               >
                 <FileUploadIcon />
@@ -224,10 +242,15 @@ const TopBar = () => {
           color="button"
           sx={{ height: "40px" }}
           onClick={async () => {
-            commands.saveExercises().then(() => {
-              setDialogContent("Saved.");
-              setSavedMsgOpen(true);
-            });
+            commands
+              .saveExercises()
+              .then(() => {
+                setDialogContent("Saved.");
+                setSavedMsgOpen(true);
+              })
+              .catch((e) =>
+                handleError(e, c_setErrorMessage, c_setErrorWindowOpen),
+              );
           }}
         >
           Save

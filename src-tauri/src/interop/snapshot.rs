@@ -4,9 +4,7 @@ use specta_typescript::Number;
 
 use crate::{
     config::ShowRecent,
-    game_state::{Color, Mark},
-    move_tree::MoveTree,
-    problem::Variant,
+    game::{Color, Mark, MoveTree, Variant},
 };
 
 #[derive(Serialize, Type)]

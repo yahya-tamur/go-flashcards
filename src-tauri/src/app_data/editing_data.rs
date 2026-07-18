@@ -1,10 +1,9 @@
 use crate::config::{self, ActiveConfig};
-use crate::fs;
-use crate::move_tree::MoveTree;
-use crate::problem::Problem;
+use crate::file::FileSystem;
+use crate::game::{MoveTree, Problem};
 use crate::sgf::{problem_to_sgf, sgf_to_problem};
+use crate::Result;
 
-use std::path::Path;
 use std::sync::Arc;
 
 use sgf_parse::go::parse;
@@ -27,11 +26,6 @@ pub struct EditingData {
 }
 
 impl EditingData {
-    //only for testing!
-    pub fn current_problem(&self) -> &Problem {
-        &self.exercises[self.current_exercise]
-    }
-
     fn load_tree(&mut self) {
         self.move_tree = MoveTree::new(self.config.clone(), &self.exercises[self.current_exercise]);
     }
@@ -70,66 +64,60 @@ impl EditingData {
         (self.current_exercise, self.exercises.len())
     }
 
-    pub async fn load(path: &Path, exercise_file: &str) -> (bool, EditingData) {
-        let config = Arc::new(config::load_editing(path, exercise_file).await);
-        let (created, exercises) = fs::load_exercises(path, exercise_file).await.unwrap();
-        (
-            created,
-            if exercises.is_empty() {
-                let exercises = vec![Problem::default()];
-                let move_tree = MoveTree::new(config.clone(), &exercises[0]);
-                EditingData {
-                    config,
-                    exercises,
-                    move_tree,
-                    current_exercise: 0,
-                    file: exercise_file.to_string(),
-                }
-            } else {
-                let i = exercises.len() - 1;
-                let move_tree = MoveTree::new(config.clone(), &exercises[i]);
-                EditingData {
-                    config,
-                    exercises,
-                    current_exercise: i,
-                    move_tree,
-                    file: exercise_file.to_string(),
-                }
-            },
-        )
+    pub fn load(fs: &mut FileSystem, exercise_file: &str) -> Result<EditingData> {
+        let config = Arc::new(config::load_editing(fs, exercise_file)?);
+        let exercises = fs.load_exercises(exercise_file)?;
+
+        if exercises.is_empty() {
+            let exercises = vec![Problem::default()];
+            let move_tree = MoveTree::new(config.clone(), &exercises[0]);
+            Ok(EditingData {
+                config,
+                exercises,
+                move_tree,
+                current_exercise: 0,
+                file: exercise_file.to_string(),
+            })
+        } else {
+            let i = exercises.len() - 1;
+            let move_tree = MoveTree::new(config.clone(), &exercises[i]);
+            Ok(EditingData {
+                config,
+                exercises,
+                current_exercise: i,
+                move_tree,
+                file: exercise_file.to_string(),
+            })
+        }
     }
 
-    pub async fn save(&mut self, path: &Path) {
+    pub fn save(&mut self, fs: &mut FileSystem) -> Result<()> {
         let mut saved_copy = self.move_tree.clone();
         self.exercises[self.current_exercise] = saved_copy.save();
-        fs::save_exercises(path, &self.exercises, &self.file)
-            .await
-            .unwrap()
+        fs.save_exercises(&self.exercises, &self.file)?;
+        Ok(())
     }
 
-    pub fn export_sgf(&self) -> String {
-        let problems: Vec<sgf_parse::GameTree> = self
-            .exercises
-            .iter()
-            .map(|prob| GoGame(problem_to_sgf(prob)))
-            .collect();
-        serialize(problems.iter())
+    pub fn export_sgf(&self) -> Result<String> {
+        let mut converted = Vec::new();
+        for problem in self.exercises.iter() {
+            converted.push(GoGame(problem_to_sgf(problem)?));
+        }
+        Ok(serialize(converted.iter()))
     }
 
-    pub fn import_sgf(&mut self, sgf: &str) -> bool {
+    pub fn import_sgf(&mut self, sgf: &str) -> Result<()> {
         self.exercises[self.current_exercise] = self.move_tree.save();
 
-        let Ok(trees) = parse(sgf) else {
-            return false;
-        };
+        let trees = parse(sgf)?;
         for game in trees {
-            self.exercises.push(sgf_to_problem(game));
+            self.exercises.push(sgf_to_problem(game)?);
         }
 
         self.current_exercise = self.exercises.len() - 1;
 
         self.load_tree();
 
-        true
+        Ok(())
     }
 }

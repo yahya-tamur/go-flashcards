@@ -10,9 +10,17 @@ await import("./App.css");
 
 const AppContext = (await import("./AppContext")).default;
 const { commands } = await import("./bindings");
+const { handleError } = await import("./utils");
 
 const CommentBox = () => {
-  const { c_phase, c_studyPhase, c_data, c_images } = useContext(AppContext);
+  const {
+    c_phase,
+    c_studyPhase,
+    c_data,
+    c_images,
+    c_setErrorMessage,
+    c_setErrorWindowOpen,
+  } = useContext(AppContext);
 
   const [comment, setComment] = useState("");
   useEffect(() => {
@@ -23,7 +31,9 @@ const CommentBox = () => {
   }, [c_data]);
   const img_size = "20px";
   const update_comment = (comment: string) => {
-    commands.comment(comment);
+    commands
+      .comment(comment)
+      .catch((e) => handleError(e, c_setErrorMessage, c_setErrorWindowOpen));
     setComment(comment);
   };
 

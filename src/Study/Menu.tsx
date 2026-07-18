@@ -1,6 +1,4 @@
-import { cursorColor } from "../utils";
-
-const { useEffect, useState, useContext } = await import("react");
+const { useContext } = await import("react");
 
 const Box = (await import("@mui/material/Box")).default;
 const Button = (await import("@mui/material/Button")).default;
@@ -12,6 +10,7 @@ const AppContext = (await import("../AppContext")).default;
 const InitializeMenu = (await import("../InitializeMenu")).default;
 const MakeTreeMenu = (await import("../MakeTreeMenu")).default;
 const { commands } = await import("../bindings");
+const { cursorColor, handleError, setClick } = await import("../utils");
 const { studyStep } = await import("../utils");
 
 const Menu = () => {
@@ -24,19 +23,12 @@ const Menu = () => {
     c_setStudyPhase,
     c_feedback,
     c_setFeedback,
+    c_answerMessage,
+    c_setAnswerMessage,
+    c_cursorDispatch,
+    c_setErrorMessage,
+    c_setErrorWindowOpen,
   } = useContext(AppContext);
-
-  const [history, setHistory] = useState<string>("");
-
-  // decided to try this instead of setting history in 3? separate places in board
-  useEffect(() => {
-    const f = async () => {
-      await commands.getHistory().then((h) => {
-        setHistory(h.map((t) => (t ? "🌟" : "❌")).join(""));
-      });
-    };
-    f();
-  }, [c_studyPhase, c_data]);
 
   return (
     <Paper
@@ -79,8 +71,17 @@ const Menu = () => {
                   .then(() => commands.getData())
                   .then((data) => {
                     c_setData(data);
-                    studyStep(data, c_setData, c_setFeedback, c_setStudyPhase);
-                  });
+                    return studyStep(
+                      data,
+                      c_setData,
+                      c_setFeedback,
+                      c_setStudyPhase,
+                      c_setAnswerMessage,
+                    );
+                  })
+                  .catch((e) =>
+                    handleError(e, c_setErrorMessage, c_setErrorWindowOpen),
+                  );
               }}
               variant="contained"
             >
@@ -129,11 +130,12 @@ const Menu = () => {
                   .then(() => commands.getData())
                   .then((data) => {
                     c_setData(data);
+                    setClick(data, c_cursorDispatch);
                     c_setStudyPhase("Guess");
                   })
-                  .catch((e) => {
-                    console.log(e);
-                  });
+                  .catch((e) =>
+                    handleError(e, c_setErrorMessage, c_setErrorWindowOpen),
+                  );
               }}
             >
               Back
@@ -148,9 +150,9 @@ const Menu = () => {
                     c_setStudyPhase("View");
                     c_setFeedback("");
                   })
-                  .catch((e) => {
-                    console.log(e);
-                  });
+                  .catch((e) =>
+                    handleError(e, c_setErrorMessage, c_setErrorWindowOpen),
+                  );
               }}
             >
               View Problem
@@ -173,7 +175,7 @@ const Menu = () => {
         >
           <Box>{c_feedback}</Box>
 
-          <Box>{history}</Box>
+          <Box>{c_answerMessage}</Box>
         </Box>
       ) : c_studyPhase === "Edit" ? (
         c_editingPhase === "Initialize" ? (
