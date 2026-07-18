@@ -73,8 +73,5 @@ def make_bindings():
 
     open("./src/bindings.ts", "w").write("\n".join(lines))
 
-    os.system("npx --loglevel silent prettier -w ./src/bindings.ts")
-
-
 if __name__ == "__main__":
     make_bindings()
