@@ -92,6 +92,7 @@ export type Snapshot = {
 	max_location: number,
 	window: [number, number, number, number],
 	min_window: [number, number, number, number] | null,
+	progress: number[] | null,
 };
 
 export type StonePaint = "Black" | "White" | "Delete";

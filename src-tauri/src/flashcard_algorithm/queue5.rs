@@ -51,7 +51,7 @@ impl FlashcardAlgorithm<5> for Queue5 {
     fn distribution<T>(&self, _selection_pool: &[Vec<T>; 5]) -> [f64; 5] {
         self.weights
     }
-    fn view<T>(&self, pool_sizes: &[Vec<T>; 5]) -> Vec<usize> {
+    fn progress<T>(&self, pool_sizes: &[Vec<T>; 5]) -> Vec<usize> {
         pool_sizes.iter().map(|v| v.len()).collect()
     }
 }

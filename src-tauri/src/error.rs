@@ -52,6 +52,7 @@ impl From<toml::de::Error> for DisplayableError {
     }
 }
 
+#[cfg(not(target_os = "android"))]
 impl From<tauri_plugin_fs::Error> for DisplayableError {
     fn from(err: tauri_plugin_fs::Error) -> Self {
         DisplayableError(format!("file system plugin error: {}", err))
@@ -73,5 +74,18 @@ impl From<SgfParseError> for DisplayableError {
 impl From<regex::Error> for DisplayableError {
     fn from(err: regex::Error) -> Self {
         DisplayableError(format!("regex error: {}", err))
+    }
+}
+
+#[cfg(target_os = "android")]
+impl From<tauri_plugin_android_fs::Error> for DisplayableError {
+    fn from(err: tauri_plugin_android_fs::Error) -> Self {
+        DisplayableError(format!("android file system plugin error: {}", err))
+    }
+}
+
+impl From<glob::PatternError> for DisplayableError {
+    fn from(err: glob::PatternError) -> Self {
+        DisplayableError(format!("glob pattern error: {}", err))
     }
 }

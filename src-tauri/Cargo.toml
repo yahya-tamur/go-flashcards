@@ -25,14 +25,12 @@ serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 tokio = "1.52.3"
 uuid = { version = "1.23.4", features = ["v4", "serde"] }
-tauri-plugin-fs = "2.5.1"
 flate2 = "1.1.9"
 rand = "0.10.2"
 regex = "1.13.0"
 sgf-parse = {
     git = "https://github.com/yahya-tamur/sgf-parse.git"
 }
-tauri-plugin-dialog = "2.7.1"
 struct-patch = "0.12.6"
 indexmap = { version = "2.14.0", features = ["serde"] }
 toml = { version = "1.1.2", features = ["preserve_order"] }
@@ -40,9 +38,12 @@ tauri-specta = { version = "=2.0.0-rc.25", features = ["derive", "typescript"] }
 specta-typescript = "0.0.12"
 specta = { version = "2.0.0-rc.25", features = ["derive"] }
 include_dir = { version = "0.7.4", features = ["glob"] }
-
-# [target.'cfg(windows)'.dependencies]
+glob = "0.3.3"
 tauri-plugin-android-fs = "28.4.0"
+tauri-plugin-fs = "2.5.1"
+tauri-plugin-dialog = "2.7.1"
+
+#[target.'cfg(target_os = "android")'.dependencies]
 
 
 # Read the optimization guideline for more details: https://tauri.app/concept/size/#cargo-configuration

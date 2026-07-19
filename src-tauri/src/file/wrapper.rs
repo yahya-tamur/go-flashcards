@@ -11,7 +11,7 @@ use serde::{de::DeserializeOwned, Serialize};
 use crate::{game::Problem, Result};
 
 #[derive(Debug)]
-pub struct FileSystem<FS>
+pub struct FileSystemWrapper<FS>
 where
     FS: OsFileSystem,
 {
@@ -19,13 +19,13 @@ where
     open_files: IndexMap<String, File>,
 }
 
-impl<OsFS> FileSystem<OsFS>
+impl<OsFS> FileSystemWrapper<OsFS>
 where
     OsFS: OsFileSystem,
 {
     pub fn initialize(app: &tauri::AppHandle) -> Result<Self> {
         let osfs = OsFS::initialize(app)?;
-        Ok(FileSystem {
+        Ok(FileSystemWrapper {
             osfs,
             open_files: IndexMap::new(),
         })
@@ -141,9 +141,11 @@ where
 
     pub fn load_config(&mut self) -> Result<String> {
         let (_, file) = self.open_file(&[], "config.toml")?;
+
         let mut contents = Vec::new();
 
         file.read_to_end(&mut contents)?;
+
         Ok(String::from_utf8(contents)?)
     }
 
@@ -151,8 +153,8 @@ where
         self.osfs.list_exercises()
     }
 
-    pub fn save_sgf(&self, app: &tauri::AppHandle, name: &str, content: &str) -> Result<()> {
-        let pick = self.osfs.pick_sgf_export(app, &format!("{name}.sgf"))?;
+    pub fn save_sgf(&self, name: &str, content: &str) -> Result<()> {
+        let pick = self.osfs.save_sgf(&format!("{name}.sgf"))?;
 
         if let Some(mut file) = pick {
             file.seek(SeekFrom::Start(0))?;
@@ -165,8 +167,8 @@ where
         }
     }
 
-    pub fn receive_sgf(&self, app: &tauri::AppHandle) -> Result<Option<String>> {
-        let pick = self.osfs.pick_sgf_import(app)?;
+    pub fn receive_sgf(&self) -> Result<Option<String>> {
+        let pick = self.osfs.pick_sgf()?;
 
         if let Some(mut file) = pick {
             let mut contents = Vec::new();

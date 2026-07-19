@@ -17,7 +17,7 @@ pub trait HistoryKeeper: Debug + Sealed + Send + 'static {
         correct: bool,
     ) -> Result<String>;
 
-    fn view(&self) -> Vec<usize>;
+    fn progress(&self) -> Vec<usize>;
     fn next(&mut self) -> Result<Uuid>;
 }
 
@@ -133,8 +133,8 @@ where
             .map(|()| self.algorithm.view_history(&self.histories[i][j].1))
     }
 
-    fn view(&self) -> Vec<usize> {
-        self.algorithm.view(&self.selection_pool)
+    fn progress(&self) -> Vec<usize> {
+        self.algorithm.progress(&self.selection_pool)
     }
 
     fn next(&mut self) -> Result<Uuid> {

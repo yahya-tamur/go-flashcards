@@ -21,7 +21,7 @@ pub trait FlashcardAlgorithm<const BUCKET_NUMBER: usize>: Debug + Send + 'static
     fn update(&self, hist: &mut Self::History, correct: bool);
     fn bucket(&self, hist: &Self::History) -> usize;
     fn distribution<T>(&self, selection_pool: &[Vec<T>; BUCKET_NUMBER]) -> [f64; BUCKET_NUMBER];
-    fn view<T>(&self, selection_pool: &[Vec<T>; BUCKET_NUMBER]) -> Vec<usize>;
+    fn progress<T>(&self, selection_pool: &[Vec<T>; BUCKET_NUMBER]) -> Vec<usize>;
 
     fn pick<T>(&self, selection_pool: &[Vec<T>; BUCKET_NUMBER]) -> Result<(usize, usize)> {
         let sizes: [usize; BUCKET_NUMBER] = selection_pool.each_ref().map(|v| v.len());

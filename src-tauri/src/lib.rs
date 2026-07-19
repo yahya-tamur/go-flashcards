@@ -62,12 +62,16 @@ async fn set_stones(
 #[specta::specta]
 async fn get_data(state: tauri::State<'_, Mutex<AppData>>) -> Result<Snapshot> {
     match state.lock().await.phase {
-        AppPhase::Editing(ref editing_data) => {
-            Ok(editing_data.move_tree.snapshot(editing_data.location())?)
-        }
-        AppPhase::Study(ref study_data) => {
-            Ok(study_data.move_tree.snapshot(study_data.location())?)
-        }
+        AppPhase::Editing(ref editing_data) => Ok(MoveTree::snapshot(
+            &editing_data.move_tree,
+            editing_data.location(),
+            None,
+        )?),
+        AppPhase::Study(ref study_data) => Ok(MoveTree::snapshot(
+            &study_data.move_tree,
+            study_data.location(),
+            Some(study_data.progress()),
+        )?),
         _ => Err(error("invalid phase!")),
     }
 }
@@ -365,13 +369,13 @@ async fn stop_editing(state: tauri::State<'_, Mutex<AppData>>, save: bool) -> Re
 
 #[tauri::command]
 #[specta::specta]
-async fn export_sgf(app: tauri::AppHandle, state: tauri::State<'_, Mutex<AppData>>) -> Result<()> {
+async fn export_sgf(state: tauri::State<'_, Mutex<AppData>>) -> Result<()> {
     let app_data = &mut *state.lock().await;
     match app_data.phase {
         AppPhase::Editing(ref editing_data) => {
             app_data
                 .fs
-                .save_sgf(&app, &editing_data.file, &editing_data.export_sgf()?)?;
+                .save_sgf(&editing_data.file, &editing_data.export_sgf()?)?;
             Ok(())
         }
         _ => Err(error("invalid phase!")),
@@ -380,11 +384,11 @@ async fn export_sgf(app: tauri::AppHandle, state: tauri::State<'_, Mutex<AppData
 
 #[tauri::command]
 #[specta::specta]
-async fn import_sgf(app: tauri::AppHandle, state: tauri::State<'_, Mutex<AppData>>) -> Result<()> {
+async fn import_sgf(state: tauri::State<'_, Mutex<AppData>>) -> Result<()> {
     let app_data = &mut *state.lock().await;
     match app_data.phase {
         AppPhase::Editing(ref mut editing_data) => {
-            if let Some(sgf) = app_data.fs.receive_sgf(&app)? {
+            if let Some(sgf) = app_data.fs.receive_sgf()? {
                 editing_data.import_sgf(&sgf)?;
             }
             Ok(())
@@ -432,10 +436,11 @@ macro_rules! apply_fns {
 
 use tauri::generate_handler;
 
-use crate::{app_data::data::AppPhase, file::FileSystem, interop::Snapshot};
+use crate::{app_data::data::AppPhase, interop::Snapshot};
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
+    use crate::file::FileSystem;
     #[cfg(debug_assertions)]
     {
         use specta_typescript::Typescript;
@@ -451,10 +456,20 @@ pub fn run() {
         }
     }
 
-    Builder::default()
-        //.any_thread()
-        .plugin(tauri_plugin_dialog::init())
-        .plugin(tauri_plugin_android_fs::init())
+    let mut builder = Builder::default();
+
+    #[cfg(not(target_os = "android"))]
+    {
+        builder = builder.plugin(tauri_plugin_dialog::init());
+    }
+
+    #[cfg(target_os = "android")]
+    {
+        builder = builder.plugin(tauri_plugin_android_fs::init());
+    }
+
+    builder
+        // .any_thread()
         .setup(|app| {
             let Ok(fs) = FileSystem::initialize(app.handle()) else {
                 println!("Error initializing file system!!");

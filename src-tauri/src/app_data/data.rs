@@ -10,7 +10,7 @@ pub enum AppPhase {
     Main,
     Study(StudyData),
 }
-#[derive(Debug)]
+
 pub struct AppData {
     pub fs: FileSystem,
     pub phase: AppPhase,

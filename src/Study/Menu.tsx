@@ -13,6 +13,8 @@ const { commands } = await import("../bindings");
 const { cursorColor, handleError, setClick } = await import("../utils");
 const { studyStep } = await import("../utils");
 
+const ProgressBar = (await import("../components/ProgressBar")).default;
+
 const Menu = () => {
   const {
     c_editingPhase,
@@ -169,12 +171,14 @@ const Menu = () => {
             maxWidth: "100%",
             display: "flex",
             flexDirection: "column",
-            justifyContent: "space-around",
+            justifyContent: "flex-start",
             alignItems: "center",
+            gap: "20px",
+            paddingTop: "20px",
           }}
         >
           <Box>{c_feedback}</Box>
-
+          <ProgressBar />
           <Box>{c_answerMessage}</Box>
         </Box>
       ) : c_studyPhase === "Edit" ? (

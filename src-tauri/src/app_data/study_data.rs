@@ -140,6 +140,10 @@ impl StudyData {
         let (i, _j) = self.coords[&self.past_exercises[self.current]];
         (*self.src_configs[i]).clone()
     }
+
+    pub fn progress(&self) -> Vec<usize> {
+        self.keeper.progress()
+    }
     /*
     // will probably never implement.
     // situation on deleting everything?

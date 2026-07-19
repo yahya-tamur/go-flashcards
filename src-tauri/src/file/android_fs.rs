@@ -1,29 +1,63 @@
-pub use std::fs::File;
-use std::{fs::OpenOptions, path::PathBuf};
-
 use crate::error::error;
 use crate::Result;
-use tauri::Manager;
-use tauri_plugin_android_fs::{AndroidFsExt, FsUri, PrivateDir};
-use tauri_plugin_dialog::DialogExt;
+pub use std::fs::File;
+use tauri_plugin_android_fs::{AndroidFsExt, Entry, FileAccessMode, FsUri, PrivateDir};
 
 use super::os_file_system::OsFileSystem;
 use super::INITIAL_APP_DATA;
 
-#[derive(Debug)]
 pub struct AndroidFileSystem {
     app_data: FsUri,
+    app: tauri::AppHandle,
+}
+
+enum EntryQuery<'a> {
+    File { name: &'a str },
+    Dir { name: &'a str },
+}
+
+fn check_directory(
+    app: &tauri::AppHandle,
+    dir: &FsUri,
+    query: EntryQuery,
+) -> Result<Option<FsUri>> {
+    match query {
+        EntryQuery::File { name: query_name } => {
+            for entry in app.android_fs().read_dir(dir)? {
+                if let Entry::File { name, uri, .. } = entry {
+                    if query_name == name {
+                        return Ok(Some(uri));
+                    }
+                }
+            }
+        }
+        EntryQuery::Dir { name: query_name } => {
+            for entry in app.android_fs().read_dir(dir)? {
+                if let Entry::Dir { name, uri, .. } = entry {
+                    if query_name == name {
+                        return Ok(Some(uri));
+                    }
+                }
+            }
+        }
+    }
+    Ok(None)
 }
 
 impl AndroidFileSystem {
-    fn resolve(&self, folders: &[&str], file: &str) -> PathBuf {
-        unimplemented!()
-        /*  let mut path = self.app_data.clone();
+    fn resolve_path(&self, folders: &[&str]) -> Result<FsUri> {
+        let mut path = self.app_data.clone();
+
         for folder in folders {
-            path = path.join(folder);
+            if let Some(path_) =
+                check_directory(&self.app, &path, EntryQuery::Dir { name: folder })?
+            {
+                path = path_
+            } else {
+                path = self.app.android_fs().create_new_dir(&path, folder)?;
+            }
         }
-        path = path.join(file);
-        path*/
+        Ok(path)
     }
 }
 
@@ -32,95 +66,122 @@ impl OsFileSystem for AndroidFileSystem {
         let app_data = app
             .android_fs()
             .private_storage()
-            .resolve_uri(PrivateDir::Data, "");
-        Err(error(&format!("{app_data:?}")))
-        /*
-        let app_data = app.path().app_data_dir()?;
+            .resolve_uri(PrivateDir::Data, "")?;
 
-        if !app_data.join("app_data").try_exists()? {
-            INITIAL_APP_DATA.extract(app_data.clone())?;
-        }
-        let app_data = app_data.join("app_data");
-        if !app_data.join("config.toml").try_exists()? {
-            std::fs::File::create(app_data.join("config.toml"))?;
-        }
-        std::fs::create_dir_all(app_data.join("exercises"))?;
-        std::fs::create_dir_all(app_data.join("history"))?;
-        Ok(WindowsLinuxFileSystem { app_data })*/
-    }
+        // let mut afs = AndroidFileSystem {app_data: app_data.clone(), app: app.clone()};
 
-    fn open_file(&self, folders: &[&str], file: &str) -> Result<(bool, File)> {
-        Err(error(&"unimplemented"))
-        /*
-        let exists = self.resolve(folders, file).try_exists()?;
-        let path = self.resolve(folders, file);
-
-        let file = OpenOptions::new()
-            .read(true)
-            .write(true)
-            .create(true)
-            .truncate(false)
-            .open(path)?;
-
-        Ok((!exists, file))*/
-    }
-
-    fn delete_file(&self, folders: &[&str], file: &str) -> Result<()> {
-        Err(error(&"unimplemented"))
-        /*
-        std::fs::remove_file(self.resolve(folders, file))?;
-        Ok(())*/
-    }
-
-    fn list_exercises(&self) -> Result<Vec<String>> {
-        Err(error(&"unimplemented"))
-        /*
-        let mut ans = Vec::new();
-        for entry in std::fs::read_dir(self.app_data.join("exercises"))? {
-            let entry = entry?;
-            if !entry.file_type()?.is_file() {
-                continue;
-            }
-            if let Some(name) = entry.path().file_prefix() {
-                if let Some(utf8name) = name.to_str() {
-                    ans.push(utf8name.to_owned());
+        if check_directory(app, &app_data, EntryQuery::Dir { name: "app_data" })?.is_none() {
+            for entry in INITIAL_APP_DATA.find("**/*")? {
+                if let include_dir::DirEntry::File(file) = entry {
+                    let opened = app
+                        .android_fs()
+                        .create_new_file(&app_data, file.path(), None)?;
+                    app.android_fs().write(&opened, file.contents())?;
+                    println!("{:?}", file);
                 }
             }
         }
-        Ok(ans)*/
-    }
-    fn pick_sgf_import(&self, app: &tauri::AppHandle) -> Result<Option<File>> {
-        Err(error(&"unimplemented"))
-        /*
-        match app
-            .dialog()
-            .file()
-            .add_filter("Sgf", &["sgf"])
-            .blocking_pick_file()
+
+        let Some(app_data) = check_directory(app, &app_data, EntryQuery::Dir { name: "app_data" })?
+        else {
+            return Err(error("app data doesn't exist, and couldn't be created."));
+        };
+
+        if check_directory(
+            app,
+            &app_data,
+            EntryQuery::File {
+                name: "config.toml",
+            },
+        )?
+        .is_none()
         {
-            Some(path) => Ok(Some(OpenOptions::new().read(true).open(path.into_path()?)?)),
-            None => Ok(None),
-        }*/
+            app.android_fs()
+                .create_new_file(&app_data, "config.toml", None)?;
+        }
+
+        app.android_fs().create_dir_all(&app_data, "exercises")?;
+        app.android_fs().create_dir_all(&app_data, "history")?;
+
+        Ok(AndroidFileSystem {
+            app_data,
+            app: app.clone(),
+        })
     }
 
-    fn pick_sgf_export(&self, app: &tauri::AppHandle, name: &str) -> Result<Option<File>> {
-        Err(error(&"unimplemented"))
-        /*
-        match app
-            .dialog()
-            .file()
-            .add_filter("Sgf", &["sgf"])
-            .set_file_name(name)
-            .blocking_save_file()
+    fn open_file(&self, folders: &[&str], file: &str) -> Result<(bool, File)> {
+        let mut created = false;
+
+        let path = self.resolve_path(folders)?;
+
+        let file_path = match check_directory(&self.app, &path, EntryQuery::File { name: file })? {
+            Some(path_) => path_,
+            None => {
+                created = true;
+                self.app.android_fs().create_new_file(&path, file, None)?
+            }
+        };
+
+        let file = self
+            .app
+            .android_fs()
+            .open_file(&file_path, FileAccessMode::ReadWrite)?;
+        Ok((created, file))
+    }
+
+    fn delete_file(&self, folders: &[&str], file: &str) -> Result<()> {
+        let path = self.resolve_path(folders)?;
+        if let Some(file_path) = check_directory(&self.app, &path, EntryQuery::File { name: file })?
         {
-            Some(path) => Ok(Some(
-                OpenOptions::new()
-                    .write(true)
-                    .create(true)
-                    .truncate(false)
-                    .open(path.into_path()?)?,
-            )),
-            None => Ok(None),
-        }*/
+            self.app.android_fs().remove_file(&file_path)?;
+        };
+        Ok(())
+    }
+
+    fn list_exercises(&self) -> Result<Vec<String>> {
+        let mut ans = Vec::new();
+        let path = self.resolve_path(&["exercises"])?;
+
+        for entry in self.app.android_fs().read_dir(&path)? {
+            if let Entry::File { name, .. } = entry {
+                if name.len() >= 8 && name[name.len() - 8..] == *".json.gz" {
+                    ans.push(name[..name.len() - 8].to_owned());
+                }
+            }
+        }
+
+        Ok(ans)
+    }
+
+    fn pick_sgf(&self) -> Result<Option<File>> {
+        if let Some(path) =
+            self.app
+                .android_fs()
+                .picker()
+                .pick_file(None, &["application/x-go-sgf"], false)?
+        {
+            let file = self
+                .app
+                .android_fs()
+                .open_file(&path, FileAccessMode::Read)?;
+            return Ok(Some(file));
+        }
+        Ok(None)
+    }
+
+    fn save_sgf(&self, name: &str) -> Result<Option<File>> {
+        if let Some(path) = self.app.android_fs().picker().save_file(
+            None,
+            name,
+            Some("application/x-go-sgf"),
+            false,
+        )? {
+            let file = self
+                .app
+                .android_fs()
+                .open_file(&path, FileAccessMode::WriteTruncate)?;
+            return Ok(Some(file));
+        }
+        Ok(None)
     }
 }

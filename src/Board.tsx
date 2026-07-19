@@ -490,7 +490,7 @@ const Board = () => {
                     strokeWidth={0}
                     fill="#00000"
                     filter="url(#gaussian-blur)"
-                    key={JSON.stringify([i, j])}
+                    key={JSON.stringify([i, j, "hole"])}
                   />
                 ))}
             </mask>
@@ -531,7 +531,7 @@ const Board = () => {
                   strokeWidth={`${1}px`}
                   vectorEffect="non-scaling-stroke"
                   shapeRendering="crispEdges"
-                  key={i}
+                  key={JSON.stringify([i, "row"])}
                 />
               ))}
             </g>
@@ -543,7 +543,7 @@ const Board = () => {
                   strokeWidth={`${1}px`}
                   vectorEffect="non-scaling-stroke"
                   shapeRendering="crispEdges"
-                  key={j}
+                  key={JSON.stringify([j, "column"])}
                 />
               ))}
             </g>
@@ -560,7 +560,7 @@ const Board = () => {
                     cy={margin + square_size * j}
                     r={12}
                     fill="black"
-                    key={JSON.stringify([i, j])}
+                    key={JSON.stringify([i, j, "grid dot"])}
                   />
                 ))}
             </g>
@@ -578,7 +578,7 @@ const Board = () => {
                     WebkitUserSelect: "none",
                     font: "bold 40pt sans-serif",
                   }}
-                  key={JSON.stringify([x, y])}
+                  key={JSON.stringify([x, y, text])}
                 >
                   {text}
                 </text>
@@ -608,31 +608,29 @@ const Board = () => {
                 (j) =>
                   grid[i][j].mark !== null &&
                   (grid[i][j].mark.type === "Label" ? (
-                    <g>
-                      <text
-                        x={margin + square_size * i}
-                        y={margin + square_size * j}
-                        width={square_size}
-                        height={square_size}
-                        textAnchor="middle"
-                        dominantBaseline="central"
-                        key={JSON.stringify([i, j, grid[i][j].mark])}
-                        style={{
-                          fill:
-                            grid[i][j].stone === "Black" ||
-                            (c_cursor.ghosts.some(
-                              ([ii, jj]) => i === ii && j === jj,
-                            ) &&
-                              cursorColor(c_cursor) === "Black")
-                              ? "white"
-                              : "black",
-                          WebkitUserSelect: "none",
-                          font: "bold 40pt sans-serif",
-                        }}
-                      >
-                        {grid[i][j].mark.label}
-                      </text>
-                    </g>
+                    <text
+                      x={margin + square_size * i}
+                      y={margin + square_size * j}
+                      width={square_size}
+                      height={square_size}
+                      textAnchor="middle"
+                      dominantBaseline="central"
+                      key={JSON.stringify([i, j, grid[i][j].mark])}
+                      style={{
+                        fill:
+                          grid[i][j].stone === "Black" ||
+                          (c_cursor.ghosts.some(
+                            ([ii, jj]) => i === ii && j === jj,
+                          ) &&
+                            cursorColor(c_cursor) === "Black")
+                            ? "white"
+                            : "black",
+                        WebkitUserSelect: "none",
+                        font: "bold 40pt sans-serif",
+                      }}
+                    >
+                      {grid[i][j].mark.label}
+                    </text>
                   ) : (
                     <image
                       x={square_size * i + margin - 0.5 * square_size}
@@ -689,7 +687,7 @@ const Board = () => {
                     WebkitUserSelect: "none",
                     font: "bold 40pt sans-serif",
                   }}
-                  key={JSON.stringify([row, col, c_cursor])}
+                  key={JSON.stringify([row, col, c_cursor, "label"])}
                 >
                   {c_nextLabel}
                 </text>
@@ -702,7 +700,7 @@ const Board = () => {
                   href={c_images[c_cursor.paint.value]}
                   filter={filter}
                   opacity={opacity}
-                  key={JSON.stringify([row, col, c_cursor])}
+                  key={JSON.stringify([row, col, c_cursor, "mark"])}
                 />
               );
             })}

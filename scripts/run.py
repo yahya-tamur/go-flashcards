@@ -32,6 +32,9 @@ def lint():
     print("\nLinting rust.\n")
     os.system("cd src-tauri && cargo clippy")
 
+    print("\nLinting rust for android.\n")
+    os.system("cd src-tauri && cargo clippy --target=aarch64-linux-android")
+
     print("\nLinting rust in release mode.\n")
     os.system("cd src-tauri && cargo clippy --release")
 

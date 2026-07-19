@@ -11,6 +11,7 @@ use super::INITIAL_APP_DATA;
 #[derive(Debug)]
 pub struct WindowsLinuxFileSystem {
     app_data: PathBuf,
+    app: tauri::AppHandle,
 }
 
 impl WindowsLinuxFileSystem {
@@ -37,7 +38,10 @@ impl OsFileSystem for WindowsLinuxFileSystem {
         }
         std::fs::create_dir_all(app_data.join("exercises"))?;
         std::fs::create_dir_all(app_data.join("history"))?;
-        Ok(WindowsLinuxFileSystem { app_data })
+        Ok(WindowsLinuxFileSystem {
+            app_data,
+            app: app.clone(),
+        })
     }
 
     fn open_file(&self, folders: &[&str], file: &str) -> Result<(bool, File)> {
@@ -73,8 +77,9 @@ impl OsFileSystem for WindowsLinuxFileSystem {
         }
         Ok(ans)
     }
-    fn pick_sgf_import(&self, app: &tauri::AppHandle) -> Result<Option<File>> {
-        match app
+    fn pick_sgf(&self) -> Result<Option<File>> {
+        match self
+            .app
             .dialog()
             .file()
             .add_filter("Sgf", &["sgf"])
@@ -85,8 +90,9 @@ impl OsFileSystem for WindowsLinuxFileSystem {
         }
     }
 
-    fn pick_sgf_export(&self, app: &tauri::AppHandle, name: &str) -> Result<Option<File>> {
-        match app
+    fn save_sgf(&self, name: &str) -> Result<Option<File>> {
+        match self
+            .app
             .dialog()
             .file()
             .add_filter("Sgf", &["sgf"])
@@ -97,7 +103,7 @@ impl OsFileSystem for WindowsLinuxFileSystem {
                 OpenOptions::new()
                     .write(true)
                     .create(true)
-                    .truncate(false)
+                    .truncate(true)
                     .open(path.into_path()?)?,
             )),
             None => Ok(None),

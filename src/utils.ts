@@ -131,6 +131,10 @@ export const studyStep = async (
     case "Incorrect":
       return commands
         .answer(false)
+        .then((answerMessage) => {
+          c_setAnswerMessage(answerMessage);
+          return commands.getData();
+        })
         .then(() => commands.getData())
         .then((data) => {
           c_setData(data);
@@ -141,6 +145,10 @@ export const studyStep = async (
       if (data?.table[0][0]?.color !== data.color) {
         return commands
           .answer(false)
+          .then((answerMessage) => {
+            c_setAnswerMessage(answerMessage);
+            return commands.getData();
+          })
           .then(() => commands.getData())
           .then((data) => {
             c_setData(data);

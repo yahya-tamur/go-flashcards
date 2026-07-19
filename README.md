@@ -35,6 +35,12 @@ Current Actual Goal
 things that popped up:
 ----------------------------------
 
+- arrow key in edit label text area moves tree
+- add exercise isn't working.
+  - configsignal doesn't work
+- make menus a little shorter or refit windows so it looks good on the default window.
+- mobile editconfig may not work when empty
+- disable tauri plugin dialog on android?
 - refactor movetree to return error instead of panic on array index
 - 'created' !!
 - are boards sliders slow?

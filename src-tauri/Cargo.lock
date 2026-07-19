@@ -1362,6 +1362,7 @@ name = "go-flashcards"
 version = "0.1.0"
 dependencies = [
  "flate2",
+ "glob",
  "include_dir",
  "indexmap 2.14.0",
  "rand",

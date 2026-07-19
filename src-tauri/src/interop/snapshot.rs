@@ -53,16 +53,22 @@ pub struct Snapshot {
     pub window: (usize, usize, usize, usize),
     #[specta(type = Option<(Number, Number, Number, Number)>)]
     pub min_window: Option<(usize, usize, usize, usize)>,
+    #[specta(type = Option<Vec<u32>>)]
+    pub progress: Option<Vec<usize>>,
 }
 
 impl MoveTree {
     // 'loc' is not tree location but extra info to send to frontend --
     // it's current exercise , number of exercises.
-    pub fn snapshot(&self, loc: (usize, usize)) -> Result<Snapshot> {
-        let (row, col) = self.tree_loc;
-        let current_move = self.current()?;
+    pub fn snapshot(
+        move_tree: &MoveTree,
+        loc: (usize, usize),
+        progress: Option<Vec<usize>>,
+    ) -> Result<Snapshot> {
+        let (row, col) = move_tree.tree_loc;
+        let current_move = move_tree.current()?;
 
-        let table = self
+        let table = move_tree
             .problem
             .table
             .iter()
@@ -70,8 +76,8 @@ impl MoveTree {
                 line.iter()
                     .map(|movopt| {
                         movopt.as_ref().map(|mov| MoveSnapshot {
-                            loc: mov.loc.map(|(i, j)| self.send(i, j)),
-                            color: self.send_recv_color(mov.color),
+                            loc: mov.loc.map(|(i, j)| move_tree.send(i, j)),
+                            color: move_tree.send_recv_color(mov.color),
                             variant: mov.variant,
                         })
                     })
@@ -80,17 +86,18 @@ impl MoveTree {
             .collect();
 
         Ok(Snapshot {
-            game: self.snapshot_game(),
+            game: move_tree.snapshot_game(),
             table,
             row,
             col,
-            color: self.send_recv_color(current_move.color),
+            color: move_tree.send_recv_color(current_move.color),
             comment: current_move.comment.clone(),
             variant: current_move.variant,
             current_location: loc.0,
             max_location: loc.1,
-            window: self.send_window(self.problem.window),
-            min_window: self.min_window().map(|w| self.send_window(w)),
+            progress,
+            window: move_tree.send_window(move_tree.problem.window),
+            min_window: move_tree.min_window().map(|w| move_tree.send_window(w)),
         })
     }
 
