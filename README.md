@@ -164,7 +164,7 @@ Finalizing
 -------------
 
 - updater plugin
-- initialize app data with example usage?
+- good initial app data
 - add licence to all the files + make repo public
 
 Notes for android building process
