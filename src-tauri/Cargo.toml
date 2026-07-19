@@ -18,7 +18,7 @@ crate-type = ["staticlib", "cdylib", "rlib"]
 tauri-build = { version = "2", features = [] }
 
 [dependencies]
-# consider removing devtools later, but it was useful and it may be useful again.
+# consider removing devtools later
 tauri = { version = "2", features = ["devtools"] } 
 tauri-plugin-opener = "2"
 serde = { version = "1", features = ["derive"] }
@@ -40,6 +40,8 @@ tauri-specta = { version = "=2.0.0-rc.25", features = ["derive", "typescript"] }
 specta-typescript = "0.0.12"
 specta = { version = "2.0.0-rc.25", features = ["derive"] }
 include_dir = { version = "0.7.4", features = ["glob"] }
+
+# [target.'cfg(windows)'.dependencies]
 tauri-plugin-android-fs = "28.4.0"
 
 

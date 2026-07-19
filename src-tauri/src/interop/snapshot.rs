@@ -1,3 +1,4 @@
+use crate::Result;
 use serde::{Deserialize, Serialize};
 use specta::Type;
 use specta_typescript::Number;
@@ -57,9 +58,9 @@ pub struct Snapshot {
 impl MoveTree {
     // 'loc' is not tree location but extra info to send to frontend --
     // it's current exercise , number of exercises.
-    pub fn snapshot(&self, loc: (usize, usize)) -> Snapshot {
+    pub fn snapshot(&self, loc: (usize, usize)) -> Result<Snapshot> {
         let (row, col) = self.tree_loc;
-        let current_move = self.current();
+        let current_move = self.current()?;
 
         let table = self
             .problem
@@ -78,7 +79,7 @@ impl MoveTree {
             })
             .collect();
 
-        Snapshot {
+        Ok(Snapshot {
             game: self.snapshot_game(),
             table,
             row,
@@ -90,7 +91,7 @@ impl MoveTree {
             max_location: loc.1,
             window: self.send_window(self.problem.window),
             min_window: self.min_window().map(|w| self.send_window(w)),
-        }
+        })
     }
 
     fn snapshot_game(&self) -> GameSnapshot {

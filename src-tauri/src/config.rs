@@ -164,12 +164,6 @@ pub fn validate(fs: &mut FileSystem, input: &str) -> Result<ValidationResult> {
         }
         Ok(config) => config,
     };
-
-    println!("ASDFASDFASDFASDF");
-
-    println!("ASDFASDFASDFASDF");
-
-    println!("ASDFASDFASDFASDF");
     let exercise_files: HashSet<String> = fs.list_exercises()?.into_iter().collect();
 
     if let Some(editing_config) = config.editing_config {
@@ -213,7 +207,7 @@ pub fn validate(fs: &mut FileSystem, input: &str) -> Result<ValidationResult> {
 }
 
 pub fn add_exercise(fs: &mut FileSystem, name: &str) -> Result<()> {
-    let bare_key_re = Regex::new(r#"^[A-Za-z0-9_\-]*$"#).unwrap();
+    let bare_key_re = Regex::new(r#"^[A-Za-z0-9_\-]*$"#)?;
 
     let qname = &format!(
         r#""{}""#,
@@ -242,7 +236,7 @@ pub fn add_exercise(fs: &mut FileSystem, name: &str) -> Result<()> {
             .unwrap_or(0),
     };
 
-    let any_table_re = Regex::new(r"(?m)^[^\S\n]*\[.*$").unwrap();
+    let any_table_re = Regex::new(r"(?m)^[^\S\n]*\[.*$")?;
 
     // insert right before next [table]
     let n: usize = any_table_re

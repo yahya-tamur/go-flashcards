@@ -1,30 +1,19 @@
 use std::{
     fs::File,
-    io::{BufReader, Read, Seek, SeekFrom, Write},
+    io::{BufReader, BufWriter, Read, Seek, SeekFrom, Write},
 };
 
+use super::os_file_system::OsFileSystem;
 use flate2::{bufread::GzDecoder, write::GzEncoder, Compression};
 use indexmap::IndexMap;
 use serde::{de::DeserializeOwned, Serialize};
 
 use crate::{game::Problem, Result};
 
-pub trait OsFileSystemTrait: Sized + std::fmt::Debug {
-    //will contain PathBuf or FsUri
-    //later, read that from file.
-    fn initialize(app: &tauri::AppHandle) -> Result<Self>;
-
-    fn os_open_file(&self, folders: &[&str], file: &str) -> Result<(bool, File)>;
-    fn delete_file(&self, folders: &[&str], file: &str) -> Result<()>;
-    fn list_exercises(&self) -> Result<Vec<String>>;
-    fn pick_sgf_import(&self, app: &tauri::AppHandle) -> Result<Option<File>>;
-    fn pick_sgf_export(&self, app: &tauri::AppHandle, name: &str) -> Result<Option<File>>;
-}
-
 #[derive(Debug)]
 pub struct FileSystem<FS>
 where
-    FS: OsFileSystemTrait,
+    FS: OsFileSystem,
 {
     osfs: FS,
     open_files: IndexMap<String, File>,
@@ -32,7 +21,7 @@ where
 
 impl<OsFS> FileSystem<OsFS>
 where
-    OsFS: OsFileSystemTrait,
+    OsFS: OsFileSystem,
 {
     pub fn initialize(app: &tauri::AppHandle) -> Result<Self> {
         let osfs = OsFS::initialize(app)?;
@@ -50,7 +39,7 @@ where
         let key = Self::path_key(folders, file);
         let mut created = false;
         if !self.open_files.contains_key(&key) {
-            let (created_, file) = self.osfs.os_open_file(folders, file)?;
+            let (created_, file) = self.osfs.open_file(folders, file)?;
             self.open_files.insert(key.clone(), file);
             created = created_;
         }
@@ -58,23 +47,17 @@ where
         let file = &mut self.open_files[&key];
         file.seek(SeekFrom::Start(0))?;
 
-        let mut buf = Vec::new();
-        file.read_to_end(&mut buf)?;
-        println!("file contents: {:?}", String::from_utf8(buf));
-        file.seek(SeekFrom::Start(0))?;
         Ok((created, file))
     }
 
     fn read_compressed<T>(&mut self, folders: &[&str], name: &str) -> Result<Vec<T>>
     where
-        T: DeserializeOwned + Serialize,
+        T: DeserializeOwned + Serialize + std::fmt::Debug,
     {
         let (created, file) = self.open_file(folders, name)?;
-        println!("{:?} {:?}", created, name);
 
         if created {
-            self.write_compressed(folders, name, &Vec::<T>::new())
-                .unwrap();
+            self.write_compressed(folders, name, &Vec::<T>::new())?;
             return Ok(Vec::new());
         }
 
@@ -84,17 +67,25 @@ where
         Ok(ans)
     }
 
-    fn write_compressed<T>(&mut self, folders: &[&str], file: &str, v: &T) -> Result<()>
+    fn write_compressed<T>(&mut self, folders: &[&str], name: &str, v: &T) -> Result<()>
     where
-        T: Serialize,
+        T: Serialize + std::fmt::Debug,
     {
-        let (_, file) = self.open_file(folders, file)?;
-        let mut gz = GzEncoder::new(file, Compression::best());
-        serde_json::to_writer(&mut gz, v)?;
-        let file = gz.finish()?;
-        let current_pos = file.stream_position()?;
+        let (_, mut file) = self.open_file(folders, name)?;
+
+        let current_pos = {
+            let mut writer = BufWriter::new(&mut file);
+            let mut gz = GzEncoder::new(&mut writer, Compression::best());
+            serde_json::to_writer(&mut gz, v)?;
+            gz.finish()?;
+
+            writer.flush()?;
+            writer.stream_position()?
+        };
+
         file.set_len(current_pos)?;
         file.seek(SeekFrom::Start(0))?;
+
         Ok(())
     }
 
@@ -110,7 +101,7 @@ where
     }
     pub fn load_history<H>(&mut self, exercise: &str, extension: &str) -> Result<Vec<H>>
     where
-        H: DeserializeOwned + Serialize,
+        H: DeserializeOwned + Serialize + std::fmt::Debug,
     {
         self.read_compressed(&["history"], &format!("{exercise}.{extension}.json.gz"))
     }
@@ -121,10 +112,10 @@ where
 
     pub fn save_history<H>(&mut self, exercise: &str, extension: &str, vec: &Vec<H>) -> Result<()>
     where
-        H: Serialize,
+        H: Serialize + std::fmt::Debug,
     {
         self.write_compressed(
-            &["exercises"],
+            &["history"],
             &format!("{exercise}.{extension}.json.gz"),
             vec,
         )

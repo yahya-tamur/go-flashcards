@@ -73,5 +73,6 @@ def make_bindings():
 
     open("./src/bindings.ts", "w").write("\n".join(lines))
 
+
 if __name__ == "__main__":
     make_bindings()

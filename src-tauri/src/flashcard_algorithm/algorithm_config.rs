@@ -1,7 +1,8 @@
 use serde::{Deserialize, Serialize};
 use specta::Type;
 
-use crate::flashcard_algorithm::history_keeper::HistoryKeeperParams;
+use super::{HistoryKeeper, HistoryKeeperParams};
+use crate::Result;
 
 use super::load_history;
 
@@ -18,10 +19,10 @@ pub enum AlgorithmConfig {
 }
 
 pub fn load_history_keeper(
-    a: AlgorithmConfig,
+    config: AlgorithmConfig,
     params: HistoryKeeperParams<'_>,
-) -> Box<dyn super::HistoryKeeperTrait + Send> {
-    match a {
+) -> Result<Box<dyn HistoryKeeper>> {
+    match config {
         AlgorithmConfig::Queue5 {
             breakpoints,
             weights,

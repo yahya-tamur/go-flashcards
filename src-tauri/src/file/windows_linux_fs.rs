@@ -1,19 +1,19 @@
-pub use std::fs::{create_dir_all, read, read_dir, read_to_string, remove_file, write, File};
+pub use std::fs::File;
 use std::{fs::OpenOptions, path::PathBuf};
 
 use crate::Result;
 use tauri::Manager;
 use tauri_plugin_dialog::DialogExt;
 
-use super::common::OsFileSystemTrait;
+use super::os_file_system::OsFileSystem;
 use super::INITIAL_APP_DATA;
 
 #[derive(Debug)]
-pub struct OsFileSystem {
+pub struct WindowsLinuxFileSystem {
     app_data: PathBuf,
 }
 
-impl OsFileSystem {
+impl WindowsLinuxFileSystem {
     fn resolve(&self, folders: &[&str], file: &str) -> PathBuf {
         let mut path = self.app_data.clone();
         for folder in folders {
@@ -24,7 +24,7 @@ impl OsFileSystem {
     }
 }
 
-impl OsFileSystemTrait for OsFileSystem {
+impl OsFileSystem for WindowsLinuxFileSystem {
     fn initialize(app: &tauri::AppHandle) -> Result<Self> {
         let app_data = app.path().app_data_dir()?;
 
@@ -37,10 +37,10 @@ impl OsFileSystemTrait for OsFileSystem {
         }
         std::fs::create_dir_all(app_data.join("exercises"))?;
         std::fs::create_dir_all(app_data.join("history"))?;
-        Ok(OsFileSystem { app_data })
+        Ok(WindowsLinuxFileSystem { app_data })
     }
 
-    fn os_open_file(&self, folders: &[&str], file: &str) -> Result<(bool, File)> {
+    fn open_file(&self, folders: &[&str], file: &str) -> Result<(bool, File)> {
         let exists = self.resolve(folders, file).try_exists()?;
         let path = self.resolve(folders, file);
 
@@ -49,8 +49,7 @@ impl OsFileSystemTrait for OsFileSystem {
             .write(true)
             .create(true)
             .truncate(false)
-            .open(path)
-            .unwrap();
+            .open(path)?;
 
         Ok((!exists, file))
     }

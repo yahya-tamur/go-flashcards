@@ -1,8 +1,10 @@
 use super::{other_color, Color, GameState, Mark};
 use crate::config::{ActiveConfig, ShowRecent};
+use crate::error::error;
 
 use super::{Move, Problem, Variant};
 use crate::interop::Transform;
+use crate::Result;
 use std::hash::{DefaultHasher, Hash, Hasher};
 use std::sync::Arc;
 
@@ -54,8 +56,12 @@ pub enum RectangleMark {
     DeleteMark,
 }
 
+fn error_on_none<T>(opt: Option<T>) -> Result<T> {
+    opt.ok_or_else(|| error("tree error"))
+}
+
 impl MoveTree {
-    pub fn new(config: Arc<ActiveConfig>, problem: &Problem) -> MoveTree {
+    pub fn new(config: Arc<ActiveConfig>, problem: &Problem) -> Result<MoveTree> {
         let problem = problem.clone();
         let mut game = GameState::default();
         for &(i, j) in problem.initial_black.iter() {
@@ -65,7 +71,7 @@ impl MoveTree {
             game.stones[i][j] = Some(Color::White);
         }
         game.play_move(
-            problem.table[0][0].as_ref().unwrap(),
+            error_on_none(problem.table[0][0].as_ref())?,
             0,
             config.transfer_marks,
         );
@@ -80,7 +86,7 @@ impl MoveTree {
             false
         };
 
-        MoveTree {
+        Ok(MoveTree {
             config,
             problem,
             game,
@@ -88,12 +94,12 @@ impl MoveTree {
             new_branches: Vec::new(),
             orientation,
             color_swap,
-        }
+        })
     }
 
-    pub fn save(&mut self) -> Problem {
+    pub fn save(&mut self) -> Result<Problem> {
         if self.problem.table.len() == 1 && self.problem.table[0].len() == 1 {
-            self.finish_setup(None);
+            self.finish_setup(None)?;
         }
         let mut problem = self.problem.clone();
         for r in 0..problem.table.len() {
@@ -105,10 +111,10 @@ impl MoveTree {
                 }
             }
         }
-        problem
+        Ok(problem)
     }
 
-    pub fn finish_setup(&mut self, color: Option<Color>) {
+    pub fn finish_setup(&mut self, color: Option<Color>) -> Result<()> {
         self.problem.initial_black.clear();
         self.problem.initial_white.clear();
 
@@ -123,8 +129,9 @@ impl MoveTree {
         }
 
         if let Some(color) = color {
-            self.problem.table[0][0].as_mut().unwrap().color = self.send_recv_color(color);
+            error_on_none(self.problem.table[0][0].as_mut())?.color = self.send_recv_color(color);
         }
+        Ok(())
     }
 
     // this should just not be called when not initializing.
@@ -137,13 +144,13 @@ impl MoveTree {
         }
     }
 
-    pub fn play(&mut self, mut loc: Option<(usize, usize)>, study: bool) -> bool {
+    pub fn play(&mut self, mut loc: Option<(usize, usize)>, study: bool) -> Result<bool> {
         if let Some((i, j)) = loc {
             loc = Some(self.recv(i, j));
         }
 
         let (r, c) = self.tree_loc;
-        let color = other_color(self.problem.table[r][c].as_ref().unwrap().color);
+        let color = other_color(error_on_none(self.problem.table[r][c].as_ref())?.color);
 
         // check if step is on table
 
@@ -158,7 +165,7 @@ impl MoveTree {
                 if mov.loc == loc && mov.color == color {
                     self.tree_loc = (r_, c + 1);
                     self.game.play_move(mov, c + 1, self.config.transfer_marks);
-                    return true;
+                    return Ok(true);
                 }
             }
         }
@@ -175,7 +182,7 @@ impl MoveTree {
             .game
             .play_move(&new_move, c + 1, self.config.transfer_marks)
         {
-            return false;
+            return Ok(false);
         }
 
         self.tree_loc = if self.problem.table[r].len() == c + 1 {
@@ -194,7 +201,7 @@ impl MoveTree {
             self.problem.table[r_].push(Some(new_move));
             (r_, c + 1)
         };
-        true
+        Ok(true)
     }
 
     pub fn jump(&mut self, mut r: usize, mut c: usize) {
@@ -271,7 +278,7 @@ impl MoveTree {
         true
     }
 
-    pub fn collapse_tree(&mut self) {
+    pub fn collapse_tree(&mut self) -> Result<()> {
         self.game.captures = (0, 0);
         self.game.ko = None;
 
@@ -287,9 +294,11 @@ impl MoveTree {
 
         let (r, c) = self.tree_loc;
 
-        let comment = self.problem.table[0][0].as_ref().unwrap().comment.clone();
+        let comment = error_on_none(self.problem.table[0][0].as_ref())?
+            .comment
+            .clone();
         let branch = self.problem.table[r].split_off(c);
-        let mov = branch.into_iter().next().unwrap().unwrap();
+        let mov = error_on_none(error_on_none(branch.into_iter().next())?)?;
 
         self.problem.table = vec![vec![Some(Move {
             loc: None,
@@ -301,6 +310,7 @@ impl MoveTree {
 
         self.tree_loc = (0, 0);
         self.game.numbers = [[None; 21]; 21];
+        Ok(())
     }
 
     pub fn set_window(&mut self, window: (usize, usize, usize, usize)) {
@@ -380,15 +390,15 @@ impl MoveTree {
         hasher.finish()
     }
 
-    pub fn set_variant(&mut self, v: Variant, study: bool) {
+    pub fn set_variant(&mut self, v: Variant, study: bool) -> Result<()> {
         let (r, c) = self.tree_loc;
 
         if !study {
-            self.problem.table[r][c].as_mut().unwrap().variant = v;
-            return;
+            error_on_none(self.problem.table[r][c].as_mut())?.variant = v;
+            return Ok(());
         }
 
-        let old_v = self.problem.table[r][c].as_ref().unwrap().variant;
+        let old_v = error_on_none(self.problem.table[r][c].as_ref())?.variant;
         let signature = self.signature();
 
         if old_v == Variant::New && !self.new_branches.contains(&signature) {
@@ -396,23 +406,24 @@ impl MoveTree {
         }
 
         if v == Variant::None && self.new_branches.contains(&signature) {
-            self.problem.table[r][c].as_mut().unwrap().variant = Variant::New;
+            error_on_none(self.problem.table[r][c].as_mut())?.variant = Variant::New;
         } else {
-            self.problem.table[r][c].as_mut().unwrap().variant = v;
+            error_on_none(self.problem.table[r][c].as_mut())?.variant = v;
         }
+        Ok(())
     }
 
-    pub fn current_mut(&mut self) -> &mut Move {
+    pub fn current_mut(&mut self) -> Result<&mut Move> {
         let (r, c) = self.tree_loc;
-        self.problem.table[r][c].as_mut().unwrap()
+        error_on_none(self.problem.table[r][c].as_mut())
     }
 
-    pub fn current(&self) -> &Move {
+    pub fn current(&self) -> Result<&Move> {
         let (r, c) = self.tree_loc;
-        self.problem.table[r][c].as_ref().unwrap()
+        error_on_none(self.problem.table[r][c].as_ref())
     }
 
-    pub fn paint(&mut self, paint: Paint, locs: Vec<(usize, usize)>, label: String) {
+    pub fn paint(&mut self, paint: Paint, locs: Vec<(usize, usize)>, label: String) -> Result<()> {
         match paint {
             Paint::Stone(stone) => {
                 for (i, j) in locs.into_iter() {
@@ -442,10 +453,11 @@ impl MoveTree {
                         continue;
                     }
                     self.game.marks[i][j] = Some(mark.clone());
-                    self.current_mut().marks.push((i, j, mark.clone()));
+                    self.current_mut()?.marks.push((i, j, mark.clone()));
                 }
             }
         }
+        Ok(())
     }
 
     pub fn mark_rectangle(
@@ -453,14 +465,12 @@ impl MoveTree {
         mark: RectangleMark,
         start: (usize, usize),
         end: (usize, usize),
-    ) {
+    ) -> Result<()> {
         let (row_start, row_end, col_start, col_end) =
             self.recv_window((start.0, end.0, start.1, end.1));
 
         let (r, c) = self.tree_loc;
-        self.problem.table[r][c]
-            .as_mut()
-            .unwrap()
+        error_on_none(self.problem.table[r][c].as_mut())?
             .marks
             .retain(|&(i, j, ref _mark)| {
                 if i > row_end || i < row_start || j < col_start || j > col_end {
@@ -484,11 +494,11 @@ impl MoveTree {
                 }
                 match mark {
                     RectangleMark::BlackTerritory => {
-                        self.current_mut().marks.push((i, j, Mark::BlackTerritory));
+                        self.current_mut()?.marks.push((i, j, Mark::BlackTerritory));
                         self.game.marks[i][j] = Some(Mark::BlackTerritory);
                     }
                     RectangleMark::WhiteTerritory => {
-                        self.current_mut().marks.push((i, j, Mark::WhiteTerritory));
+                        self.current_mut()?.marks.push((i, j, Mark::WhiteTerritory));
                         self.game.marks[i][j] = Some(Mark::WhiteTerritory);
                     }
                     RectangleMark::DeleteMark => {
@@ -497,5 +507,6 @@ impl MoveTree {
                 }
             }
         }
+        Ok(())
     }
 }

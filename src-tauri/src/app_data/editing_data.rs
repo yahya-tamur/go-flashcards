@@ -26,18 +26,20 @@ pub struct EditingData {
 }
 
 impl EditingData {
-    fn load_tree(&mut self) {
-        self.move_tree = MoveTree::new(self.config.clone(), &self.exercises[self.current_exercise]);
+    fn load_tree(&mut self) -> Result<()> {
+        self.move_tree =
+            MoveTree::new(self.config.clone(), &self.exercises[self.current_exercise])?;
+        Ok(())
     }
 
-    pub fn jump_to_exercise(&mut self, index: usize) {
-        self.exercises[self.current_exercise] = self.move_tree.save();
+    pub fn jump_to_exercise(&mut self, index: usize) -> Result<()> {
+        self.exercises[self.current_exercise] = self.move_tree.save()?;
         self.current_exercise = index;
-        self.load_tree();
+        self.load_tree()
     }
 
-    pub fn new_exercise(&mut self, insert: bool) {
-        self.exercises[self.current_exercise] = self.move_tree.save();
+    pub fn new_exercise(&mut self, insert: bool) -> Result<()> {
+        self.exercises[self.current_exercise] = self.move_tree.save()?;
 
         if insert {
             self.exercises
@@ -47,17 +49,17 @@ impl EditingData {
             self.current_exercise = self.exercises.len() - 1;
         };
 
-        self.load_tree();
+        self.load_tree()
     }
 
-    pub fn delete_exercise(&mut self) {
+    pub fn delete_exercise(&mut self) -> Result<()> {
         self.exercises.remove(self.current_exercise);
         if self.exercises.is_empty() {
             self.exercises.push(Problem::default());
         } else if self.exercises.len() == self.current_exercise {
             self.current_exercise -= 1;
         }
-        self.load_tree();
+        self.load_tree()
     }
 
     pub fn location(&self) -> (usize, usize) {
@@ -70,7 +72,7 @@ impl EditingData {
 
         if exercises.is_empty() {
             let exercises = vec![Problem::default()];
-            let move_tree = MoveTree::new(config.clone(), &exercises[0]);
+            let move_tree = MoveTree::new(config.clone(), &exercises[0])?;
             Ok(EditingData {
                 config,
                 exercises,
@@ -80,7 +82,7 @@ impl EditingData {
             })
         } else {
             let i = exercises.len() - 1;
-            let move_tree = MoveTree::new(config.clone(), &exercises[i]);
+            let move_tree = MoveTree::new(config.clone(), &exercises[i])?;
             Ok(EditingData {
                 config,
                 exercises,
@@ -93,7 +95,7 @@ impl EditingData {
 
     pub fn save(&mut self, fs: &mut FileSystem) -> Result<()> {
         let mut saved_copy = self.move_tree.clone();
-        self.exercises[self.current_exercise] = saved_copy.save();
+        self.exercises[self.current_exercise] = saved_copy.save()?;
         fs.save_exercises(&self.exercises, &self.file)?;
         Ok(())
     }
@@ -107,7 +109,7 @@ impl EditingData {
     }
 
     pub fn import_sgf(&mut self, sgf: &str) -> Result<()> {
-        self.exercises[self.current_exercise] = self.move_tree.save();
+        self.exercises[self.current_exercise] = self.move_tree.save()?;
 
         let trees = parse(sgf)?;
         for game in trees {
@@ -116,7 +118,7 @@ impl EditingData {
 
         self.current_exercise = self.exercises.len() - 1;
 
-        self.load_tree();
+        self.load_tree()?;
 
         Ok(())
     }

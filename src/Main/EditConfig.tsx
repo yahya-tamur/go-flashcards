@@ -187,7 +187,9 @@ const EditConfig = ({ setStudies, configSignal }: EditConfigProps) => {
             maxWidth: "100%",
             display: "flex",
             flexDirection: "row",
-            justifyContent: "space-around",
+            justifyContent: "space-between",
+            paddingRight: "20px",
+            paddingLeft: "20px",
           }}
         >
           <Box
@@ -205,7 +207,7 @@ const EditConfig = ({ setStudies, configSignal }: EditConfigProps) => {
           <Button
             disabled={code === lastSaved}
             variant="contained"
-            sx={{ height: "40px", margin: "15px" }}
+            sx={{ height: "40px", margin: "15px", marginRight: "0px" }}
             onClick={() => {
               if (code === null) {
                 return;

@@ -1,5 +1,3 @@
-//, fmt::{Display, Formatter}, string::FromUtf8Error};
-
 use std::{
     fmt::{Display, Formatter},
     string::FromUtf8Error,
@@ -69,5 +67,11 @@ impl From<tauri::Error> for DisplayableError {
 impl From<SgfParseError> for DisplayableError {
     fn from(err: SgfParseError) -> Self {
         DisplayableError(format!("sgf parse error: {}", err))
+    }
+}
+
+impl From<regex::Error> for DisplayableError {
+    fn from(err: regex::Error) -> Self {
+        DisplayableError(format!("regex error: {}", err))
     }
 }

@@ -10,8 +10,8 @@ use std::fmt::Debug;
 
 // All flashcards must
 
-pub trait FlashcardAlgorithm<const BUCKET_NUMBER: usize>: Debug {
-    type History: for<'a> Deserialize<'a> + Serialize + Debug;
+pub trait FlashcardAlgorithm<const BUCKET_NUMBER: usize>: Debug + Send + 'static {
+    type History: for<'a> Deserialize<'a> + Serialize + Debug + Send;
 
     const FILE_EXT: &'static str;
 

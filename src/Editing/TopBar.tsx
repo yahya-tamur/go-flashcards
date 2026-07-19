@@ -223,7 +223,7 @@ const TopBar = () => {
                   commands
                     .exportSgf()
                     .then(() => {
-                      setDialogContent("Exported to sgf, under app_data/sgf.");
+                      setDialogContent("Export complete.");
                       setSavedMsgOpen(true);
                     })
                     .catch((e) =>

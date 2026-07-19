@@ -35,6 +35,7 @@ Current Actual Goal
 things that popped up:
 ----------------------------------
 
+- refactor movetree to return error instead of panic on array index
 - 'created' !!
 - are boards sliders slow?
   - always draw entire board.
@@ -79,7 +80,7 @@ Small things that come to mind:
 - (big thing actually)
   - configurable app data dir.
     - will publicstorage cause more problems?
-    - scaffold app data
+    - scaffold app data => instead, try tauri store
     - frontend
   - go into re-orderable lists
 

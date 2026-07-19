@@ -63,9 +63,11 @@ async fn set_stones(
 async fn get_data(state: tauri::State<'_, Mutex<AppData>>) -> Result<Snapshot> {
     match state.lock().await.phase {
         AppPhase::Editing(ref editing_data) => {
-            Ok(editing_data.move_tree.snapshot(editing_data.location()))
+            Ok(editing_data.move_tree.snapshot(editing_data.location())?)
         }
-        AppPhase::Study(ref study_data) => Ok(study_data.move_tree.snapshot(study_data.location())),
+        AppPhase::Study(ref study_data) => {
+            Ok(study_data.move_tree.snapshot(study_data.location())?)
+        }
         _ => Err(error("invalid phase!")),
     }
 }
@@ -88,7 +90,7 @@ async fn set_window(
 #[specta::specta]
 async fn play(state: tauri::State<'_, Mutex<AppData>>, loc: Option<(u32, u32)>) -> Result<bool> {
     apply_to_move_tree(state, |move_tree, study| {
-        Ok(move_tree.play(loc.map(|(i, j)| (i as usize, j as usize)), study))
+        move_tree.play(loc.map(|(i, j)| (i as usize, j as usize)), study)
     })
     .await
 }
@@ -114,7 +116,7 @@ async fn delete_branch(state: tauri::State<'_, Mutex<AppData>>) -> Result<bool> 
 async fn new_exercise(state: tauri::State<'_, Mutex<AppData>>, insert: bool) -> Result<()> {
     match state.lock().await.phase {
         AppPhase::Editing(ref mut editing_data) => {
-            let _: () = editing_data.new_exercise(insert);
+            let _: () = editing_data.new_exercise(insert)?;
             Ok(())
         }
         _ => Err(error("invalid phase!")),
@@ -135,7 +137,7 @@ async fn next_exercise(state: tauri::State<'_, Mutex<AppData>>) -> Result<()> {
 async fn delete_exercise(state: tauri::State<'_, Mutex<AppData>>) -> Result<()> {
     match state.lock().await.phase {
         AppPhase::Editing(ref mut editing_data) => {
-            let _: () = editing_data.delete_exercise();
+            let _: () = editing_data.delete_exercise()?;
             Ok(())
         }
         _ => Err(error("invalid phase!")),
@@ -146,7 +148,7 @@ async fn delete_exercise(state: tauri::State<'_, Mutex<AppData>>) -> Result<()> 
 #[specta::specta]
 async fn finish_setup(state: tauri::State<'_, Mutex<AppData>>, color: Color) -> Result<()> {
     apply_to_move_tree(state, |move_tree, _| {
-        let _: () = move_tree.finish_setup(Some(color));
+        let _: () = move_tree.finish_setup(Some(color))?;
         Ok(())
     })
     .await
@@ -156,7 +158,7 @@ async fn finish_setup(state: tauri::State<'_, Mutex<AppData>>, color: Color) -> 
 #[specta::specta]
 async fn collapse_tree(state: tauri::State<'_, Mutex<AppData>>) -> Result<()> {
     apply_to_move_tree(state, |move_tree, _| {
-        let _: () = move_tree.collapse_tree();
+        let _: () = move_tree.collapse_tree()?;
         Ok(())
     })
     .await
@@ -166,7 +168,7 @@ async fn collapse_tree(state: tauri::State<'_, Mutex<AppData>>) -> Result<()> {
 #[specta::specta]
 async fn comment(state: tauri::State<'_, Mutex<AppData>>, comment: String) -> Result<()> {
     apply_to_move_tree(state, |move_tree, _| {
-        let _: () = move_tree.current_mut().comment = comment;
+        let _: () = move_tree.current_mut()?.comment = comment;
         Ok(())
     })
     .await
@@ -187,7 +189,7 @@ async fn paint(
                 .map(|(i, j)| (i as usize, j as usize))
                 .collect(),
             label,
-        );
+        )?;
         Ok(())
     })
     .await
@@ -206,7 +208,7 @@ async fn mark_rectangle(
             mark,
             (start.0 as usize, start.1 as usize),
             (end.0 as usize, end.1 as usize),
-        );
+        )?;
         Ok(())
     })
     .await
@@ -216,7 +218,7 @@ async fn mark_rectangle(
 #[specta::specta]
 async fn set_variant(state: tauri::State<'_, Mutex<AppData>>, variant: Variant) -> Result<()> {
     apply_to_move_tree(state, |move_tree, study| {
-        let _: () = move_tree.set_variant(variant, study);
+        let _: () = move_tree.set_variant(variant, study)?;
         Ok(())
     })
     .await
@@ -227,11 +229,11 @@ async fn set_variant(state: tauri::State<'_, Mutex<AppData>>, variant: Variant) 
 async fn jump_to_exercise(state: tauri::State<'_, Mutex<AppData>>, index: u32) -> Result<()> {
     match state.lock().await.phase {
         AppPhase::Editing(ref mut editing_data) => {
-            let _: () = editing_data.jump_to_exercise(index as usize);
+            let _: () = editing_data.jump_to_exercise(index as usize)?;
             Ok(())
         }
         AppPhase::Study(ref mut study_data) => {
-            let _: () = study_data.jump_to_exercise(index as usize);
+            let _: () = study_data.jump_to_exercise(index as usize)?;
             Ok(())
         }
         AppPhase::Main => Err(error("Tried 'jump_to_exercise' on main")),
@@ -305,7 +307,6 @@ async fn set_config_str(
     let result = config::validate(&mut app_data.fs, &config)?;
 
     if let ValidationResult::Valid = result {
-        println!("Will try to save config.");
         app_data.fs.save_config(&config)?;
     }
 
@@ -355,7 +356,7 @@ async fn stop_editing(state: tauri::State<'_, Mutex<AppData>>, save: bool) -> Re
     let app_data = &mut *state.lock().await;
     match app_data.phase {
         AppPhase::Study(ref mut study_data) => {
-            study_data.stop_editing(&mut app_data.fs, save).await;
+            study_data.stop_editing(&mut app_data.fs, save).await?;
             Ok(())
         }
         _ => Err(error("invalid phase!")),
@@ -456,7 +457,7 @@ pub fn run() {
         .plugin(tauri_plugin_android_fs::init())
         .setup(|app| {
             let Ok(fs) = FileSystem::initialize(app.handle()) else {
-                println!("Error initialixing file system!!");
+                println!("Error initializing file system!!");
                 std::process::exit(1);
             };
             app.manage(Mutex::new(AppData {

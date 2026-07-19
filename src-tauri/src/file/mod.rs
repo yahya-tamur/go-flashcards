@@ -1,5 +1,6 @@
 pub mod android_fs;
-pub mod common;
+pub mod os_file_system;
+pub mod wrapper;
 
 use include_dir::{include_dir, Dir};
 
@@ -14,6 +15,6 @@ mod fs;
 mod fs;
 // */
 
-pub mod fs;
+pub mod windows_linux_fs;
 
-pub type FileSystem = common::FileSystem<fs::OsFileSystem>;
+pub type FileSystem = wrapper::FileSystem<windows_linux_fs::WindowsLinuxFileSystem>;

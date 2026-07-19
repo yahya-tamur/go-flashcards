@@ -4,7 +4,7 @@ use std::sync::Arc;
 use crate::config::{self, ActiveConfig};
 use crate::error::error;
 use crate::flashcard_algorithm::algorithm_config::load_history_keeper;
-use crate::flashcard_algorithm::{HistoryKeeperParams, HistoryKeeperTrait};
+use crate::flashcard_algorithm::{HistoryKeeper, HistoryKeeperParams};
 use crate::game::MoveTree;
 use crate::game::Problem;
 use crate::Result;
@@ -20,10 +20,6 @@ use crate::file::FileSystem;
 pub struct StudyData {
     pub move_tree: MoveTree,
     pub src_configs: Vec<Arc<ActiveConfig>>,
-
-    // think about current
-
-    // This is very much like a sql database??
     current: usize,
     past_exercises: Vec<Uuid>,
 
@@ -33,7 +29,7 @@ pub struct StudyData {
     // history_srcs: Vec<Vec<<Algorithm as Fl::History>>,
     names: Vec<String>,
 
-    keeper: Box<dyn HistoryKeeperTrait + Send>,
+    keeper: Box<dyn HistoryKeeper + Send>,
     // make this an option and separate phases here too?
     //   current_selection: (usize, usize),
     //   selection_pool: Vec<Vec<Uuid>>,
@@ -41,8 +37,6 @@ pub struct StudyData {
 
 impl StudyData {
     pub fn load(fs: &mut FileSystem, flashcard_set: &str) -> Result<StudyData> {
-        // load everything...
-        // is unwrap ok here?
         let (set_config, sources) = config::load_study(fs, flashcard_set)?;
 
         let mut exercises: Vec<Vec<Problem>> = Vec::new();
@@ -64,7 +58,7 @@ impl StudyData {
                 names: &names,
                 exercises: &exercises,
             },
-        );
+        )?;
 
         let mut coords: HashMap<Uuid, (usize, usize)> = HashMap::new();
         for (i, exercise_file) in exercises.iter().enumerate() {
@@ -73,35 +67,34 @@ impl StudyData {
             }
         }
 
-        keeper.next().map(|id| {
-            let past_exercises = vec![id];
+        let id = keeper.next()?;
+        let past_exercises = vec![id];
 
-            let (i, j) = coords[&id];
+        let (i, j) = coords[&id];
 
-            let move_tree = MoveTree::new(src_configs[i].clone(), &exercises[i][j]);
+        let move_tree = MoveTree::new(src_configs[i].clone(), &exercises[i][j])?;
 
-            // load
-            StudyData {
-                move_tree,
-                src_configs,
-                current: 0,
-                past_exercises,
-                coords,
-                exercises,
-                names,
-                keeper,
-            }
+        // load
+        Ok(StudyData {
+            move_tree,
+            src_configs,
+            current: 0,
+            past_exercises,
+            coords,
+            exercises,
+            names,
+            keeper,
         })
     }
 
-    fn load_tree(&mut self) {
+    fn load_tree(&mut self) -> Result<()> {
         let (i, j) = self.coords[&self.past_exercises[self.current]];
-        self.move_tree = MoveTree::new(self.src_configs[i].clone(), &self.exercises[i][j]);
+        self.move_tree = MoveTree::new(self.src_configs[i].clone(), &self.exercises[i][j])?;
+        Ok(())
     }
 
     pub fn answer(&mut self, fs: &mut FileSystem, correct: bool) -> Result<String> {
         if self.current != self.past_exercises.len() - 1 {
-            println!("{:?}", self);
             return Err(error("tried to answer a different question????"));
         }
 
@@ -111,12 +104,12 @@ impl StudyData {
     }
 
     pub fn next_question(&mut self) -> Result<()> {
-        self.keeper.next().map(|id| {
-            self.current = self.past_exercises.len();
-            self.past_exercises.push(id);
+        let id = self.keeper.next()?;
+        self.current = self.past_exercises.len();
+        self.past_exercises.push(id);
 
-            self.load_tree();
-        })
+        self.load_tree()?;
+        Ok(())
     }
 
     pub fn location(&self) -> (usize, usize) {
@@ -125,21 +118,22 @@ impl StudyData {
 
     // makes blue nodes
 
-    pub async fn stop_editing(&mut self, fs: &mut FileSystem, save: bool) {
+    pub async fn stop_editing(&mut self, fs: &mut FileSystem, save: bool) -> Result<()> {
         if save {
             let (i, j) = self.coords[&self.past_exercises[self.current]];
 
-            self.exercises[i][j] = self.move_tree.save();
-            fs.save_exercises(&self.exercises[i], &self.names[i])
-                .unwrap();
+            self.exercises[i][j] = self.move_tree.save()?;
+            fs.save_exercises(&self.exercises[i], &self.names[i])?;
         }
-        self.load_tree();
+        self.load_tree()?;
+        Ok(())
     }
 
     // does not update selection. DO NOT try answering etc. after this.
-    pub fn jump_to_exercise(&mut self, index: usize) {
+    pub fn jump_to_exercise(&mut self, index: usize) -> Result<()> {
         self.current = index;
-        self.load_tree();
+        self.load_tree()?;
+        Ok(())
     }
 
     pub fn get_config(&self) -> ActiveConfig {

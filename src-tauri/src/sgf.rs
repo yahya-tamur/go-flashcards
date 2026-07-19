@@ -13,11 +13,15 @@ use sgf_parse::{
     SgfNode, SimpleText, Text,
 };
 
-use crate::Result;
+use crate::{error::error, Result};
 use std::collections::HashSet;
 use uuid::Uuid;
 
 use crate::game::{Color::*, Mark::*, Move, Problem, Variant};
+
+fn error_on_none<T>(opt: Option<T>) -> Result<T> {
+    opt.ok_or_else(|| error("error converting sgf."))
+}
 
 pub fn sgf_to_problem(mut start: SgfNode<Prop>) -> Result<Problem> {
     let x = |p: &go::Point| p.x as usize + 1;
@@ -38,10 +42,10 @@ pub fn sgf_to_problem(mut start: SgfNode<Prop>) -> Result<Problem> {
                 Prop::AB(set) => set.iter().for_each(|p| initial_black.push((x(p), y(p)))),
                 Prop::AW(set) => set.iter().for_each(|p| initial_white.push((x(p), y(p)))),
                 Prop::VW(set) => {
-                    min_row = set.iter().map(&x).min().unwrap();
-                    max_row = set.iter().map(&x).max().unwrap();
-                    min_col = set.iter().map(&y).min().unwrap();
-                    max_col = set.iter().map(&y).max().unwrap();
+                    min_row = error_on_none(set.iter().map(&x).min())?;
+                    max_row = error_on_none(set.iter().map(&x).max())?;
+                    min_col = error_on_none(set.iter().map(&y).min())?;
+                    max_col = error_on_none(set.iter().map(&y).max())?;
                 }
                 Prop::SQ(set) => set
                     .iter()
@@ -196,14 +200,14 @@ pub fn sgf_to_problem(mut start: SgfNode<Prop>) -> Result<Problem> {
                 stack.push((child, j + 1));
             }
 
-            node = node.children.pop().unwrap();
+            node = error_on_none(node.children.pop())?;
             j += 1;
         }
     }
     if table[0].len() > 1 {
         let (root, rest) = table[0].split_at_mut(1);
         if let Some(mov) = rest[0].as_ref() {
-            root[0].as_mut().unwrap().color = match mov.color {
+            error_on_none(root[0].as_mut())?.color = match mov.color {
                 Black => White,
                 White => Black,
             };
@@ -314,7 +318,7 @@ pub fn problem_to_sgf(problem: &Problem) -> Result<SgfNode<Prop>> {
         start.add_white.insert(pt(i, j));
     }
 
-    let first_move: &Move = problem.table[0][0].as_ref().unwrap();
+    let first_move: &Move = error_on_none(problem.table[0][0].as_ref())?;
 
     for mark in first_move.marks.iter() {
         match *mark {
@@ -440,7 +444,7 @@ pub fn problem_to_sgf(problem: &Problem) -> Result<SgfNode<Prop>> {
         }
     }
 
-    let m = node_table.iter().map(|line| line.len()).max().unwrap();
+    let m = error_on_none(node_table.iter().map(|line| line.len()).max())?;
 
     for j in (1..m).rev() {
         for i in 0..node_table.len() {
@@ -459,14 +463,12 @@ pub fn problem_to_sgf(problem: &Problem) -> Result<SgfNode<Prop>> {
                     let (top, bottom) = node_table.split_at_mut(i);
                     (&mut top[p_i][p_j], &mut bottom[0][j])
                 };
-                parent
-                    .as_mut()
-                    .unwrap()
+                error_on_none(parent.as_mut())?
                     .children
-                    .push(child.take().unwrap());
+                    .push(error_on_none(child.take())?);
             }
         }
     }
 
-    Ok(node_table[0][0].take().unwrap())
+    error_on_none(node_table[0][0].take())
 }

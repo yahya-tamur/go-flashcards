@@ -9,7 +9,7 @@ use super::FlashcardAlgorithm;
 
 pub trait Sealed {}
 
-pub trait HistoryKeeperTrait: Debug + Sealed {
+pub trait HistoryKeeper: Debug + Sealed + Send + 'static {
     fn answer(
         &mut self,
         fs: &mut FileSystem,
@@ -18,14 +18,13 @@ pub trait HistoryKeeperTrait: Debug + Sealed {
     ) -> Result<String>;
 
     fn view(&self) -> Vec<usize>;
-
     fn next(&mut self) -> Result<Uuid>;
 }
 
 #[derive(Debug)]
-pub struct HistoryKeeper<FA, const BUCKET_NUMBER: usize>
+pub struct FAHistoryKeeper<FA, const BUCKET_NUMBER: usize>
 where
-    FA: super::FlashcardAlgorithm<BUCKET_NUMBER>,
+    FA: FlashcardAlgorithm<BUCKET_NUMBER>,
     FA: Debug,
 {
     algorithm: FA,
@@ -44,7 +43,7 @@ pub struct HistoryKeeperParams<'a> {
 pub fn load_history<FA, const BUCKET_NUMBER: usize>(
     algorithm: FA,
     params: HistoryKeeperParams<'_>,
-) -> Box<HistoryKeeper<FA, BUCKET_NUMBER>>
+) -> Result<Box<dyn HistoryKeeper>>
 where
     FA: FlashcardAlgorithm<BUCKET_NUMBER>,
 {
@@ -57,27 +56,27 @@ where
     let mut histories = Vec::new();
 
     for (i, name) in names.iter().enumerate() {
-        let mut history_file: Vec<(Uuid, FA::History)> =
-            fs.load_history(name, FA::FILE_EXT).unwrap();
+        let mut history_file: Vec<(Uuid, FA::History)> = fs.load_history(name, FA::FILE_EXT)?;
 
         let mut j = 0usize;
-        while i < exercises.len().min(history_file.len()) {
+        while j < exercises.len().min(history_file.len()) {
             if exercises[i][j].id != history_file[j].0 {
                 break;
             }
+            j += 1;
         }
-        j += 1;
+
         match () {
-            () if exercises[i].len() == history_file.len() && i == history_file.len() => {}
-            () if exercises[i].len() > history_file.len() && i == history_file.len() => {
+            () if exercises[i].len() == history_file.len() && j == history_file.len() => {}
+            () if exercises[i].len() > history_file.len() && j == history_file.len() => {
                 for exercise in exercises[i].iter().skip(j) {
                     history_file.push((exercise.id, FA::new_history()))
                 }
-                fs.save_history(name, FA::FILE_EXT, &history_file).unwrap();
+                fs.save_history(name, FA::FILE_EXT, &history_file)?;
             }
             _ => {
                 let mut hist_map: HashMap<Uuid, FA::History> =
-                    history_file.split_off(i).into_iter().collect();
+                    history_file.split_off(j).into_iter().collect();
                 for exercise in exercises[i].iter().skip(j) {
                     history_file.push((
                         exercise.id,
@@ -86,7 +85,7 @@ where
                             .unwrap_or_else(FA::new_history),
                     ))
                 }
-                fs.save_history(name, FA::FILE_EXT, &history_file).unwrap();
+                fs.save_history(name, FA::FILE_EXT, &history_file)?;
             }
         }
         histories.push(history_file);
@@ -100,21 +99,21 @@ where
         }
     }
 
-    Box::new(HistoryKeeper {
+    Ok(Box::new(FAHistoryKeeper {
         algorithm,
         histories,
         names: names.clone(),
         selection_pool,
         current_selection: (0, 0),
-    })
+    }))
 }
 
-impl<FA, const BUCKET_NUMBER: usize> Sealed for HistoryKeeper<FA, BUCKET_NUMBER> where
+impl<FA, const BUCKET_NUMBER: usize> Sealed for FAHistoryKeeper<FA, BUCKET_NUMBER> where
     FA: FlashcardAlgorithm<BUCKET_NUMBER>
 {
 }
 
-impl<FA, const BUCKET_NUMBER: usize> HistoryKeeperTrait for HistoryKeeper<FA, BUCKET_NUMBER>
+impl<FA, const BUCKET_NUMBER: usize> HistoryKeeper for FAHistoryKeeper<FA, BUCKET_NUMBER>
 where
     FA: FlashcardAlgorithm<BUCKET_NUMBER>,
 {
