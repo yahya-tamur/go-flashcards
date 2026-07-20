@@ -12,6 +12,7 @@
   "app": {
     "windows": [
       {
+        "dragDropEnabled": false,
         "title": "go-flashcards",
         "width": 800,
         "height": 600

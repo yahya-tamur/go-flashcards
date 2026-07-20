@@ -31,8 +31,6 @@ Current Actual Goal
 
 bugs / small improvements
 ----------------------------------------
-- ? no clue how difficult
-  - dragging does not work on android
 
 - back button on android
 - arrow key in edit label text area moves tree
@@ -50,7 +48,6 @@ bugs / small improvements
 - Ctrl - S
 - right click to delete
 - disable exercise loading when invalid config.
-- menus can be dragged (as if they're images )
 - import from sgf ignored AB property in example sgf file!!
 - there's a fontsource: roboto??! what is it, why is it, and do I still need the local font?
 - reset label when moving exercises

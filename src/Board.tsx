@@ -338,8 +338,12 @@ const Board = () => {
             width: boardBoxWidth,
             height: boardBoxHeight,
             margin: "20px",
+            touchAction: "none",
           }}
           onPointerDown={(e) => {
+            if (board_svg.current !== null) {
+              board_svg.current.setPointerCapture(e.pointerId);
+            }
             const w = get_coord(e);
             c_cursorDispatch({
               type: "down",
@@ -373,6 +377,12 @@ const Board = () => {
             }
           }}
           onPointerUp={(e) => {
+            if (
+              board_svg.current !== null &&
+              board_svg.current.hasPointerCapture(e.pointerId)
+            ) {
+              board_svg.current.releasePointerCapture(e.pointerId);
+            }
             const w = get_coord(e);
             if (c_cursor.type === "Click") {
               if (w !== null) {

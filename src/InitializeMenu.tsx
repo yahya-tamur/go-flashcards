@@ -41,7 +41,10 @@ const InitializeMenu = () => {
         overflow: "scroll",
         justifyContent: "start",
         gap: "20px",
+        userSelect: "none",
+        WebkitUserSelect: "none",
       }}
+      draggable="false"
       elevation={7}
     >
       <Box

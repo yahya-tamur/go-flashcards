@@ -70,7 +70,10 @@ const CommentBox = () => {
         display: "flex",
         overflow: "scroll",
         flexDirection: "column",
+        userSelect: "none",
+        WebkitUserSelect: "none",
       }}
+      draggable="false"
       elevation={20}
     >
       {c_studyPhase !== "Edit" && c_phase === "Study" ? (
