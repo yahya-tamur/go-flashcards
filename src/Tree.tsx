@@ -41,8 +41,9 @@ const Tree = () => {
   useEffect(() => {
     const handle_key = (e: KeyboardEvent) => {
       if (e.currentTarget !== null) {
-        const target = e.currentTarget as HTMLElement;
-        if (/INPUT|TEXTAREA|SELECT/.test(target.tagName)) {
+        if (
+          /INPUT|TEXTAREA|SELECT/.test(document.activeElement?.tagName ?? "")
+        ) {
           return;
         }
       }

@@ -31,16 +31,16 @@ Current Actual Goal
 
 bugs / small improvements
 ----------------------------------------
-
+- can't select stone in make tree mode (it doesn't stay selected)
+- can apply variant to root node
+- 'clean' script
+- better frontend folder organisation
 - back button on android
-- arrow key in edit label text area moves tree
 - config doesn't automatically update on add exericse
   - configsignal doesn't work
 - updating config doesn't update study sets automatically.
 - make this look better on default window size
   - InitializeMenu, MakeTreeMenu just a little too tall for their box
-- mobile editconfig may not work when empty
-- disable tauri plugin dialog on android?
   - done? follow up? I think some crate couldn't be enitrely removed for permissions
 - refactor movetree to return error instead of panic on array index
 - are boards sliders slow?
@@ -63,6 +63,7 @@ bugs / small improvements
 - delete history file?
 
 - In comments, moves marked like {S1} also get transformed.
+  - need to add 'letters' into config and access from frontend
   - or, comments like {Black}
 - I don't like the number spinner.
 
