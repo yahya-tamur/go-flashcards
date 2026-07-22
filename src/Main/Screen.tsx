@@ -33,8 +33,23 @@ const Screen = () => {
   }, [c_setErrorMessage, c_setErrorWindowOpen]);
 
   return (
-    <main style={{ display: "flex", flexDirection: "row" }}>
-      <Box sx={{ height: "100vh", width: "max(60%, calc(100% - 200px))" }}>
+    <main
+      style={{
+        display: "flex",
+        flexDirection: "row",
+        paddingTop: "env(safe-area-inset-top)",
+        paddingBottom: "env(safe-area-inset-bottom)",
+        paddingLeft: "env(safe-area-inset-left)",
+        paddingRight: "env(safe-area-inset-right)",
+      }}
+    >
+      <Box
+        sx={{
+          height:
+            "calc((100vh - env(safe-area-inset-top)) - env(safe-area-inset-bottom))",
+          width: "max(60%, calc(100% - 200px))",
+        }}
+      >
         <EditConfig setStudies={setStudies} configSignal={configSignal} />
       </Box>
       <Box
@@ -42,7 +57,7 @@ const Screen = () => {
           display: "flex",
           flexDirection: "column",
           width: "min(40%, 200px)",
-          maxHeight: "100vh",
+          maxHeight: "100%",
           overflow: "hidden",
         }}
       >

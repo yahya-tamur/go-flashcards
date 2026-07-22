@@ -108,11 +108,20 @@ const Menu = (props: MenuProps) => {
             width: props.drawerWidth,
           },
         }}
+        slotProps={{
+          paper: {
+            sx: {
+              marginTop: "env(safe-area-inset-top)",
+              marginBottom: "env(safe-area-inset-bottom)",
+            },
+          },
+        }}
       >
         <Paper
           elevation={4}
           sx={{
-            height: "100%",
+            height:
+              "calc((100vh - env(safe-area-inset-top)) - env(safe-area-inset-bottom))",
             display: "flex",
             flexDirection: "column",
             alignItems: "center",
@@ -230,11 +239,20 @@ const Menu = (props: MenuProps) => {
           },
         }}
         anchor="right"
+        slotProps={{
+          paper: {
+            sx: {
+              marginTop: "env(safe-area-inset-top)",
+              marginBottom: "env(safe-area-inset-bottom)",
+            },
+          },
+        }}
       >
         <Paper
           elevation={4}
           sx={{
-            height: "100%",
+            height:
+              "calc((100vh - env(safe-area-inset-top)) - env(safe-area-inset-bottom))",
             display: "flex",
             flexDirection: "column",
             alignItems: "center",

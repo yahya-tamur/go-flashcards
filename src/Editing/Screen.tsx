@@ -18,13 +18,23 @@ const Screen = () => {
   const { c_editingPhase } = useContext(AppContext);
 
   return (
-    <main style={{ display: "flex", flexDirection: "column" }}>
+    <main
+      style={{
+        display: "flex",
+        flexDirection: "column",
+        paddingTop: "env(safe-area-inset-top)",
+        paddingBottom: "env(safe-area-inset-bottom)",
+        paddingLeft: "env(safe-area-inset-left)",
+        paddingRight: "env(safe-area-inset-right)",
+      }}
+    >
       <Box sx={{ height: "60px" }}>
         <TopBar />
       </Box>
       <Box
         sx={{
-          height: "calc(100vh - 60px)",
+          height:
+            "calc(((100vh - 60px) - env(safe-area-inset-top)) - env(safe-area-inset-bottom))",
           display: "flex",
           flexDirection: "row",
         }}

@@ -17,10 +17,20 @@ const Screen = () => {
   const { c_studyPhase } = useContext(AppContext);
 
   return (
-    <main style={{ display: "flex", flexDirection: "row" }}>
+    <main
+      style={{
+        display: "flex",
+        flexDirection: "row",
+        paddingTop: "env(safe-area-inset-top)",
+        paddingBottom: "env(safe-area-inset-bottom)",
+        paddingLeft: "env(safe-area-inset-left)",
+        paddingRight: "env(safe-area-inset-right)",
+      }}
+    >
       <Box
         sx={{
-          height: "100vh",
+          height:
+            "calc((100vh - env(safe-area-inset-top)) - env(safe-area-inset-bottom))",
           flexBasis: "60%",
           minWidth: 0,
           flexDirection: "col",
@@ -29,7 +39,7 @@ const Screen = () => {
         <Box sx={{ height: "80px" }}>
           <TopBar />
         </Box>
-        <Box sx={{ height: "calc(100vh - 80px)" }}>
+        <Box sx={{ height: "calc(100% - 80px)" }}>
           <Board />
         </Box>
       </Box>
