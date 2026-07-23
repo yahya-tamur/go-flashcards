@@ -57,6 +57,7 @@ export type Place = {
   ghosts: [number, number][];
   dragging: [number, number][] | null;
   paint: ClickPaint | OtherPaint;
+  leftMode: MarkPaint | RectangleMark | StonePaint | null;
 };
 export type Drag = {
   type: "Drag";
@@ -64,6 +65,7 @@ export type Drag = {
   paint: RectPaint;
   start: [number, number] | null;
   end: [number, number] | null;
+  leftMode: MarkPaint | RectangleMark | StonePaint | null;
 };
 
 export type Cursor = Click | Place | Drag;
@@ -79,6 +81,10 @@ export type CursorAction =
     }
   | {
       type: "down";
+      w: [number, number] | null;
+    }
+  | {
+      type: "rightdown";
       w: [number, number] | null;
     }
   | {

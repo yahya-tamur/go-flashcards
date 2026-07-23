@@ -8,6 +8,8 @@ import type {
   PhaseType,
   CursorAction,
   Click,
+  Place,
+  Drag,
 } from "./AppContext";
 import type {
   Color,
@@ -82,7 +84,7 @@ const defaultClickCursor = (color: Color): Click => ({
 
 const defaultPaintCursor = (
   value: MarkPaint | RectangleMark | StonePaint,
-): Cursor =>
+): Place | Drag =>
   value === "BlackTerritory" ||
   value === "WhiteTerritory" ||
   value === "DeleteMark"
@@ -92,6 +94,7 @@ const defaultPaintCursor = (
         start: null,
         end: null,
         paint: { value: value, layer: "mark" },
+        leftMode: null,
       }
     : value === "Black" || value === "White" || value === "Delete"
       ? {
@@ -102,6 +105,7 @@ const defaultPaintCursor = (
             value: value,
             layer: "stone",
           },
+          leftMode: null,
         }
       : {
           type: "Place",
@@ -111,6 +115,7 @@ const defaultPaintCursor = (
             value: value,
             layer: "mark",
           },
+          leftMode: null,
         };
 
 // 2. Transform the union into an object indexed by that key
@@ -121,6 +126,35 @@ type CursorReducerMapType = {
       action: Extract<CursorAction, { type: A }>,
     ) => Cursor;
   };
+};
+
+// should not be called when already Delete or DeleteMark
+const newrightdown = (
+  cursor: Place | Drag,
+  w: [number, number] | null,
+): Cursor => {
+  if (
+    cursor.paint.value === "Black" ||
+    cursor.paint.value === "White" ||
+    cursor.paint.value === "Delete"
+  ) {
+    const cursor_ = defaultPaintCursor("Delete") as Place;
+    if (cursor.leftMode === null) {
+      cursor_.leftMode = cursor.paint.value;
+    }
+    cursor_.dragging = w === null ? [] : [w];
+    cursor_.ghosts = w === null ? [] : [w];
+    return cursor_;
+  }
+  const cursor_ = defaultPaintCursor("DeleteMark") as Drag;
+  if (cursor.leftMode === null) {
+    cursor_.leftMode = cursor.paint.value;
+  }
+  cursor_.start = w;
+  cursor_.end = w;
+  cursor_.ghosts = w === null ? [] : [w];
+
+  return cursor_;
 };
 
 const cursorMap: CursorReducerMapType = {
@@ -155,7 +189,11 @@ const cursorMap: CursorReducerMapType = {
       } else {
         const cursor_ = structuredClone(cursor);
         cursor_.dragging = action.w === null ? [] : [action.w];
-        cursor_.ghosts = [];
+        if (cursor.paint.value === "Delete") {
+          cursor_.ghosts = action.w === null ? [] : [action.w];
+        } else {
+          cursor_.ghosts = [];
+        }
         return cursor_;
       }
     },
@@ -168,6 +206,31 @@ const cursorMap: CursorReducerMapType = {
       cursor_.end = action.w;
       cursor_.ghosts = action.w === null ? [] : [action.w];
       return cursor_;
+    },
+  },
+  rightdown: {
+    Click: (cursor) => cursor,
+    Place: (cursor, action) => {
+      if (
+        cursor.leftMode !== null &&
+        cursor.dragging !== null &&
+        cursor.dragging.length <= 1 &&
+        wEquals(cursor.dragging[0] ?? null, action.w)
+      ) {
+        return cursor;
+      } else {
+        return newrightdown(cursor, action.w);
+      }
+    },
+    Drag: (cursor, action) => {
+      if (
+        cursor.leftMode !== null &&
+        wEquals(cursor.start, action.w) &&
+        wEquals(cursor.end, action.w)
+      ) {
+        return cursor;
+      }
+      return newrightdown(cursor, action.w);
     },
   },
   move: {
@@ -203,8 +266,12 @@ const cursorMap: CursorReducerMapType = {
           return {
             type: "Place",
             paint: structuredClone(cursor.paint),
-            ghosts: [],
+            ghosts:
+              action.w === null || cursor.paint.value !== "Delete"
+                ? []
+                : [action.w],
             dragging: [...cursor.dragging, action.w],
+            leftMode: cursor.leftMode,
           };
         }
       }
@@ -244,14 +311,24 @@ const cursorMap: CursorReducerMapType = {
       cursor.ghosts.length === 0
         ? cursor
         : defaultClickCursor(cursor.paint.value),
-    Place: (cursor) =>
-      cursor.dragging === null && cursor.ghosts.length === 0
-        ? cursor
-        : defaultPaintCursor(cursor.paint.value),
-    Drag: (cursor) =>
-      cursor.start === null && cursor.end === null
-        ? cursor
-        : defaultPaintCursor(cursor.paint.value),
+    Place: (cursor) => {
+      if (cursor.leftMode !== null) {
+        return defaultPaintCursor(cursor.leftMode);
+      }
+      if (cursor.dragging === null && cursor.ghosts.length === 0) {
+        return cursor;
+      }
+      return defaultPaintCursor(cursor.paint.value);
+    },
+    Drag: (cursor) => {
+      if (cursor.leftMode !== null) {
+        return defaultPaintCursor(cursor.leftMode);
+      }
+      if (cursor.start === null && cursor.end === null) {
+        return cursor;
+      }
+      return defaultPaintCursor(cursor.paint.value);
+    },
   },
 };
 
@@ -294,12 +371,11 @@ function App() {
     }),
   );
 
-  const [c_cursor, c_cursorDispatch] = useReducer(cursorReducer, {
-    type: "Place",
-    ghosts: [],
-    dragging: null,
-    paint: { value: "Black", layer: "stone" },
-  });
+  const [c_cursor, c_cursorDispatch] = useReducer(
+    cursorReducer,
+    "Black",
+    defaultPaintCursor,
+  );
 
   return (
     <ThemeProvider theme={theme}>

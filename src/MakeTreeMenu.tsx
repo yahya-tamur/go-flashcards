@@ -113,11 +113,15 @@ const MakeTreeMenu = () => {
         }}
       >
         <ToggleButtonGroup
-          value={c_cursor}
+          value={c_cursor.paint.value}
           color="toggle"
           exclusive
           size="small"
           onChange={() => {
+            console.log(
+              c_cursor.paint.value,
+              c_data?.color === "Black" ? "Black" : "White",
+            );
             setClick(c_data, c_cursorDispatch);
           }}
         >
@@ -158,6 +162,7 @@ const MakeTreeMenu = () => {
 
         <ToggleButtonGroup
           color="toggle"
+          disabled={c_data !== null && c_data.col === 0 && c_data.col === 0}
           value={variant}
           exclusive
           size="small"

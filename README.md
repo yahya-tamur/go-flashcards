@@ -31,9 +31,8 @@ Current Actual Goal
 
 bugs / small improvements
 ----------------------------------------
-- can't select stone in make tree mode (it doesn't stay selected)
-- can apply variant to root node
-- 'clean' script
+- right click on one of the drag marks makes a drag deletemark, not usual rectangle one
+- text on board looks absolutely terrible??
 - better frontend folder organisation
 - back button on android
 - config doesn't automatically update on add exericse

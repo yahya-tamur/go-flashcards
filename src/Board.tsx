@@ -74,6 +74,8 @@ const gridReducer = (grid: Grid, action: GridAction): Grid => {
 
 */
 
+const ARRAY19 = [...Array(19)].map((_, i) => i);
+
 const Board = () => {
   const [grid, gridDispatch] = useReducer(gridReducer, empty_grid);
 
@@ -101,6 +103,7 @@ const Board = () => {
   const margin = 150;
   const partial = 70; // dots for partial board.
   const partial_border = 0; // border from partial edges
+  const board_size = 18 * square_size + 2 * margin;
 
   const [boardBoxWidth, setBoardBoxWidth] = useState("0px");
   const [boardBoxHeight, setBoardBoxHeight] = useState("0px");
@@ -118,7 +121,10 @@ const Board = () => {
   }, [c_data, c_setWindow]);
 
   const [viewBox, setViewBox] = useState<[number, number, number, number]>([
-    0, 0, 2100, 2100,
+    0,
+    0,
+    board_size,
+    board_size,
   ]);
 
   const get_coord = useCallback(
@@ -166,6 +172,9 @@ const Board = () => {
         }
       } else if (c_cursor.type === "Place") {
         if (c_cursor.paint.layer === "stone") {
+          if (c_cursor.paint.value === "Delete") {
+            return [si, sj];
+          }
           if (grid[si][sj].stone === c_cursor.paint.value) {
             return null;
           }
@@ -243,48 +252,41 @@ const Board = () => {
     gridDispatch({ type: "set_grid", grid: c_data.game.grid });
   }, [c_window, c_data]);
 
-  //maybe just always do 0..19?
-  const [rows, setRows] = useState<number[]>([]);
-  const [cols, setCols] = useState<number[]>([]);
-  const [lines, setLines] = useState<number[]>([]);
   const [borders, setBorders] = useState<[number, number, string][]>([]);
+  const [partialRect, setPartialRect] = useState<
+    [number, number, number, number]
+  >([0, 0, board_size, board_size]);
 
   useEffect(() => {
     const [left, right, top, bottom] = c_window;
 
-    const newRows: number[] = [];
-    for (let i = left; i <= right; i++) {
-      newRows.push(i);
-    }
-    setRows(newRows);
-
-    const newCols: number[] = [];
-    for (let j = top; j <= bottom; j++) {
-      newCols.push(j);
-    }
-    setCols(newCols);
-
     const stroke_width = 0; // but it's 1??
-    const hline_start =
-      margin +
-      square_size * left +
-      (left > 0 ? -partial : 0) -
-      stroke_width / 2;
-    const hline_end =
-      margin +
-      square_size * right +
-      (right < 18 ? partial : 0) +
-      stroke_width / 2;
-    const vline_start = margin + square_size * top + (top > 0 ? -partial : 0);
-    const vline_end =
-      margin + square_size * bottom + (bottom < 18 ? partial : 0);
-    setLines([hline_start, hline_end, vline_start, vline_end]);
+
+    const partialLeft =
+      left > 0 ? margin + square_size * left - partial - stroke_width / 2 : 0;
+
+    const partialTop = top > 0 ? margin + square_size * top - partial : 0;
+
+    const partialRight =
+      right < 18
+        ? margin + square_size * right + partial + stroke_width / 2
+        : board_size;
+
+    const partialBottom =
+      bottom < 18 ? margin + square_size * bottom + partial : board_size;
+
+    setPartialRect([
+      partialLeft,
+      partialTop,
+      partialRight - partialLeft,
+      partialBottom - partialTop,
+    ]);
 
     const newBorders: [number, number, string][] = [];
     if (left == 0) {
       for (let j = top; j <= bottom; j++) {
         newBorders.push([
-          hline_start - 70,
+          margin - 70,
           margin + square_size * j,
           String(19 - j),
         ]);
@@ -293,7 +295,7 @@ const Board = () => {
     if (right == 18) {
       for (let j = top; j <= bottom; j++) {
         newBorders.push([
-          hline_end + 70,
+          board_size - margin + 70,
           margin + square_size * j,
           String(19 - j),
         ]);
@@ -301,20 +303,20 @@ const Board = () => {
     }
     if (top == 0) {
       for (let i = left; i <= right; i++) {
-        newBorders.push([
-          margin + square_size * i,
-          vline_start - 70,
-          letters[i],
-        ]);
+        newBorders.push([margin + square_size * i, margin - 70, letters[i]]);
       }
     }
     if (bottom == 18) {
       for (let i = left; i <= right; i++) {
-        newBorders.push([margin + square_size * i, vline_end + 70, letters[i]]);
+        newBorders.push([
+          margin + square_size * i,
+          board_size - margin + 70,
+          letters[i],
+        ]);
       }
     }
     setBorders(newBorders);
-  }, [c_window]);
+  }, [c_window, board_size]);
 
   return (
     <Paper
@@ -340,25 +342,40 @@ const Board = () => {
             margin: "20px",
             touchAction: "none",
           }}
+          onContextMenu={(e) => {
+            e.preventDefault();
+          }}
           onPointerDown={(e) => {
             if (board_svg.current !== null) {
               board_svg.current.setPointerCapture(e.pointerId);
             }
+            e.preventDefault();
+            console.log(e.button);
             const w = get_coord(e);
-            c_cursorDispatch({
-              type: "down",
-              w: w,
-            });
-            if (c_cursor.type === "Place") {
-              if (w !== null) {
-                gridDispatch({
-                  type: "set_temp",
-                  w: w,
-                  holding: c_cursor.paint,
-                  label: c_nextLabel,
-                });
+            if (e.button === 2) {
+              c_cursorDispatch({
+                type: "rightdown",
+                w: w,
+              });
+            } else {
+              c_cursorDispatch({
+                type: "down",
+                w: w,
+              });
+
+              if (c_cursor.type === "Place") {
+                if (w !== null) {
+                  gridDispatch({
+                    type: "set_temp",
+                    w: w,
+                    holding: c_cursor.paint,
+                    label: c_nextLabel,
+                  });
+                }
               }
             }
+
+            /*   */
           }}
           onPointerMove={async (e) => {
             const w = get_coord(e);
@@ -367,7 +384,12 @@ const Board = () => {
               type: "move",
               w: w,
             });
-            if (c_cursor.type === "Place" && c_cursor.dragging && w !== null) {
+            if (
+              c_cursor.type === "Place" &&
+              c_cursor.dragging !== null &&
+              w !== null
+            ) {
+              console.log(c_cursor, grid, w);
               gridDispatch({
                 type: "set_temp",
                 w: w,
@@ -471,16 +493,24 @@ const Board = () => {
           }}
         >
           <defs>
-            <mask id="labelMask" maskUnits="objectBoundingBox">
+            <mask id="viewMask" maskUnits="objectBoundingBox">
               <rect
-                x={viewBox[0]}
-                y={viewBox[1]}
-                width={viewBox[2]}
-                height={viewBox[3]}
+                x={partialRect[0]}
+                y={partialRect[1]}
+                width={partialRect[2]}
+                height={partialRect[3]}
                 fill="white"
               />
-              {rows
-                .flatMap((i) => cols.map((j) => [i, j]))
+            </mask>
+            <mask id="labelMask" maskUnits="objectBoundingBox">
+              <rect
+                x={partialRect[0]}
+                y={partialRect[1]}
+                width={partialRect[2]}
+                height={partialRect[3]}
+                fill="white"
+              />
+              {ARRAY19.flatMap((i) => ARRAY19.map((j) => [i, j]))
                 .filter(
                   ([i, j]) =>
                     grid[i][j].stone === null &&
@@ -534,9 +564,9 @@ const Board = () => {
           />
           <g mask="url(#labelMask)" filter="url(#flatten-alpha)">
             <g>
-              {rows.map((i) => (
+              {ARRAY19.map((i) => (
                 <path
-                  d={`M${margin + square_size * i} ${lines[2]} ${margin + square_size * i} ${lines[3]}`}
+                  d={`M${margin + square_size * i} ${margin} ${margin + square_size * i} ${board_size - margin}`}
                   stroke={"black"}
                   strokeWidth={`${1}px`}
                   vectorEffect="non-scaling-stroke"
@@ -546,9 +576,9 @@ const Board = () => {
               ))}
             </g>
             <g>
-              {cols.map((j) => (
+              {ARRAY19.map((j) => (
                 <path
-                  d={`M${lines[0]} ${margin + square_size * j} ${lines[1]} ${margin + square_size * j}`}
+                  d={`M${margin} ${margin + square_size * j} ${board_size - margin} ${margin + square_size * j}`}
                   stroke={"black"}
                   strokeWidth={`${1}px`}
                   vectorEffect="non-scaling-stroke"
@@ -595,9 +625,9 @@ const Board = () => {
               ))}
             </g>
           </g>
-          <g>
-            {rows.flatMap((i) =>
-              cols.map(
+          <g mask="url(#viewMask)">
+            {ARRAY19.flatMap((i) =>
+              ARRAY19.map(
                 (j) =>
                   grid[i][j].stone !== null && (
                     <image
@@ -612,9 +642,9 @@ const Board = () => {
               ),
             )}
           </g>
-          <g>
-            {rows.flatMap((i) =>
-              cols.map(
+          <g mask="url(#viewMask)">
+            {ARRAY19.flatMap((i) =>
+              ARRAY19.map(
                 (j) =>
                   grid[i][j].mark !== null &&
                   (grid[i][j].mark.type === "Label" ? (
@@ -667,7 +697,7 @@ const Board = () => {
               ),
             )}
           </g>
-          <g>
+          <g mask="url(#viewMask)">
             {c_cursor.ghosts.map(([row, col]) => {
               const label_color =
                 grid[row][col].stone === "Black" ? "white" : "black";
@@ -697,7 +727,12 @@ const Board = () => {
                     WebkitUserSelect: "none",
                     font: "bold 40pt sans-serif",
                   }}
-                  key={JSON.stringify([row, col, c_cursor, "label"])}
+                  key={JSON.stringify([
+                    row,
+                    col,
+                    c_cursor.paint.value,
+                    "label",
+                  ])}
                 >
                   {c_nextLabel}
                 </text>
@@ -710,7 +745,7 @@ const Board = () => {
                   href={c_images[c_cursor.paint.value]}
                   filter={filter}
                   opacity={opacity}
-                  key={JSON.stringify([row, col, c_cursor, "mark"])}
+                  key={JSON.stringify([row, col, c_cursor.paint.value, "mark"])}
                 />
               );
             })}

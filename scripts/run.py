@@ -2,6 +2,9 @@ import os
 from pathlib import Path
 
 
+old_vars = vars()
+
+
 def format():
     from sort_imports import sort_imports
     from make_bindings import make_bindings
