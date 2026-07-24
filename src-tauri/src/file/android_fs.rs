@@ -102,6 +102,7 @@ impl OsFileSystem for AndroidFileSystem {
 
         app.android_fs().create_dir_all(&app_data, "exercises")?;
         app.android_fs().create_dir_all(&app_data, "history")?;
+        app.android_fs().create_dir_all(&app_data, "assets")?;
 
         Ok(AndroidFileSystem {
             app_data,

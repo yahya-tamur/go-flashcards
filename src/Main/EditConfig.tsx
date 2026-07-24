@@ -91,10 +91,6 @@ const EditConfig = ({ setStudies, configSignal }: EditConfigProps) => {
   const editorRef = useRef<ReactCodeMirrorRef>(null);
 
   useEffect(() => {
-    console.log(code);
-  }, [code]);
-
-  useEffect(() => {
     if (configStatus.result === "Valid") {
       editorRef.current?.view?.dispatch({
         effects: removeHighlight.of(null),

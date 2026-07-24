@@ -18,6 +18,8 @@ const TopBar = () => {
     c_studyPhase,
     c_data,
     c_setData,
+    c_exerciseNumber,
+    c_setExerciseNumber,
     c_setNextLabel,
     c_setStudyPhase,
     c_setPhase,
@@ -75,9 +77,9 @@ const TopBar = () => {
         <NumberSpinner
           disabled={["Guess", "UnknownGuess"].some((a) => a === c_studyPhase)}
           size="small"
-          value={(c_data?.current_location ?? 0) + 1}
+          value={c_exerciseNumber[0]}
           min={1}
-          max={c_data?.max_location ?? 1}
+          max={c_exerciseNumber[1]}
           onValueChange={async (v) => {
             if (c_data === null || v === null) {
               return;
@@ -89,6 +91,8 @@ const TopBar = () => {
                 c_setData(data);
                 c_setFeedback("");
               })
+              .then(() => commands.getExerciseNumber())
+              .then((e) => c_setExerciseNumber(e))
               .catch((e) =>
                 handleError(e, c_setErrorMessage, c_setErrorWindowOpen),
               );
@@ -171,6 +175,8 @@ const TopBar = () => {
                   setClick(data, c_cursorDispatch);
                   c_setStudyPhase("Guess");
                 })
+                .then(() => commands.getExerciseNumber())
+                .then((e) => c_setExerciseNumber(e))
                 .catch((e) =>
                   handleError(e, c_setErrorMessage, c_setErrorWindowOpen),
                 );

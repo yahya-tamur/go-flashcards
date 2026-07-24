@@ -22,6 +22,14 @@ UI overhaul
 Current Actual Goal
 --------------
 
+- customizable theme goal:
+  - progress bar colors
+  - config validation
+  - make other theme that looks ok
+  - add opportunities for theme to change and test that
+  - prevent initial config flash?
+  - color scheme editconfig
+
 - study frontend :
   - hide tree completely ?
     - not in view
@@ -31,6 +39,8 @@ Current Actual Goal
 
 bugs / small improvements
 ----------------------------------------
+- (x) to play is current color, not exercise color??
+- make button say 'saved.' on editing mode as well.
 - right click on one of the drag marks makes a drag deletemark, not usual rectangle one
 - text on board looks absolutely terrible??
 - better frontend folder organisation
@@ -40,12 +50,8 @@ bugs / small improvements
 - updating config doesn't update study sets automatically.
 - make this look better on default window size
   - InitializeMenu, MakeTreeMenu just a little too tall for their box
-  - done? follow up? I think some crate couldn't be enitrely removed for permissions
 - refactor movetree to return error instead of panic on array index
-- are boards sliders slow?
-  - always draw entire board.
 - Ctrl - S
-- right click to delete
 - disable exercise loading when invalid config.
 - import from sgf ignored AB property in example sgf file!!
 - there's a fontsource: roboto??! what is it, why is it, and do I still need the local font?
@@ -66,7 +72,9 @@ bugs / small improvements
   - or, comments like {Black}
 - I don't like the number spinner.
 
-
+- about customizable theme:
+  - elevations?
+  - test more?
 
 Remaining Goals
 ---------------
@@ -89,17 +97,6 @@ Remaining Goals
 - reorderable lists
   - store on usual app data
 
-- custom theme goal:
-  - (convertfilesync)
-  - editable values:
-    - theme, all images
-      papers? elevations? no?
-      mode ?!
-  - progress bar colors
-  - add to appdata + config
-    -images too
-- we will have to have this default theme in the public folder,
-  but you can probably import whatever ThemeOptions you want
 
 (-) Actually make a good flashcard set and use this to study.
 
@@ -142,6 +139,7 @@ Maybe don't do
 - ? multiple spaces in file names?
 
 - ? reconsider snapshot ~> location.
+- ? separate default config file
 
 Small things, but do not do for now
 ------------

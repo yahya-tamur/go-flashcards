@@ -62,8 +62,11 @@ impl EditingData {
         self.load_tree()
     }
 
-    pub fn location(&self) -> (usize, usize) {
-        (self.current_exercise, self.exercises.len())
+    pub fn exercise_number(&self) -> (u32, u32) {
+        (
+            (self.current_exercise + 1) as u32,
+            (self.exercises.len()) as u32,
+        )
     }
 
     pub fn load(fs: &mut FileSystem, exercise_file: &str) -> Result<EditingData> {

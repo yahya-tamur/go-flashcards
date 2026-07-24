@@ -18,7 +18,7 @@ const { commands } = await import("./bindings");
 const { handleError, setClick } = await import("./utils");
 
 const BoardSlider = (await import("./components/BoardSlider")).default;
-const DragLabelGroup = (await import("./components/DragLabelGroup")).default;
+const PlaceMarkGroup = (await import("./components/PlaceMarkGroup")).default;
 const RectLabelGroup = (await import("./components/RectLabelGroup")).default;
 
 const MakeTreeMenu = () => {
@@ -68,6 +68,8 @@ const MakeTreeMenu = () => {
           maxWidth: "100%",
           display: "flex",
           flexDirection: "row",
+          paddingTop: "10px",
+          marginBottom: "-10px",
         }}
       >
         <BoardSlider side={"row"} force={false} />
@@ -82,8 +84,9 @@ const MakeTreeMenu = () => {
           alignItems: "center",
         }}
       >
+        <PlaceMarkGroup default="click" />
         <TextField
-          sx={{ width: "60px" }}
+          sx={{ width: "30px" }}
           size="small"
           variant="standard"
           value={c_nextLabel}
@@ -100,8 +103,7 @@ const MakeTreeMenu = () => {
               value: "Label",
             });
           }}
-        ></TextField>
-        <DragLabelGroup default="click" />
+        />
       </Box>
       <Box
         sx={{
@@ -113,26 +115,30 @@ const MakeTreeMenu = () => {
         }}
       >
         <ToggleButtonGroup
-          value={c_cursor.paint.value}
+          value={JSON.stringify({
+            type: c_cursor.type,
+            tool: c_cursor.tool.value,
+          })}
           color="toggle"
           exclusive
           size="small"
           onChange={() => {
-            console.log(
-              c_cursor.paint.value,
-              c_data?.color === "Black" ? "Black" : "White",
-            );
             setClick(c_data, c_cursorDispatch);
           }}
         >
-          <ToggleButton value={c_data?.color === "Black" ? "White" : "Black"}>
+          <ToggleButton
+            value={JSON.stringify({
+              type: "click",
+              tool: c_data?.color === "Black" ? "White" : "Black",
+            })}
+          >
             <img
               src={
                 c_data?.color === "Black"
                   ? c_images["White"]
                   : c_images["Black"]
               }
-              style={{ height: "25px", width: "25px" }}
+              style={{ height: "24px", width: "24px" }}
             />
           </ToggleButton>
         </ToggleButtonGroup>

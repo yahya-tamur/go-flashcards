@@ -11,6 +11,8 @@ pub mod sgf;
 
 pub use error::Result;
 
+use crate::{app_data::data::AppPhase, interop::Snapshot};
+
 use config::{ActiveConfig, ValidationResult};
 use error::error;
 use game::{MoveTree, Paint, RectangleMark, Variant};
@@ -60,16 +62,23 @@ async fn set_stones(
 
 #[tauri::command]
 #[specta::specta]
+async fn get_exercise_number(state: tauri::State<'_, Mutex<AppData>>) -> Result<(u32, u32)> {
+    match state.lock().await.phase {
+        AppPhase::Editing(ref editing_data) => Ok(editing_data.exercise_number()),
+        AppPhase::Study(ref study_data) => Ok(study_data.exercise_number()),
+        _ => Err(error("invalid phase!")),
+    }
+}
+
+#[tauri::command]
+#[specta::specta]
 async fn get_data(state: tauri::State<'_, Mutex<AppData>>) -> Result<Snapshot> {
     match state.lock().await.phase {
-        AppPhase::Editing(ref editing_data) => Ok(MoveTree::snapshot(
-            &editing_data.move_tree,
-            editing_data.location(),
-            None,
-        )?),
+        AppPhase::Editing(ref editing_data) => {
+            Ok(MoveTree::snapshot(&editing_data.move_tree, None)?)
+        }
         AppPhase::Study(ref study_data) => Ok(MoveTree::snapshot(
             &study_data.move_tree,
-            study_data.location(),
             Some(study_data.progress()),
         )?),
         _ => Err(error("invalid phase!")),
@@ -107,6 +116,12 @@ async fn jump(state: tauri::State<'_, Mutex<AppData>>, r: u32, c: u32) -> Result
         Ok(())
     })
     .await
+}
+
+#[tauri::command]
+#[specta::specta]
+async fn undo(state: tauri::State<'_, Mutex<AppData>>) -> Result<bool> {
+    apply_to_move_tree(state, |move_tree, _| Ok(move_tree.undo())).await
 }
 
 #[tauri::command]
@@ -287,11 +302,20 @@ async fn load_exercises(state: tauri::State<'_, Mutex<AppData>>, exercise: Strin
 #[tauri::command]
 #[specta::specta]
 async fn get_config(state: tauri::State<'_, Mutex<AppData>>) -> Result<ActiveConfig> {
-    match state.lock().await.phase {
+    let app_data = &mut *state.lock().await;
+    match app_data.phase {
         AppPhase::Editing(ref editing_data) => Ok((*editing_data.config).clone()),
-        AppPhase::Study(ref study_data) => Ok((study_data.get_config()).clone()),
-        _ => Err(error("invalid phase!")),
+        AppPhase::Study(ref study_data) => Ok(study_data.get_config()),
+        AppPhase::Main => config::load_main(&mut app_data.fs),
     }
+}
+
+use tauri::ipc::Response;
+
+#[tauri::command]
+async fn get_asset(state: tauri::State<'_, Mutex<AppData>>, asset: String) -> Result<Response> {
+    let app_data = &mut *state.lock().await;
+    Ok(Response::new(app_data.fs.load_asset(&asset)?))
 }
 
 #[tauri::command]
@@ -398,11 +422,13 @@ async fn import_sgf(state: tauri::State<'_, Mutex<AppData>>) -> Result<()> {
 }
 
 macro_rules! apply_fns {
-    ($macr:ident) => {{
+    ($macr:ident $(, $($more:expr),*)? ) => {{
         $macr![
             get_data,
+            get_exercise_number,
             play,
             jump,
+            undo,
             delete_branch,
             set_stones,
             new_exercise,
@@ -430,13 +456,12 @@ macro_rules! apply_fns {
             mark_rectangle,
             import_sgf,
             export_sgf,
+            $($($more,)*)?
         ]
     }};
 }
 
 use tauri::generate_handler;
-
-use crate::{app_data::data::AppPhase, interop::Snapshot};
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
@@ -481,7 +506,7 @@ pub fn run() {
             }));
             Ok(())
         })
-        .invoke_handler(apply_fns!(generate_handler))
+        .invoke_handler(apply_fns!(generate_handler, get_asset))
         .run(tauri::generate_context!())
         .unwrap();
 }

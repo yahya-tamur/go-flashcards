@@ -7,6 +7,7 @@ use super::os_file_system::OsFileSystem;
 use flate2::{bufread::GzDecoder, write::GzEncoder, Compression};
 use indexmap::IndexMap;
 use serde::{de::DeserializeOwned, Serialize};
+use specta::Type;
 
 use crate::{game::Problem, Result};
 
@@ -18,6 +19,9 @@ where
     osfs: FS,
     open_files: IndexMap<String, File>,
 }
+
+#[derive(Type, Serialize)]
+pub struct Bytes(pub Vec<u8>);
 
 impl<OsFS> FileSystemWrapper<OsFS>
 where
@@ -147,6 +151,16 @@ where
         file.read_to_end(&mut contents)?;
 
         Ok(String::from_utf8(contents)?)
+    }
+
+    pub fn load_asset(&mut self, asset: &str) -> Result<Vec<u8>> {
+        let (_, file) = self.open_file(&["assets"], asset)?;
+
+        let mut contents = Vec::new();
+
+        file.read_to_end(&mut contents)?;
+
+        Ok(contents)
     }
 
     pub fn list_exercises(&self) -> Result<Vec<String>> {

@@ -112,8 +112,11 @@ impl StudyData {
         Ok(())
     }
 
-    pub fn location(&self) -> (usize, usize) {
-        (self.current, self.past_exercises.len())
+    pub fn exercise_number(&self) -> (u32, u32) {
+        (
+            (self.current + 1) as u32,
+            (self.past_exercises.len()) as u32,
+        )
     }
 
     // makes blue nodes

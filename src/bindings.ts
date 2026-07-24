@@ -7,9 +7,12 @@ const { invoke : __TAURI_INVOKE, } = await import("@tauri-apps/api/core");
 
 /** Commands */
 export const commands = {
+	getAsset: (asset: string) : Promise<ArrayBuffer> => (__TAURI_INVOKE("get_asset", { asset })),
 	getData: () : Promise<Snapshot> => (__TAURI_INVOKE("get_data")),
+	getExerciseNumber: () : Promise<[number, number]> => (__TAURI_INVOKE("get_exercise_number")),
 	play: (loc: [number, number] | null) : Promise<boolean> => (__TAURI_INVOKE("play", { loc })),
 	jump: (r: number, c: number) : Promise<null> => (__TAURI_INVOKE("jump", { r, c })),
+	undo: () : Promise<boolean> => (__TAURI_INVOKE("undo")),
 	deleteBranch: () : Promise<boolean> => (__TAURI_INVOKE("delete_branch")),
 	setStones: (stones: ([number, number, Color])[]) : Promise<null> => (__TAURI_INVOKE("set_stones", { stones })),
 	newExercise: (insert: boolean) : Promise<null> => (__TAURI_INVOKE("new_exercise", { insert })),
@@ -45,6 +48,7 @@ export type ActiveConfig = {
 	random_orientation: boolean,
 	random_color: boolean,
 	show_recent: ShowRecent,
+	theme: string,
 };
 
 export type Color = "Black" | "White";
@@ -66,7 +70,7 @@ export type Loc = {
 
 export type Mark = { type: "Triangle" } | { type: "Circle" } | { type: "Square" } | { type: "Cross" } | { type: "BlackTerritory" } | { type: "WhiteTerritory" } | { type: "Label"; label: string };
 
-export type MarkPaint = "Circle" | "Triangle" | "Cross" | "Square" | "Label";
+export type MarkPaint = "Circle" | "Triangle" | "Cross" | "Square" | "Label" | "DeleteMark";
 
 export type MoveSnapshot = {
 	loc: [number, number] | null,
@@ -88,8 +92,6 @@ export type Snapshot = {
 	color: Color,
 	comment: string,
 	variant: Variant,
-	current_location: number,
-	max_location: number,
 	window: [number, number, number, number],
 	min_window: [number, number, number, number] | null,
 	progress: number[] | null,

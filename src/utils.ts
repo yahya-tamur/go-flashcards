@@ -46,8 +46,8 @@ export const setClick = (
 };
 
 export const cursorColor = (cursor: Cursor): "Black" | "White" | null => {
-  if (cursor.paint.value === "Black" || cursor.paint.value === "White") {
-    return cursor.paint.value;
+  if (cursor.tool.value === "Black" || cursor.tool.value === "White") {
+    return cursor.tool.value;
   }
   return null;
 };
@@ -87,7 +87,18 @@ export const handleError = async <T>(
   c_setErrorMessage: Dispatch<SetStateAction<string>>,
   c_setErrorWindowOpen: Dispatch<SetStateAction<boolean>>,
 ) => {
-  c_setErrorMessage(error as string);
+  if (
+    error !== null &&
+    typeof error === "object" &&
+    "message" in error &&
+    typeof error.message === "string"
+  ) {
+    c_setErrorMessage(error.message);
+  } else if (typeof error === "string") {
+    c_setErrorMessage(error);
+  } else {
+    c_setErrorMessage("Unknown type of error.");
+  }
   c_setErrorWindowOpen(true);
 };
 

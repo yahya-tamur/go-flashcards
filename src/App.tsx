@@ -1,4 +1,4 @@
-import type { PaletteMode, ThemeOptions } from "@mui/material";
+import type { PaletteMode, ThemeOptions, Theme } from "@mui/material";
 
 import type {
   ImageVariant,
@@ -7,19 +7,25 @@ import type {
   Cursor,
   PhaseType,
   CursorAction,
-  Click,
-  Place,
-  Drag,
+  ClickCursor,
+  PaintCursor,
+  RectangleCursor,
+  ThemeConfig,
 } from "./AppContext";
-import type {
-  Color,
-  MarkPaint,
-  RectangleMark,
-  Snapshot,
-  StonePaint,
+
+import {
+  type Color,
+  type MarkPaint,
+  type RectangleMark,
+  type Snapshot,
+  type StonePaint,
 } from "./bindings";
 
-const { useState, useReducer } = await import("react");
+const mime = (await import("mime")).default;
+
+const { commands } = await import("./bindings");
+const { useState, useReducer, useRef, useEffect, useCallback } =
+  await import("react");
 
 const Button = (await import("@mui/material/Button")).default;
 const CssBaseline = (await import("@mui/material/CssBaseline")).default;
@@ -34,7 +40,7 @@ await import("./App.css");
 
 await import("./AppContext");
 const AppContext = (await import("./AppContext")).default;
-const { wEquals } = await import("./utils");
+const { wEquals, handleError } = await import("./utils");
 
 const EditingScreen = (await import("./Editing/Screen")).default;
 
@@ -42,81 +48,80 @@ const MainScreen = (await import("./Main/Screen")).default;
 
 const StudyScreen = (await import("./Study/Screen")).default;
 
-const theme_import: ThemeOptions = await (await fetch(`/theme.json`)).json();
+const theme_from_import = (theme_import: ThemeOptions): Theme => {
+  const theme = createTheme({
+    ...theme_import,
+    palette: {
+      ...theme_import.palette,
+      mode: (theme_import.palette?.mode ?? "dark") as PaletteMode,
+    },
+  });
 
-let theme = createTheme({
-  ...theme_import,
-  palette: {
-    ...theme_import.palette,
-    mode: (theme_import.palette?.mode ?? "dark") as PaletteMode,
-  },
-});
-
-theme = createTheme(theme, {
-  components: {
-    MuiToggleButtonGroup: {
-      styleOverrides: {
-        root: {
-          backgroundColor: theme.palette.toggle.light,
+  return createTheme(theme, {
+    components: {
+      MuiToggleButtonGroup: {
+        styleOverrides: {
+          root: {
+            backgroundColor: theme.palette.toggle.light,
+          },
         },
       },
-    },
-    MuiFormLabel: {
-      styleOverrides: {
-        root: {
-          "&.Mui-focused": {
-            color: theme.palette.primary.contrastText,
+      MuiFormLabel: {
+        styleOverrides: {
+          root: {
+            "&.Mui-focused": {
+              color: theme.palette.primary.contrastText,
+            },
           },
         },
       },
     },
-  },
-});
+  });
+};
 
-const defaultClickCursor = (color: Color): Click => ({
-  type: "Click",
+const defaultClickCursor = (color: Color): ClickCursor => ({
   ghosts: [],
-  paint: {
+  type: "click",
+  tool: {
     value: color,
     layer: "stone",
   },
 });
 
-const defaultPaintCursor = (
-  value: MarkPaint | RectangleMark | StonePaint,
-): Place | Drag =>
-  value === "BlackTerritory" ||
-  value === "WhiteTerritory" ||
-  value === "DeleteMark"
+const defaultPaintCursor = (value: MarkPaint | StonePaint): PaintCursor =>
+  value === "Black" || value === "White" || value === "Delete"
     ? {
-        type: "Drag",
+        type: "paint",
         ghosts: [],
-        start: null,
-        end: null,
-        paint: { value: value, layer: "mark" },
+        dragging: null,
+        tool: {
+          value: value,
+          layer: "stone",
+        },
         leftMode: null,
       }
-    : value === "Black" || value === "White" || value === "Delete"
-      ? {
-          type: "Place",
-          ghosts: [],
-          dragging: null,
-          paint: {
-            value: value,
-            layer: "stone",
-          },
-          leftMode: null,
-        }
-      : {
-          type: "Place",
-          ghosts: [],
-          dragging: null,
-          paint: {
-            value: value,
-            layer: "mark",
-          },
-          leftMode: null,
-        };
+    : {
+        type: "paint",
+        ghosts: [],
+        dragging: null,
+        tool: {
+          value: value,
+          layer: "mark",
+        },
+        leftMode: null,
+      };
+
+const defaultRectangleCursor = (value: RectangleMark): RectangleCursor => ({
+  type: "rectangle",
+  tool: {
+    value: value,
+    layer: "mark",
+  },
+  ghosts: [],
+  start: null,
+  end: null,
+  leftMode: null,
+});
 
 // 2. Transform the union into an object indexed by that key
 type CursorReducerMapType = {
@@ -128,58 +133,34 @@ type CursorReducerMapType = {
   };
 };
 
-// should not be called when already Delete or DeleteMark
-const newrightdown = (
-  cursor: Place | Drag,
-  w: [number, number] | null,
-): Cursor => {
-  if (
-    cursor.paint.value === "Black" ||
-    cursor.paint.value === "White" ||
-    cursor.paint.value === "Delete"
-  ) {
-    const cursor_ = defaultPaintCursor("Delete") as Place;
-    if (cursor.leftMode === null) {
-      cursor_.leftMode = cursor.paint.value;
-    }
-    cursor_.dragging = w === null ? [] : [w];
-    cursor_.ghosts = w === null ? [] : [w];
-    return cursor_;
-  }
-  const cursor_ = defaultPaintCursor("DeleteMark") as Drag;
-  if (cursor.leftMode === null) {
-    cursor_.leftMode = cursor.paint.value;
-  }
-  cursor_.start = w;
-  cursor_.end = w;
-  cursor_.ghosts = w === null ? [] : [w];
-
-  return cursor_;
-};
-
 const cursorMap: CursorReducerMapType = {
   set_click: {
-    Click: (cursor, action) =>
-      cursor.paint.value === action.value
+    click: (cursor, action) =>
+      cursor.tool.value === action.value
         ? cursor
         : defaultClickCursor(action.value),
-    Place: (_cursor, action) => defaultClickCursor(action.value),
-    Drag: (_cursor, action) => defaultClickCursor(action.value),
+    paint: (_cursor, action) => defaultClickCursor(action.value),
+    rectangle: (_cursor, action) => defaultClickCursor(action.value),
   },
   set_paint: {
-    Click: (_cursor, action) => defaultPaintCursor(action.value),
-    Place: (cursor, action) =>
-      cursor.paint.value === action.value
+    click: (_cursor, action) => defaultPaintCursor(action.value),
+    paint: (cursor, action) =>
+      cursor.tool.value === action.value
         ? cursor
         : defaultPaintCursor(action.value),
-    Drag: (cursor, action) =>
-      cursor.paint.value === action.value
+    rectangle: (_cursor, action) => defaultPaintCursor(action.value),
+  },
+  set_rectangle: {
+    click: (_cursor, action) => defaultRectangleCursor(action.value),
+    paint: (_cursor, action) => defaultRectangleCursor(action.value),
+    rectangle: (cursor, action) =>
+      cursor.tool.value === action.value
         ? cursor
-        : defaultPaintCursor(action.value),
+        : defaultRectangleCursor(action.value),
   },
   down: {
-    Click: (cursor) => cursor,
-    Place: (cursor, action) => {
+    click: (cursor) => cursor,
+    paint: (cursor, action) => {
       if (
         cursor.dragging !== null &&
         cursor.dragging.length <= 1 &&
@@ -189,7 +170,10 @@ const cursorMap: CursorReducerMapType = {
       } else {
         const cursor_ = structuredClone(cursor);
         cursor_.dragging = action.w === null ? [] : [action.w];
-        if (cursor.paint.value === "Delete") {
+        if (
+          cursor.tool.value === "Delete" ||
+          cursor.tool.value === "DeleteMark"
+        ) {
           cursor_.ghosts = action.w === null ? [] : [action.w];
         } else {
           cursor_.ghosts = [];
@@ -197,7 +181,7 @@ const cursorMap: CursorReducerMapType = {
         return cursor_;
       }
     },
-    Drag: (cursor, action) => {
+    rectangle: (cursor, action) => {
       if (wEquals(cursor.start, action.w) && wEquals(cursor.end, action.w)) {
         return cursor;
       }
@@ -209,8 +193,8 @@ const cursorMap: CursorReducerMapType = {
     },
   },
   rightdown: {
-    Click: (cursor) => cursor,
-    Place: (cursor, action) => {
+    click: (cursor) => cursor,
+    paint: (cursor, action) => {
       if (
         cursor.leftMode !== null &&
         cursor.dragging !== null &&
@@ -219,10 +203,22 @@ const cursorMap: CursorReducerMapType = {
       ) {
         return cursor;
       } else {
-        return newrightdown(cursor, action.w);
+        const cursor_ = defaultPaintCursor(
+          cursor.tool.value === "Black" ||
+            cursor.tool.value === "White" ||
+            cursor.tool.value === "Delete"
+            ? "Delete"
+            : "DeleteMark",
+        );
+        if (cursor.leftMode === null) {
+          cursor_.leftMode = cursor.tool.value;
+        }
+        cursor_.dragging = action.w === null ? [] : [action.w];
+        cursor_.ghosts = action.w === null ? [] : [action.w];
+        return cursor_;
       }
     },
-    Drag: (cursor, action) => {
+    rectangle: (cursor, action) => {
       if (
         cursor.leftMode !== null &&
         wEquals(cursor.start, action.w) &&
@@ -230,11 +226,19 @@ const cursorMap: CursorReducerMapType = {
       ) {
         return cursor;
       }
-      return newrightdown(cursor, action.w);
+      const cursor_ = defaultRectangleCursor("DeleteMark");
+      if (cursor.leftMode === null) {
+        cursor_.leftMode = cursor.tool.value;
+      }
+      cursor_.start = action.w;
+      cursor_.end = action.w;
+      cursor_.ghosts = action.w === null ? [] : [action.w];
+
+      return cursor_;
     },
   },
   move: {
-    Click: (cursor, action) => {
+    click: (cursor, action) => {
       if (wEquals(action.w, cursor.ghosts[0] ?? null)) {
         return cursor;
       }
@@ -242,7 +246,7 @@ const cursorMap: CursorReducerMapType = {
       cursor_.ghosts = action.w === null ? [] : [action.w];
       return cursor_;
     },
-    Place: (cursor, action) => {
+    paint: (cursor, action) => {
       if (action.w === null) {
         if (cursor.dragging === null && cursor.ghosts.length > 0) {
           const cursor_ = structuredClone(cursor);
@@ -264,10 +268,12 @@ const cursorMap: CursorReducerMapType = {
           return cursor;
         } else {
           return {
-            type: "Place",
-            paint: structuredClone(cursor.paint),
+            type: "paint",
+            tool: structuredClone(cursor.tool),
             ghosts:
-              action.w === null || cursor.paint.value !== "Delete"
+              action.w === null ||
+              (cursor.tool.value !== "Delete" &&
+                cursor.tool.value !== "DeleteMark")
                 ? []
                 : [action.w],
             dragging: [...cursor.dragging, action.w],
@@ -276,7 +282,7 @@ const cursorMap: CursorReducerMapType = {
         }
       }
     },
-    Drag: (cursor, action) => {
+    rectangle: (cursor, action) => {
       if (wEquals(action.w, cursor.end)) {
         return cursor;
       }
@@ -307,27 +313,27 @@ const cursorMap: CursorReducerMapType = {
     },
   },
   up: {
-    Click: (cursor) =>
+    click: (cursor) =>
       cursor.ghosts.length === 0
         ? cursor
-        : defaultClickCursor(cursor.paint.value),
-    Place: (cursor) => {
+        : defaultClickCursor(cursor.tool.value),
+    paint: (cursor) => {
       if (cursor.leftMode !== null) {
         return defaultPaintCursor(cursor.leftMode);
       }
       if (cursor.dragging === null && cursor.ghosts.length === 0) {
         return cursor;
       }
-      return defaultPaintCursor(cursor.paint.value);
+      return defaultPaintCursor(cursor.tool.value);
     },
-    Drag: (cursor) => {
+    rectangle: (cursor) => {
       if (cursor.leftMode !== null) {
-        return defaultPaintCursor(cursor.leftMode);
+        return defaultRectangleCursor(cursor.leftMode);
       }
       if (cursor.start === null && cursor.end === null) {
         return cursor;
       }
-      return defaultPaintCursor(cursor.paint.value);
+      return defaultRectangleCursor(cursor.tool.value);
     },
   },
 };
@@ -354,22 +360,114 @@ function App() {
   const [c_window, c_setWindow] = useState<[number, number, number, number]>([
     0, 18, 0, 18,
   ]);
+  const [c_exerciseNumber, c_setExerciseNumber] = useState<[number, number]>([
+    1, 1,
+  ]);
 
+  const [c_themeStr, c_setThemeStr] = useState<string>(
+    () => "none_" + Math.random().toString(36).substring(2),
+  );
+  const [c_theme, c_setTheme] = useState<Theme>(() => createTheme());
   const [c_images, c_setImages] = useState<Record<ImageVariant, string>>(
     () => ({
-      Delete: "/mui_clear.svg",
-      DeleteMark: "./delete_mark.svg",
-      Black: "./black_night.png",
-      White: "./white_anime.png",
-      Triangle: "./triangle.svg",
-      Circle: "./circle.svg",
-      Cross: "./cross.svg",
-      Square: "./square.svg",
-      BlackTerritory: "./black_territory.svg",
-      WhiteTerritory: "./white_territory.svg",
-      Board: "./board.jpeg",
+      Delete: "doesn't exist!",
+      DeleteMark: "doesn't exist!",
+      Black: "doesn't exist!",
+      White: "doesn't exist!",
+      Triangle: "doesn't exist!",
+      Circle: "doesn't exist!",
+      Cross: "doesn't exist!",
+      Square: "doesn't exist!",
+      BlackTerritory: "doesn't exist!",
+      WhiteTerritory: "doesn't exist!",
+      Board: "doesn't exist!",
     }),
   );
+
+  const assetRef = useRef(new Map());
+
+  const getAsset = async (asset: string): Promise<string> => {
+    if (assetRef.current.has(asset)) {
+      return assetRef.current.get(asset);
+    }
+    try {
+      const binary = await commands.getAsset(asset);
+      const type = mime.getType(asset) ?? "application/octet-stream";
+      console.log(type);
+      const blob = new Blob([binary], { type });
+      const url = URL.createObjectURL(blob);
+      assetRef.current.set(asset, url);
+      return url;
+    } catch (e) {
+      console.log(e);
+      handleError(e, c_setErrorMessage, c_setErrorWindowOpen);
+      return `not found.`;
+    }
+  };
+
+  const c_loadTheme = useCallback(
+    async (newThemeStr: string) => {
+      if (newThemeStr === c_themeStr) {
+        return;
+      }
+      try {
+        console.log(newThemeStr);
+        const theme_binary = await commands.getAsset(newThemeStr);
+        console.log(theme_binary.byteLength, theme_binary);
+        const theme_config: ThemeConfig = JSON.parse(
+          await new Blob([theme_binary], { type: "application/json" }).text(),
+        );
+
+        const theme = theme_from_import(theme_config.themeOptions);
+        const images = {
+          Delete: await getAsset(theme_config.images.Delete),
+          DeleteMark: await getAsset(theme_config.images.DeleteMark),
+          Black: await getAsset(theme_config.images.Black),
+          White: await getAsset(theme_config.images.White),
+          Triangle: await getAsset(theme_config.images.Triangle),
+          Circle: await getAsset(theme_config.images.Circle),
+          Cross: await getAsset(theme_config.images.Cross),
+          Square: await getAsset(theme_config.images.Square),
+          BlackTerritory: await getAsset(theme_config.images.BlackTerritory),
+          WhiteTerritory: await getAsset(theme_config.images.WhiteTerritory),
+          Board: await getAsset(theme_config.images.Board),
+        };
+        console.log(images);
+        c_setThemeStr(newThemeStr);
+        c_setTheme(theme);
+        c_setImages(images);
+      } catch (e) {
+        handleError(e, c_setErrorMessage, c_setErrorWindowOpen);
+      }
+    },
+    [c_themeStr],
+  );
+
+  useEffect(() => {
+    commands
+      .getConfig()
+      .then((config) => {
+        c_loadTheme(config.theme);
+      })
+      .catch((e) => handleError(e, c_setErrorMessage, c_setErrorWindowOpen));
+  }, [c_loadTheme]);
+  /*
+  useEffect(() => {
+    commands.getConfig()
+      .then((config) => {
+        let theme_options = 
+      })
+  }, [])
+  useEffect(() => {
+      
+      let d = document.getElementById("blob") as HTMLImageElement;
+      if (d) {
+        d.src = url;
+      }
+
+      console.log(url, d);
+    });
+  }, []);*/
 
   const [c_cursor, c_cursorDispatch] = useReducer(
     cursorReducer,
@@ -378,7 +476,7 @@ function App() {
   );
 
   return (
-    <ThemeProvider theme={theme}>
+    <ThemeProvider theme={c_theme}>
       <CssBaseline />
       <AppContext
         value={{
@@ -390,6 +488,8 @@ function App() {
           c_setStudyPhase,
           c_data,
           c_setData,
+          c_exerciseNumber,
+          c_setExerciseNumber,
           c_feedback,
           c_setFeedback,
           c_cursor,
@@ -406,6 +506,7 @@ function App() {
           c_setErrorWindowOpen,
           c_answerMessage,
           c_setAnswerMessage,
+          c_loadTheme,
         }}
       >
         {c_phase === "Main" ? (

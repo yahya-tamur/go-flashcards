@@ -53,8 +53,8 @@ const CommentBox = () => {
       // just in case
       textAreaHeight -= 1;
       const heightPerRow = 23;
-
-      setRows(Math.max(1, Math.floor(textAreaHeight / heightPerRow)));
+      console.log(Math.max(2, Math.floor(textAreaHeight / heightPerRow)));
+      setRows(Math.max(2, Math.floor(textAreaHeight / heightPerRow)));
     });
 
     observer.observe(areaRef.current);
@@ -167,14 +167,22 @@ const CommentBox = () => {
                 commands.comment(comment);
               }}
               multiline
-              rows={rows} // do with inputref later
+              minRows={rows} // do with inputref later
+              maxRows={rows} // do with inputref later
               sx={{
                 height: "calc(100% - 10px)",
                 margin: "5px",
                 width: "calc(100% - 10px)",
               }}
               slotProps={{
-                input: { sx: { height: "100%", alignItems: "start" } },
+                input: {
+                  sx: {
+                    height: "100%",
+                    alignItems: "start",
+                    overflowY: "auto",
+                    fieldSizing: "content",
+                  },
+                },
               }}
             />
           </Box>

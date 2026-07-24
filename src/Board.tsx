@@ -1,8 +1,8 @@
-import type { Holding } from "./AppContext";
+import type { PaintTool, RectangleTool } from "./AppContext";
 import type { Grid } from "./bindings";
 
 await import("react");
-const { useEffect, useState, useRef, useContext, useCallback, useReducer } =
+const { useEffect, useState, useRef, useContext, useReducer } =
   await import("react");
 
 const Paper = (await import("@mui/material/Paper")).default;
@@ -18,7 +18,7 @@ type GridAction =
   | {
       type: "set_temp";
       w: [number, number];
-      holding: Holding;
+      cursor_tool: PaintTool | RectangleTool;
       label: string;
     }
   | {
@@ -34,23 +34,29 @@ const gridReducer = (grid: Grid, action: GridAction): Grid => {
   switch (action.type) {
     case "set_temp": {
       const [r, c] = action.w;
-      if (action.holding.layer === "stone") {
-        if (grid[r][c].stone ?? "Delete" !== action.holding.value) {
+      if (action.cursor_tool.layer === "stone") {
+        if (grid[r][c].stone ?? "Delete" !== action.cursor_tool.value) {
           const grid_ = structuredClone(grid);
           grid_[r][c].stone =
-            action.holding.value === "Delete" ? null : action.holding.value;
+            action.cursor_tool.value === "Delete"
+              ? null
+              : action.cursor_tool.value;
           return grid_;
         }
       } else {
         if (
-          !markEqualsCursor(grid[r][c].mark, action.holding.value, action.label)
+          !markEqualsCursor(
+            grid[r][c].mark,
+            action.cursor_tool.value,
+            action.label,
+          )
         ) {
           const grid_ = structuredClone(grid);
           grid_[r][c].mark =
-            action.holding.value === "DeleteMark"
+            action.cursor_tool.value === "DeleteMark"
               ? null
-              : action.holding.value !== "Label"
-                ? { type: action.holding.value }
+              : action.cursor_tool.value !== "Label"
+                ? { type: action.cursor_tool.value }
                 : { type: "Label", label: action.label };
           return grid_;
         }
@@ -127,73 +133,67 @@ const Board = () => {
     board_size,
   ]);
 
-  const get_coord = useCallback(
-    (e: React.MouseEvent<SVGSVGElement>): [number, number] | null => {
+  const get_coord = (
+    e: React.MouseEvent<SVGSVGElement>,
+  ): [number, number] | null => {
+    if (board_svg.current === null || c_data === null || c_data === undefined) {
+      return null;
+    }
+    // get coord in board in [0, 1]
+    const rect = board_svg.current.getBoundingClientRect();
+    let i = (e.pageX - (rect.left + window.scrollX)) / rect.width;
+    let j = (e.pageY - (rect.top + window.scrollY)) / rect.height;
+
+    // coord in board viewBox
+    i = viewBox[2] * i;
+    j = viewBox[3] * j;
+
+    // if board is 19 x 19, this labels the top left square (0, 0),
+    // and linearly increases by 1 per square_size .
+
+    i = (i - margin) / square_size;
+    j = (j - margin) / square_size;
+
+    const [left, right, top, bottom] = c_window;
+
+    // correction for partial boards
+    i += left + (left > 0 ? -partial_border / square_size : 0);
+    j += top + (top > 0 ? -partial_border / square_size : 0);
+
+    const si = Math.round(i);
+    const sj = Math.round(j);
+    if (!(si >= left && si <= right && sj >= top && sj <= bottom)) {
+      return null;
+    }
+
+    if (c_cursor.type === "click") {
+      if ((i - si) * (i - si) + (j - sj) * (j - sj) > 0.25) {
+        return null;
+      }
+      if (c_data.game.grid[si][sj].stone !== null) {
+        return null;
+      }
+    } else if (c_cursor.type === "paint") {
       if (
-        board_svg.current === null ||
-        c_data === null ||
-        c_data === undefined
+        c_cursor.tool.value === "Delete" ||
+        c_cursor.tool.value === "DeleteMark"
       ) {
-        return null;
+        return [si, sj];
       }
-      // get coord in board in [0, 1]
-      const rect = board_svg.current.getBoundingClientRect();
-      let i = (e.pageX - (rect.left + window.scrollX)) / rect.width;
-      let j = (e.pageY - (rect.top + window.scrollY)) / rect.height;
-
-      // coord in board viewBox
-      i = viewBox[2] * i;
-      j = viewBox[3] * j;
-
-      // if board is 19 x 19, this labels the top left square (0, 0),
-      // and linearly increases by 1 per square_size .
-
-      i = (i - margin) / square_size;
-      j = (j - margin) / square_size;
-
-      const [left, right, top, bottom] = c_window;
-
-      // correction for partial boards
-      i += left + (left > 0 ? -partial_border / square_size : 0);
-      j += top + (top > 0 ? -partial_border / square_size : 0);
-
-      const si = Math.round(i);
-      const sj = Math.round(j);
-      if (!(si >= left && si <= right && sj >= top && sj <= bottom)) {
-        return null;
-      }
-
-      if (c_cursor.type === "Click") {
-        if ((i - si) * (i - si) + (j - sj) * (j - sj) > 0.25) {
+      if (c_cursor.tool.layer === "stone") {
+        if (grid[si][sj].stone === c_cursor.tool.value) {
           return null;
         }
-        if (c_data.game.grid[si][sj].stone !== null) {
+      } else {
+        if (
+          markEqualsCursor(grid[si][sj].mark, c_cursor.tool.value, c_nextLabel)
+        ) {
           return null;
         }
-      } else if (c_cursor.type === "Place") {
-        if (c_cursor.paint.layer === "stone") {
-          if (c_cursor.paint.value === "Delete") {
-            return [si, sj];
-          }
-          if (grid[si][sj].stone === c_cursor.paint.value) {
-            return null;
-          }
-        } else {
-          if (
-            markEqualsCursor(
-              grid[si][sj].mark,
-              c_cursor.paint.value,
-              c_nextLabel,
-            )
-          ) {
-            return null;
-          }
-        }
       }
-      return [si, sj];
-    },
-    [c_cursor, c_data, c_nextLabel, c_window, grid, viewBox],
-  );
+    }
+    return [si, sj];
+  };
 
   // fits board in app. This was easier than pure css.
   useEffect(() => {
@@ -350,7 +350,6 @@ const Board = () => {
               board_svg.current.setPointerCapture(e.pointerId);
             }
             e.preventDefault();
-            console.log(e.button);
             const w = get_coord(e);
             if (e.button === 2) {
               c_cursorDispatch({
@@ -363,12 +362,12 @@ const Board = () => {
                 w: w,
               });
 
-              if (c_cursor.type === "Place") {
+              if (c_cursor.type === "paint") {
                 if (w !== null) {
                   gridDispatch({
                     type: "set_temp",
                     w: w,
-                    holding: c_cursor.paint,
+                    cursor_tool: c_cursor.tool,
                     label: c_nextLabel,
                   });
                 }
@@ -385,15 +384,14 @@ const Board = () => {
               w: w,
             });
             if (
-              c_cursor.type === "Place" &&
+              c_cursor.type === "paint" &&
               c_cursor.dragging !== null &&
               w !== null
             ) {
-              console.log(c_cursor, grid, w);
               gridDispatch({
                 type: "set_temp",
                 w: w,
-                holding: c_cursor.paint,
+                cursor_tool: c_cursor.tool,
                 label: c_nextLabel,
               });
             }
@@ -406,49 +404,67 @@ const Board = () => {
               board_svg.current.releasePointerCapture(e.pointerId);
             }
             const w = get_coord(e);
-            if (c_cursor.type === "Click") {
-              if (w !== null) {
-                commands
-                  .play([w[0], w[1]])
-                  .then(() => commands.getData())
-                  .then((data) => {
-                    if (
-                      c_data !== null &&
-                      c_data.game.grid[w[0]][w[1]].stone ===
-                        data.game.grid[w[0]][w[1]].stone
-                    ) {
-                      return;
-                    }
-                    setClick(data, c_cursorDispatch);
-                    c_setData(data);
-                    if (c_phase === "Study" && c_studyPhase === "Guess") {
-                      return studyStep(
-                        data,
-                        c_setData,
-                        c_setFeedback,
-                        c_setStudyPhase,
-                        c_setAnswerMessage,
+            if (c_cursor.type === "click") {
+              if (e.button === 2) {
+                if (!(c_phase === "Study" && c_studyPhase === "Guess")) {
+                  commands
+                    .undo()
+                    .then(() => commands.getData())
+                    .then((data) => {
+                      c_setData(data);
+                      setClick(data, c_cursorDispatch);
+                      c_setStudyPhase((old_phase) =>
+                        old_phase === "UnknownGuess" ? "Guess" : old_phase,
                       );
-                    }
-                  })
-                  .catch((e) =>
-                    handleError(e, c_setErrorMessage, c_setErrorWindowOpen),
-                  );
+                    })
+                    .catch((e) =>
+                      handleError(e, c_setErrorMessage, c_setErrorWindowOpen),
+                    );
+                }
+              } else {
+                if (w !== null) {
+                  commands
+                    .play([w[0], w[1]])
+                    .then(() => commands.getData())
+                    .then((data) => {
+                      if (
+                        c_data !== null &&
+                        c_data.game.grid[w[0]][w[1]].stone ===
+                          data.game.grid[w[0]][w[1]].stone
+                      ) {
+                        return;
+                      }
+                      setClick(data, c_cursorDispatch);
+                      c_setData(data);
+                      if (c_phase === "Study" && c_studyPhase === "Guess") {
+                        return studyStep(
+                          data,
+                          c_setData,
+                          c_setFeedback,
+                          c_setStudyPhase,
+                          c_setAnswerMessage,
+                        );
+                      }
+                    })
+                    .catch((e) =>
+                      handleError(e, c_setErrorMessage, c_setErrorWindowOpen),
+                    );
+                }
               }
-            } else if (c_cursor.type === "Place") {
+            } else if (c_cursor.type === "paint") {
               if (c_cursor.dragging !== null && c_cursor.dragging.length > 0) {
                 commands
-                  .paint(c_cursor.paint, c_cursor.dragging, c_nextLabel)
+                  .paint(c_cursor.tool, c_cursor.dragging, c_nextLabel)
                   .then(() => commands.getData())
                   .then((data) => c_setData(data))
                   .catch((e) =>
                     handleError(e, c_setErrorMessage, c_setErrorWindowOpen),
                   );
               }
-            } else if (c_cursor.type === "Drag") {
+            } else if (c_cursor.type === "rectangle") {
               if (w !== null && c_cursor.start !== null) {
                 commands
-                  .markRectangle(c_cursor.paint.value, c_cursor.start, [
+                  .markRectangle(c_cursor.tool.value, c_cursor.start, [
                     w[0],
                     w[1],
                   ])
@@ -464,10 +480,10 @@ const Board = () => {
             });
           }}
           onPointerCancel={() => {
-            if (c_cursor.type === "Place") {
+            if (c_cursor.type === "paint") {
               if (c_cursor.dragging !== null && c_cursor.dragging.length > 0) {
                 commands
-                  .paint(c_cursor.paint, c_cursor.dragging, c_nextLabel)
+                  .paint(c_cursor.tool, c_cursor.dragging, c_nextLabel)
                   .then(() => commands.getData())
                   .then((data) => c_setData(data))
                   .catch((e) =>
@@ -478,10 +494,10 @@ const Board = () => {
             c_cursorDispatch({ type: "up" });
           }}
           onPointerLeave={() => {
-            if (c_cursor.type === "Place") {
+            if (c_cursor.type === "paint") {
               if (c_cursor.dragging !== null && c_cursor.dragging.length > 0) {
                 commands
-                  .paint(c_cursor.paint, c_cursor.dragging, c_nextLabel)
+                  .paint(c_cursor.tool, c_cursor.dragging, c_nextLabel)
                   .then(() => commands.getData())
                   .then((data) => c_setData(data))
                   .catch((e) =>
@@ -517,7 +533,7 @@ const Board = () => {
                     ((grid[i][j].mark !== null &&
                       grid[i][j].mark.type !== "BlackTerritory" &&
                       grid[i][j].mark.type !== "WhiteTerritory") ||
-                      (c_cursor.type === "Place" &&
+                      (c_cursor.type === "paint" &&
                         c_cursor.ghosts.some(
                           ([ii, jj]) => i == ii && j == jj,
                         ))),
@@ -704,16 +720,16 @@ const Board = () => {
               let filter = label_color === "black" ? "" : "url(#invert-color)";
               let opacity = "0.6";
               if (
-                c_cursor.paint.value !== "Label" &&
-                (c_cursor.paint.value === "BlackTerritory" ||
-                  c_cursor.paint.value === "WhiteTerritory" ||
-                  c_cursor.paint.value === "DeleteMark" ||
-                  c_cursor.paint.value === "Delete")
+                c_cursor.tool.value !== "Label" &&
+                (c_cursor.tool.value === "BlackTerritory" ||
+                  c_cursor.tool.value === "WhiteTerritory" ||
+                  c_cursor.tool.value === "DeleteMark" ||
+                  c_cursor.tool.value === "Delete")
               ) {
                 filter = "";
                 opacity = "0.5";
               }
-              return c_cursor.paint.value === "Label" ? (
+              return c_cursor.tool.value === "Label" ? (
                 <text
                   x={margin + square_size * row}
                   y={margin + square_size * col}
@@ -727,12 +743,7 @@ const Board = () => {
                     WebkitUserSelect: "none",
                     font: "bold 40pt sans-serif",
                   }}
-                  key={JSON.stringify([
-                    row,
-                    col,
-                    c_cursor.paint.value,
-                    "label",
-                  ])}
+                  key={JSON.stringify([row, col, c_cursor.tool.value, "label"])}
                 >
                   {c_nextLabel}
                 </text>
@@ -742,10 +753,10 @@ const Board = () => {
                   y={square_size * col + margin - 0.5 * square_size}
                   width={square_size}
                   height={square_size}
-                  href={c_images[c_cursor.paint.value]}
+                  href={c_images[c_cursor.tool.value]}
                   filter={filter}
                   opacity={opacity}
-                  key={JSON.stringify([row, col, c_cursor.paint.value, "mark"])}
+                  key={JSON.stringify([row, col, c_cursor.tool.value, "mark"])}
                 />
               );
             })}

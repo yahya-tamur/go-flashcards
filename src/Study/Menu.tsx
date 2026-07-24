@@ -117,18 +117,8 @@ const Menu = () => {
                 if (contextdata === null) {
                   return;
                 }
-
-                let [row, col] = [contextdata.row, contextdata.col];
-                // todo: why is this in the frontend??
-                do {
-                  col -= 1;
-                  while (contextdata.table[row][col] === null) {
-                    row -= 1;
-                  }
-                } while (contextdata.table[row][col]?.variant === "New");
-
                 commands
-                  .jump(row, col)
+                  .undo()
                   .then(() => commands.getData())
                   .then((data) => {
                     c_setData(data);
@@ -181,14 +171,10 @@ const Menu = () => {
           <ProgressBar />
           <Box>{c_answerMessage}</Box>
         </Box>
-      ) : c_studyPhase === "Edit" ? (
-        c_editingPhase === "Initialize" ? (
-          <InitializeMenu />
-        ) : (
-          <MakeTreeMenu />
-        )
+      ) : c_editingPhase === "Initialize" ? (
+        <InitializeMenu />
       ) : (
-        <>unknown phase {c_studyPhase}</>
+        <MakeTreeMenu />
       )}
     </Paper>
   );

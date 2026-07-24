@@ -27,6 +27,7 @@ pub struct ActiveConfig {
     pub random_orientation: bool,
     pub random_color: bool,
     pub show_recent: ShowRecent,
+    pub theme: String,
 }
 
 #[derive(Deserialize, Patch, PartialEq, Debug, Clone, Serialize, Type)]
@@ -93,6 +94,13 @@ pub fn flashcard_sets(fs: &mut FileSystem) -> Result<Vec<String>> {
     let config = toml::from_str::<ConfigFile>(&input)?;
 
     Ok(config.study_sets.into_keys().collect())
+}
+
+pub fn load_main(fs: &mut FileSystem) -> Result<ActiveConfig> {
+    let input = fs.load_config()?;
+    let config: ConfigFile = toml::from_str(&input)?;
+
+    Ok(config.default_config.config)
 }
 
 pub fn load_editing(fs: &mut FileSystem, name: &str) -> Result<ActiveConfig> {

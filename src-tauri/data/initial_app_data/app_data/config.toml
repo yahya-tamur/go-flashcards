@@ -1,9 +1,14 @@
-[flashcard_set.sda]
-sources = ["sda"]
-
+[flashcard_set.asdfasdf]
+sources = ["asdfasdf"]
 [default]
-show_recent = "circle"
-random_orientation = false
-random_color = false
-algorithm = 3
+show_recent = "number"
+random_orientation = true
+random_color = true
+algorithm.queue5 = {
+  breakpoints = [2, 4, 5],
+  weights = [1, 1, 1, 1, 1],
+  total = 10
+}
+shared = true
 transfer_marks = true
+theme = "dark_theme.json"

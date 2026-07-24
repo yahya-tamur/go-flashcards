@@ -38,6 +38,7 @@ pub enum MarkPaint {
     Cross,
     Square,
     Label,
+    DeleteMark,
 }
 
 #[derive(Deserialize, Type)]
@@ -232,7 +233,7 @@ impl MoveTree {
         }
     }
 
-    pub fn delete_branch(&mut self) -> bool {
+    pub fn undo(&mut self) -> bool {
         if self.tree_loc == (0, 0) {
             return false;
         }
@@ -242,6 +243,14 @@ impl MoveTree {
             pr -= 1;
         }
         self.jump(pr, pc);
+        true
+    }
+
+    pub fn delete_branch(&mut self) -> bool {
+        let (r, c) = self.tree_loc;
+        if !(self.undo()) {
+            return false;
+        }
 
         if r < self.problem.table.len() - 1
             && self.problem.table[r + 1].len() > c
@@ -423,11 +432,18 @@ impl MoveTree {
         error_on_none(self.problem.table[r][c].as_ref())
     }
 
-    pub fn paint(&mut self, paint: Paint, locs: Vec<(usize, usize)>, label: String) -> Result<()> {
+    pub fn paint(
+        &mut self,
+        paint: Paint,
+        mut locs: Vec<(usize, usize)>,
+        label: String,
+    ) -> Result<()> {
+        locs.iter_mut()
+            .for_each(|tup| *tup = self.recv(tup.0, tup.1));
+
         match paint {
             Paint::Stone(stone) => {
                 for (i, j) in locs.into_iter() {
-                    let (i, j) = self.recv(i, j);
                     self.game.stones[i][j] = match stone {
                         StonePaint::Black => Some(self.send_recv_color(Color::Black)),
                         StonePaint::White => Some(self.send_recv_color(Color::White)),
@@ -436,24 +452,27 @@ impl MoveTree {
                 }
             }
             Paint::Mark(mark) => {
+                locs.retain(|(i, j)| match self.config.show_recent {
+                    ShowRecent::Number => self.game.numbers[*i][*j].is_none(),
+                    ShowRecent::Circle => self.game.numbers[*i][*j] != Some(self.tree_loc.1),
+                    ShowRecent::None => true,
+                });
                 let mark = match mark {
-                    MarkPaint::Circle => Mark::Circle,
-                    MarkPaint::Cross => Mark::Cross,
-                    MarkPaint::Square => Mark::Square,
-                    MarkPaint::Triangle => Mark::Triangle,
-                    MarkPaint::Label => Mark::Label(label),
+                    MarkPaint::Circle => Some(Mark::Circle),
+                    MarkPaint::Cross => Some(Mark::Cross),
+                    MarkPaint::Square => Some(Mark::Square),
+                    MarkPaint::Triangle => Some(Mark::Triangle),
+                    MarkPaint::Label => Some(Mark::Label(label)),
+                    MarkPaint::DeleteMark => None,
                 };
+                self.current_mut()?
+                    .marks
+                    .retain(|(i, j, ref _mark)| !locs.contains(&(*i, *j)));
                 for (i, j) in locs.into_iter() {
-                    let (i, j) = self.recv(i, j);
-                    if match self.config.show_recent {
-                        ShowRecent::Number => self.game.numbers[i][j].is_some(),
-                        ShowRecent::Circle => self.game.numbers[i][j] == Some(self.tree_loc.1),
-                        ShowRecent::None => false,
-                    } {
-                        continue;
+                    self.game.marks[i][j] = mark.clone();
+                    if let Some(ref mark) = mark {
+                        self.current_mut()?.marks.push((i, j, mark.clone()));
                     }
-                    self.game.marks[i][j] = Some(mark.clone());
-                    self.current_mut()?.marks.push((i, j, mark.clone()));
                 }
             }
         }

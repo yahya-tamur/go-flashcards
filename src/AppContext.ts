@@ -1,5 +1,7 @@
 import type { Dispatch, SetStateAction } from "react";
 
+import type { ThemeOptions } from "@mui/material";
+
 import type {
   MarkPaint,
   RectangleMark,
@@ -28,47 +30,55 @@ export type ImageVariant =
   | "BlackTerritory"
   | "WhiteTerritory";
 
-export type ClickPaint =
+export type ThemeConfig = {
+  themeOptions: ThemeOptions;
+  images: Record<ImageVariant, string>;
+};
+
+export type ClickTool =
   { value: "Black"; layer: "stone" } | { value: "White"; layer: "stone" };
 
-export type RectPaint =
-  | { value: "BlackTerritory"; layer: "mark" }
-  | { value: "WhiteTerritory"; layer: "mark" }
-  | { value: "DeleteMark"; layer: "mark" };
-
-export type OtherPaint =
+export type PaintTool =
   | { value: "Triangle"; layer: "mark" }
   | { value: "Cross"; layer: "mark" }
   | { value: "Square"; layer: "mark" }
   | { value: "Circle"; layer: "mark" }
-  | { value: "Delete"; layer: "stone" }
-  | { value: "Label"; layer: "mark" };
+  | { value: "Label"; layer: "mark" }
+  | { value: "DeleteMark"; layer: "mark" }
+  | { value: "Black"; layer: "stone" }
+  | { value: "White"; layer: "stone" }
+  | { value: "Delete"; layer: "stone" };
 
-export type Holding = ClickPaint | RectPaint | OtherPaint;
+export type RectangleTool =
+  | { value: "BlackTerritory"; layer: "mark" }
+  | { value: "WhiteTerritory"; layer: "mark" }
+  | { value: "DeleteMark"; layer: "mark" };
 
-export type Click = {
-  type: "Click";
+export type Tool = ClickTool | PaintTool | RectangleTool;
+
+export type ClickCursor = {
+  type: "click";
+  tool: ClickTool;
   ghosts: [number, number][];
-  paint: ClickPaint;
 };
 
-export type Place = {
-  type: "Place";
+export type PaintCursor = {
+  type: "paint";
+  tool: PaintTool;
   ghosts: [number, number][];
   dragging: [number, number][] | null;
-  paint: ClickPaint | OtherPaint;
-  leftMode: MarkPaint | RectangleMark | StonePaint | null;
+  leftMode: MarkPaint | StonePaint | null;
 };
-export type Drag = {
-  type: "Drag";
+export type RectangleCursor = {
+  type: "rectangle";
+  tool: RectangleTool;
   ghosts: [number, number][];
-  paint: RectPaint;
   start: [number, number] | null;
   end: [number, number] | null;
-  leftMode: MarkPaint | RectangleMark | StonePaint | null;
+  leftMode: RectangleMark | null;
 };
 
-export type Cursor = Click | Place | Drag;
+export type Cursor = ClickCursor | PaintCursor | RectangleCursor;
 
 export type CursorAction =
   | {
@@ -77,7 +87,11 @@ export type CursorAction =
     }
   | {
       type: "set_paint";
-      value: MarkPaint | RectangleMark | StonePaint;
+      value: MarkPaint | StonePaint;
+    }
+  | {
+      type: "set_rectangle";
+      value: RectangleMark;
     }
   | {
       type: "down";
@@ -120,6 +134,9 @@ export interface AppContextType {
   c_setErrorWindowOpen: Dispatch<SetStateAction<boolean>>;
   c_answerMessage: string;
   c_setAnswerMessage: Dispatch<SetStateAction<string>>;
+  c_exerciseNumber: [number, number];
+  c_setExerciseNumber: Dispatch<SetStateAction<[number, number]>>;
+  c_loadTheme: (newThemeStr: string) => Promise<void>;
 }
 
 // ??? is eslint really okay with this?? what to do instead??

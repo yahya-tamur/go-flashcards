@@ -12,7 +12,7 @@ const { commands } = await import("./bindings");
 const { cursorColor, handleError } = await import("./utils");
 
 const BoardSlider = (await import("./components/BoardSlider")).default;
-const DragLabelGroup = (await import("./components/DragLabelGroup")).default;
+const PlaceMarkGroup = (await import("./components/PlaceMarkGroup")).default;
 const PlaceStoneGroup = (await import("./components/PlaceStoneGroup")).default;
 const RectLabelGroup = (await import("./components/RectLabelGroup")).default;
 
@@ -54,6 +54,8 @@ const InitializeMenu = () => {
           maxWidth: "100%",
           display: "flex",
           flexDirection: "row",
+          paddingTop: "10px",
+          marginBottom: "-10px",
         }}
       >
         <BoardSlider side={"row"} force={true} />
@@ -68,8 +70,9 @@ const InitializeMenu = () => {
           alignItems: "center",
         }}
       >
+        <PlaceMarkGroup default="place" />
         <TextField
-          sx={{ width: "60px" }}
+          sx={{ width: "30px" }}
           size="small"
           variant="standard"
           value={c_nextLabel}
@@ -86,8 +89,7 @@ const InitializeMenu = () => {
               value: "Label",
             });
           }}
-        ></TextField>
-        <DragLabelGroup default="place" />
+        />
       </Box>
       <Box
         sx={{

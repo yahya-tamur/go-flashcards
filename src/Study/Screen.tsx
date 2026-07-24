@@ -53,7 +53,7 @@ const Screen = () => {
           overflow: "hidden",
         }}
       >
-        <Box sx={{ flexBasis: "40%", minHeight: 0 }}>
+        <Box sx={{ flexBasis: "25%", minHeight: 0 }}>
           {c_studyPhase === "Guess" || c_studyPhase === "UnknownGuess" ? (
             <Paper
               sx={{
@@ -66,10 +66,10 @@ const Screen = () => {
             <Tree />
           )}
         </Box>
-        <Box sx={{ flexBasis: "30%", minHeight: 0 }}>
+        <Box sx={{ flexBasis: "50%", minHeight: 0 }}>
           <Menu />
         </Box>
-        <Box sx={{ flexBasis: "30%", minHeight: 0 }}>
+        <Box sx={{ flexBasis: "25%", minHeight: 0 }}>
           <CommentBox />
         </Box>
       </Box>

@@ -45,10 +45,6 @@ pub struct Snapshot {
     pub color: Color,
     pub comment: String,
     pub variant: Variant,
-    #[specta(type = Number)]
-    pub current_location: usize,
-    #[specta(type = Number)]
-    pub max_location: usize,
     #[specta(type = (Number, Number, Number, Number))]
     pub window: (usize, usize, usize, usize),
     #[specta(type = Option<(Number, Number, Number, Number)>)]
@@ -60,11 +56,7 @@ pub struct Snapshot {
 impl MoveTree {
     // 'loc' is not tree location but extra info to send to frontend --
     // it's current exercise , number of exercises.
-    pub fn snapshot(
-        move_tree: &MoveTree,
-        loc: (usize, usize),
-        progress: Option<Vec<usize>>,
-    ) -> Result<Snapshot> {
+    pub fn snapshot(move_tree: &MoveTree, progress: Option<Vec<usize>>) -> Result<Snapshot> {
         let (row, col) = move_tree.tree_loc;
         let current_move = move_tree.current()?;
 
@@ -93,8 +85,6 @@ impl MoveTree {
             color: move_tree.send_recv_color(current_move.color),
             comment: current_move.comment.clone(),
             variant: current_move.variant,
-            current_location: loc.0,
-            max_location: loc.1,
             progress,
             window: move_tree.send_window(move_tree.problem.window),
             min_window: move_tree.min_window().map(|w| move_tree.send_window(w)),

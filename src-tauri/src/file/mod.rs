@@ -1,6 +1,8 @@
 pub mod os_file_system;
 pub mod wrapper;
 
+pub use wrapper::Bytes;
+
 use include_dir::{include_dir, Dir};
 
 static INITIAL_APP_DATA: Dir<'_> = include_dir!("$CARGO_MANIFEST_DIR/data/initial_app_data");

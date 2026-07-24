@@ -1,0 +1,56 @@
+{
+  "themeOptions": {
+    "palette": {
+      "primary": {
+        "light": "#94805f",
+        "main": "#946e2c",
+        "dark": "#5c3d08",
+        "contrastText": "#fff"
+      },
+      "secondary": {
+        "light": "#ff7961",
+        "main": "#f44336",
+        "dark": "#ba000d",
+        "contrastText": "#000"
+      },
+      "gray": {
+        "light": "#999999",
+        "main": "#999999",
+        "dark": "#999999",
+        "contrastText": "#000"
+      },
+      "button": {
+        "light": "#999999",
+        "main": "#95cf95",
+        "dark": "#999999",
+        "contrastText": "#000"
+      },
+      "other": {
+        "light": "#ffffff",
+        "main": "#ffffff",
+        "dark": "#ffffff",
+        "contrastText": "#fff"
+      },
+      "toggle": {
+        "light": "#3b362a",
+        "main": "#95cf95",
+        "dark": "#999999",
+        "contrastText": "#000"
+      },
+      "mode": "dark"
+    }
+  },
+  "images": {
+      "Delete": "mui_clear.svg",
+      "DeleteMark": "delete_mark.svg",
+      "Black": "black_night.png",
+      "White": "white_anime.png",
+      "Triangle": "triangle.svg",
+      "Circle": "circle.svg",
+      "Cross": "cross.svg",
+      "Square": "square.svg",
+      "BlackTerritory": "black_territory.svg",
+      "WhiteTerritory": "white_territory.svg",
+      "Board": "board.jpeg"
+  }
+}

@@ -38,6 +38,7 @@ impl OsFileSystem for WindowsLinuxFileSystem {
         }
         std::fs::create_dir_all(app_data.join("exercises"))?;
         std::fs::create_dir_all(app_data.join("history"))?;
+        std::fs::create_dir_all(app_data.join("assets"))?;
         Ok(WindowsLinuxFileSystem {
             app_data,
             app: app.clone(),

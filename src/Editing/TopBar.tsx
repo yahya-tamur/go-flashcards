@@ -37,6 +37,8 @@ const TopBar = () => {
     c_cursorDispatch,
     c_setNextLabel,
     c_setPhase,
+    c_exerciseNumber,
+    c_setExerciseNumber,
     c_setEditingPhase,
     c_setErrorMessage,
     c_setErrorWindowOpen,
@@ -95,9 +97,9 @@ const TopBar = () => {
         </Button>
         <NumberSpinner
           size="small"
-          value={(c_data?.current_location ?? 0) + 1}
+          value={c_exerciseNumber[0]}
           min={1}
-          max={c_data?.max_location ?? 1}
+          max={c_exerciseNumber[1]}
           onValueChange={async (v) => {
             if (c_data === null || v === null) {
               return;
@@ -109,6 +111,8 @@ const TopBar = () => {
                 editNewExercise(data, c_cursorDispatch, c_setEditingPhase);
                 c_setData(data);
               })
+              .then(() => commands.getExerciseNumber())
+              .then((e) => c_setExerciseNumber(e))
               .catch((e) =>
                 handleError(e, c_setErrorMessage, c_setErrorWindowOpen),
               );
@@ -130,6 +134,8 @@ const TopBar = () => {
                     editNewExercise(data, c_cursorDispatch, c_setEditingPhase);
                     c_setData(data);
                   })
+                  .then(() => commands.getExerciseNumber())
+                  .then((e) => c_setExerciseNumber(e))
                   .catch((e) =>
                     handleError(e, c_setErrorMessage, c_setErrorWindowOpen),
                   );
@@ -151,6 +157,8 @@ const TopBar = () => {
                     editNewExercise(data, c_cursorDispatch, c_setEditingPhase);
                     c_setData(data);
                   })
+                  .then(() => commands.getExerciseNumber())
+                  .then((e) => c_setExerciseNumber(e))
                   .catch((e) =>
                     handleError(e, c_setErrorMessage, c_setErrorWindowOpen),
                   );
@@ -173,6 +181,8 @@ const TopBar = () => {
                     editNewExercise(data, c_cursorDispatch, c_setEditingPhase);
                     c_setData(data);
                   })
+                  .then(() => commands.getExerciseNumber())
+                  .then((e) => c_setExerciseNumber(e))
                   .catch((e) =>
                     handleError(e, c_setErrorMessage, c_setErrorWindowOpen),
                   );
@@ -202,6 +212,8 @@ const TopBar = () => {
                       );
                       c_setData(data);
                     })
+                    .then(() => commands.getExerciseNumber())
+                    .then((e) => c_setExerciseNumber(e))
                     .catch((e) =>
                       handleError(e, c_setErrorMessage, c_setErrorWindowOpen),
                     );

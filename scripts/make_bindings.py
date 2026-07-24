@@ -39,6 +39,12 @@ def make_bindings():
         signature,
     ]
     for i, line in enumerate(file.splitlines()):
+        if "export const commands" in line:
+            lines.append(line)
+            lines.append(
+                '	getAsset: (asset: string) : Promise<ArrayBuffer> => (__TAURI_INVOKE("get_asset", { asset })),'
+            )
+            continue
         if line[:28] == "export type DisplayableError":
             lines.append(f"// {line}")
             continue

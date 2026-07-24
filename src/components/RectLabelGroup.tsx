@@ -20,17 +20,21 @@ const RectLabelGroup = (props: RectLabelGroupProps) => {
   const { c_data, c_images, c_cursor, c_cursorDispatch } =
     useContext(AppContext);
 
-  const img_size = "25px";
+  const img_size = "24px";
 
   return (
     <Box>
       <ToggleButtonGroup
         color="toggle"
-        value={c_cursor.paint.value}
+        value={JSON.stringify({
+          type: c_cursor.type,
+          tool: c_cursor.tool.value,
+        })}
         exclusive
         size="small"
         onChange={(_e, newValue: RectangleMark | null) => {
-          if (newValue === null) {
+          const new_tool = newValue && JSON.parse(newValue).tool;
+          if (new_tool === null) {
             if (props.default === "click") {
               setClick(c_data, c_cursorDispatch);
             } else {
@@ -41,25 +45,31 @@ const RectLabelGroup = (props: RectLabelGroupProps) => {
             }
           } else {
             c_cursorDispatch({
-              type: "set_paint",
-              value: newValue,
+              type: "set_rectangle",
+              value: new_tool,
             });
           }
         }}
       >
-        <ToggleButton value="BlackTerritory">
+        <ToggleButton
+          value={JSON.stringify({ type: "rectangle", tool: "BlackTerritory" })}
+        >
           <img
             src={c_images["BlackTerritory"]}
             style={{ height: img_size, width: img_size }}
           />
         </ToggleButton>
-        <ToggleButton value="WhiteTerritory">
+        <ToggleButton
+          value={JSON.stringify({ type: "rectangle", tool: "WhiteTerritory" })}
+        >
           <img
             src={c_images["WhiteTerritory"]}
             style={{ height: img_size, width: img_size }}
           />
         </ToggleButton>
-        <ToggleButton value="DeleteMark">
+        <ToggleButton
+          value={JSON.stringify({ type: "rectangle", tool: "DeleteMark" })}
+        >
           <img
             src={c_images["DeleteMark"]}
             style={{ height: img_size, width: img_size }}

@@ -1,5 +1,3 @@
-import type { StonePaint } from "../bindings";
-
 const { useContext } = await import("react");
 
 const ClearIcon = (await import("@mui/icons-material/Clear")).default;
@@ -28,11 +26,15 @@ const PlaceStoneGroup = (props: PlaceStoneGroupProps) => {
     <Box>
       <ToggleButtonGroup
         color="toggle"
-        value={c_cursor.paint.value}
+        value={JSON.stringify({
+          type: c_cursor.type,
+          tool: c_cursor.tool.value,
+        })}
         exclusive
         size="small"
-        onChange={(_e, newValue: StonePaint) => {
-          if (newValue === null) {
+        onChange={(_e, newValue: string | null) => {
+          const new_tool = newValue && JSON.parse(newValue).tool;
+          if (new_tool === null) {
             if (props.default === "click") {
               setClick(c_data, c_cursorDispatch);
             } else {
@@ -44,24 +46,24 @@ const PlaceStoneGroup = (props: PlaceStoneGroupProps) => {
           } else {
             c_cursorDispatch({
               type: "set_paint",
-              value: newValue,
+              value: new_tool,
             });
           }
         }}
       >
-        <ToggleButton value="Black">
+        <ToggleButton value={JSON.stringify({ type: "paint", tool: "Black" })}>
           <img
             src={c_images["Black"]}
             style={{ height: img_size, width: img_size }}
           />
         </ToggleButton>
-        <ToggleButton value="White">
+        <ToggleButton value={JSON.stringify({ type: "paint", tool: "White" })}>
           <img
             src={c_images["White"]}
             style={{ height: img_size, width: img_size }}
           />
         </ToggleButton>
-        <ToggleButton value="Delete">
+        <ToggleButton value={JSON.stringify({ type: "paint", tool: "Delete" })}>
           <ClearIcon color="error" sx={{ height: img_size, width: img_size }} />
         </ToggleButton>
       </ToggleButtonGroup>
