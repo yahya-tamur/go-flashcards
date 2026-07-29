@@ -1,16 +1,19 @@
 import type { PaintTool, RectangleTool } from "./AppContext";
 import type { Grid } from "./bindings";
 
-await import("react");
-const { useEffect, useState, useRef, useContext, useReducer } =
-  await import("react");
+import { useEffect, useState, useRef, useContext, useReducer } from "react";
 
-const Paper = (await import("@mui/material/Paper")).default;
+import Paper from "@mui/material/Paper";
 
-const AppContext = (await import("./AppContext")).default;
-const { commands } = await import("./bindings");
-const { handleError, studyStep, cursorColor, markEqualsCursor, setClick } =
-  await import("./utils");
+import AppContext from "@/AppContext";
+import { commands } from "@/bindings";
+import {
+  handleError,
+  studyStep,
+  cursorColor,
+  markEqualsCursor,
+  setClick,
+} from "@/utils";
 
 const letters = "ABCDEFGHJKLMNOPQRST".split("");
 

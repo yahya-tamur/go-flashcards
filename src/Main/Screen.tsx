@@ -1,15 +1,13 @@
-const { useEffect, useState, useContext } = await import("react");
+import { useEffect, useState, useContext } from "react";
 
-const Box = (await import("@mui/material/Box")).default;
+import Box from "@mui/material/Box";
 
-await import("../App.css");
+import AppContext from "@/AppContext";
+import { commands } from "@/bindings.js";
+import { handleError } from "@/utils.js";
 
-const AppContext = (await import("../AppContext")).default;
-const { commands } = await import("../bindings.js");
-const { handleError } = await import("../utils.js");
-
-const EditConfig = (await import("./EditConfig.jsx")).default;
-const Menu = (await import("./Menu.jsx")).default;
+import EditConfig from "./EditConfig.jsx";
+import Menu from "./Menu.jsx";
 
 const Screen = () => {
   const [exercises, setExercises] = useState<string[]>([]);

@@ -1,30 +1,27 @@
 import type { Dispatch, SetStateAction } from "react";
 
-const { useState, useContext } = await import("react");
+import { useState, useContext } from "react";
 
-const AddIcon = (await import("@mui/icons-material/Add")).default;
-const ClearIcon = (await import("@mui/icons-material/Clear")).default;
+import AddIcon from "@mui/icons-material/Add";
+import ClearIcon from "@mui/icons-material/Clear";
 
-const Button = (await import("@mui/material/Button")).default;
-const Dialog = (await import("@mui/material/Dialog")).default;
-const DialogActions = (await import("@mui/material/DialogActions")).default;
-const DialogContent = (await import("@mui/material/DialogContent")).default;
-const DialogContentText = (await import("@mui/material/DialogContentText"))
-  .default;
-const IconButton = (await import("@mui/material/IconButton")).default;
-const List = (await import("@mui/material/List")).default;
-const ListItem = (await import("@mui/material/ListItem")).default;
-const ListItemButton = (await import("@mui/material/ListItemButton")).default;
-const ListItemText = (await import("@mui/material/ListItemText")).default;
-const Paper = (await import("@mui/material/Paper")).default;
-const SwipeableDrawer = (await import("@mui/material/SwipeableDrawer")).default;
-const TextField = (await import("@mui/material/TextField")).default;
+import Button from "@mui/material/Button";
+import Dialog from "@mui/material/Dialog";
+import DialogActions from "@mui/material/DialogActions";
+import DialogContent from "@mui/material/DialogContent";
+import DialogContentText from "@mui/material/DialogContentText";
+import IconButton from "@mui/material/IconButton";
+import List from "@mui/material/List";
+import ListItem from "@mui/material/ListItem";
+import ListItemButton from "@mui/material/ListItemButton";
+import ListItemText from "@mui/material/ListItemText";
+import Paper from "@mui/material/Paper";
+import SwipeableDrawer from "@mui/material/SwipeableDrawer";
+import TextField from "@mui/material/TextField";
 
-await import("../App.css");
-
-const AppContext = (await import("../AppContext")).default;
-const { commands } = await import("../bindings");
-const { editNewExercise, handleError, setClick } = await import("../utils");
+import AppContext from "@/AppContext";
+import { commands } from "@/bindings";
+import { editNewExercise, handleError, setClick } from "@/utils";
 
 interface MenuProps {
   drawerWidth: string;

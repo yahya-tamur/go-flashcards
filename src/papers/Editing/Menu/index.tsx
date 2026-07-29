@@ -1,9 +1,9 @@
-const { useContext } = await import("react");
+import { useContext } from "react";
 
-const AppContext = (await import("@/AppContext")).default;
+import AppContext from "@/AppContext";
 
-const InitializeMenu = (await import("./InitializeMenu")).default;
-const MakeTreeMenu = (await import("./MakeTreeMenu")).default;
+import InitializeMenu from "./InitializeMenu";
+import MakeTreeMenu from "./MakeTreeMenu";
 
 const Menu = () => {
   const { c_editingPhase } = useContext(AppContext);

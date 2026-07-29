@@ -9,7 +9,7 @@ import type {
   StonePaint,
 } from "./bindings";
 
-const { createContext } = await import("react");
+import { createContext } from "react";
 
 export type PhaseType = "Main" | "Editing" | "Study";
 

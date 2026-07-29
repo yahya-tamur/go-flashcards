@@ -5,16 +5,16 @@ import type {
   Cursor,
   EditingPhaseType,
   StudyPhaseType,
-} from "./AppContext";
+} from "@/AppContext";
 import type {
   Mark,
   MarkPaint,
   RectangleMark,
   Snapshot,
   ValidationResult,
-} from "./bindings";
+} from "@/bindings";
 
-const { commands } = await import("./bindings");
+import { commands } from "@/bindings";
 
 // label(Triangle) = label(Square)
 //

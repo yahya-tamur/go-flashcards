@@ -1,12 +1,10 @@
-const { useContext } = await import("react");
+import { useContext } from "react";
 
-const Slider = (await import("@mui/material/Slider")).default;
+import Slider from "@mui/material/Slider";
 
-await import("../App.css");
-
-const AppContext = (await import("../AppContext")).default;
-const { commands } = await import("../bindings");
-const { handleError } = await import("../utils");
+import AppContext from "@/AppContext";
+import { commands } from "@/bindings";
+import { handleError } from "@/utils";
 
 type BoardSliderProps = {
   side: "row" | "column";

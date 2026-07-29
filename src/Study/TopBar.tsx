@@ -1,17 +1,14 @@
-const { useContext } = await import("react");
+import { useContext } from "react";
 
-const Box = (await import("@mui/material/Box")).default;
-const Button = (await import("@mui/material/Button")).default;
-const Paper = (await import("@mui/material/Paper")).default;
+import Box from "@mui/material/Box";
+import Button from "@mui/material/Button";
+import Paper from "@mui/material/Paper";
 
-await import("../App.css");
+import AppContext from "@/AppContext";
+import { commands } from "@/bindings";
+import { handleError, setClick } from "@/utils";
 
-await import("../AppContext");
-const AppContext = (await import("../AppContext")).default;
-const { commands } = await import("../bindings");
-const { handleError, setClick } = await import("../utils");
-
-const NumberSpinner = (await import("../components/NumberSpinner")).default;
+import NumberSpinner from "@/components/NumberSpinner";
 
 const TopBar = () => {
   const {

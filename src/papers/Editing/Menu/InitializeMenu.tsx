@@ -1,25 +1,19 @@
-const { useContext } = await import("react");
+import { useContext } from "react";
 
-const Box = (await import("@mui/material/Box")).default;
-const Button = (await import("@mui/material/Button")).default;
-const Paper = (await import("@mui/material/Paper")).default;
-const TextField = (await import("@mui/material/TextField")).default;
+import Box from "@mui/material/Box";
+import Button from "@mui/material/Button";
+import Paper from "@mui/material/Paper";
+import TextField from "@mui/material/TextField";
 
-const AppContext = (await import("../../../AppContext")).default;
-const { commands } = await import("../../../bindings");
-const { cursorColor, handleError } = await import("../../../utils");
+import AppContext from "@/AppContext";
+import { commands } from "@/bindings";
+import { cursorColor, handleError } from "@/utils";
 
-const BoardSlider = (await import("../../../components/BoardSlider")).default;
-const PlaceMarkGroup = (await import("../../../components/PlaceMarkGroup"))
-  .default;
-const PlaceStoneGroup = (await import("../../../components/PlaceStoneGroup"))
+import BoardSlider from "@/components/BoardSlider";
+import PlaceMarkGroup from "@/components/PlaceMarkGroup";
+import PlaceStoneGroup from "@/components/PlaceStoneGroup";
 
-  .default;
-
-await import("@/App.css");
-
-const RectLabelGroup = (await import("../../../components/RectLabelGroup"))
-  .default;
+import RectLabelGroup from "@/components/RectLabelGroup";
 
 const InitializeMenu = () => {
   const {

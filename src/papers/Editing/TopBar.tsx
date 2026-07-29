@@ -1,34 +1,26 @@
-const { useState, useContext } = await import("react");
+import { useState, useContext } from "react";
 
-const ClearIcon = (await import("@mui/icons-material/Clear")).default;
-const DownloadIcon = (await import("@mui/icons-material/Download")).default;
-const FileUploadIcon = (await import("@mui/icons-material/FileUpload")).default;
-const KeyboardArrowDownOutlinedIcon = (
-  await import("@mui/icons-material/KeyboardArrowDownOutlined")
-).default;
-const KeyboardArrowRightOutlinedIcon = (
-  await import("@mui/icons-material/KeyboardArrowRightOutlined")
-).default;
+import AppContext from "@/AppContext";
+import { commands } from "@/bindings";
+import { editNewExercise, handleError } from "@/utils";
 
-const Box = (await import("@mui/material/Box")).default;
-const Button = (await import("@mui/material/Button")).default;
-const ButtonGroup = (await import("@mui/material/ButtonGroup")).default;
-const Dialog = (await import("@mui/material/Dialog")).default;
-const DialogActions = (await import("@mui/material/DialogActions")).default;
-const DialogContent = (await import("@mui/material/DialogContent")).default;
-const DialogContentText = (await import("@mui/material/DialogContentText"))
-  .default;
-const Paper = (await import("@mui/material/Paper")).default;
-const Tooltip = (await import("@mui/material/Tooltip")).default;
+import NumberSpinner from "@/components/NumberSpinner";
 
-await import("../App.css");
+import ClearIcon from "@mui/icons-material/Clear";
+import DownloadIcon from "@mui/icons-material/Download";
+import FileUploadIcon from "@mui/icons-material/FileUpload";
+import KeyboardArrowDownOutlinedIcon from "@mui/icons-material/KeyboardArrowDownOutlined";
+import KeyboardArrowRightOutlinedIcon from "@mui/icons-material/KeyboardArrowRightOutlined";
 
-await import("../AppContext");
-const AppContext = (await import("../AppContext")).default;
-const { commands } = await import("../bindings");
-const { editNewExercise, handleError } = await import("../utils");
-
-const NumberSpinner = (await import("../components/NumberSpinner")).default;
+import Box from "@mui/material/Box";
+import Button from "@mui/material/Button";
+import ButtonGroup from "@mui/material/ButtonGroup";
+import Dialog from "@mui/material/Dialog";
+import DialogActions from "@mui/material/DialogActions";
+import DialogContent from "@mui/material/DialogContent";
+import DialogContentText from "@mui/material/DialogContentText";
+import Paper from "@mui/material/Paper";
+import Tooltip from "@mui/material/Tooltip";
 
 const TopBar = () => {
   const {

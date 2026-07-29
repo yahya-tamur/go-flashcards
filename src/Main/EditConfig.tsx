@@ -1,29 +1,27 @@
 import type { Dispatch, SetStateAction } from "react";
 
+import type { ValidationResult } from "@/bindings";
+
 import type { ReactCodeMirrorRef } from "@uiw/react-codemirror";
 
-import type { ValidationResult } from "../bindings";
+import { useEffect, useState, useRef, useContext } from "react";
 
-const { useEffect, useState, useRef, useContext } = await import("react");
+import { StreamLanguage } from "@codemirror/language";
+import { StateField, StateEffect } from "@codemirror/state";
+import { Decoration, EditorView } from "@codemirror/view";
 
-const { StreamLanguage } = await import("@codemirror/language");
-const { StateField, StateEffect } = await import("@codemirror/state");
-const { Decoration, EditorView } = await import("@codemirror/view");
+import { toml } from "@codemirror/legacy-modes/mode/toml";
 
-const { toml } = await import("@codemirror/legacy-modes/mode/toml");
+import Box from "@mui/material/Box";
+import Button from "@mui/material/Button";
+import Paper from "@mui/material/Paper";
 
-const Box = (await import("@mui/material/Box")).default;
-const Button = (await import("@mui/material/Button")).default;
-const Paper = (await import("@mui/material/Paper")).default;
+import { vscodeDark as editorTheme } from "@uiw/codemirror-theme-vscode";
+import CodeMirror from "@uiw/react-codemirror";
 
-const editorTheme = (await import("@uiw/codemirror-theme-vscode")).vscodeDark;
-const CodeMirror = (await import("@uiw/react-codemirror")).default;
-
-await import("../App.css");
-
-const AppContext = (await import("../AppContext")).default;
-const { commands } = await import("../bindings");
-const { configStatusEquals, handleError } = await import("../utils");
+import AppContext from "@/AppContext";
+import { commands } from "@/bindings";
+import { configStatusEquals, handleError } from "@/utils";
 
 interface HighlightPayload {
   from: number;

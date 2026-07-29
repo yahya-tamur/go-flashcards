@@ -1,17 +1,15 @@
-const { useContext } = await import("react");
+import { useContext } from "react";
 
-const Box = (await import("@mui/material/Box")).default;
-const Paper = (await import("@mui/material/Paper")).default;
+import Box from "@mui/material/Box";
+import Paper from "@mui/material/Paper";
 
-await import("../App.css");
+import AppContext from "@/AppContext";
+import Board from "@/Board";
+import CommentBox from "@/CommentBox";
+import Tree from "@/Tree";
 
-const AppContext = (await import("../AppContext")).default;
-const Board = (await import("../Board")).default;
-const CommentBox = (await import("../CommentBox")).default;
-const Tree = (await import("../Tree")).default;
-
-const Menu = (await import("./Menu")).default;
-const TopBar = (await import("./TopBar")).default;
+import Menu from "./Menu";
+import TopBar from "./TopBar";
 
 const Screen = () => {
   const { c_studyPhase } = useContext(AppContext);

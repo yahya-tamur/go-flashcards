@@ -1,15 +1,13 @@
-import type { Color, Variant } from "./bindings";
+import type { Color, Variant } from "@/bindings";
 
-const { useEffect, useState, useRef, useContext } = await import("react");
+import { useEffect, useState, useRef, useContext } from "react";
 
-const Paper = (await import("@mui/material/Paper")).default;
-const { useTheme } = await import("@mui/material/styles");
+import Paper from "@mui/material/Paper";
+import { useTheme } from "@mui/material/styles";
 
-await import("./App.css");
-
-const AppContext = (await import("./AppContext")).default;
-const { commands } = await import("./bindings");
-const { handleError } = await import("./utils");
+import AppContext from "@/AppContext";
+import { commands } from "@/bindings";
+import { handleError } from "@/utils";
 
 const Tree = () => {
   const {

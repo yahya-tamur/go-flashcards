@@ -1,6 +1,6 @@
 #!/bin/bash
 
-if [[  $0 != "bash" || $(basename "$PWD") != "go-flashcards" ]]; then
+if [[  $(basename "$0") != "bash" || $(basename "$PWD") != "go-flashcards" ]]; then
     echo ""
     echo "This script adds tab-autocomplete arguments to ./scripts/run.py ."
     echo "It needs to be sourced, not run, from the project root folder."
@@ -25,3 +25,5 @@ _autocomplete_run_py() {
 
 complete -F _autocomplete_run_py ./scripts/run.py
 chmod +x ./scripts/run.py
+
+echo "done!"

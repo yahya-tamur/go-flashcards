@@ -15,10 +15,10 @@ def sort_imports():
         "react": -2,
         "@tauri-apps": -1,
         ".": 20,
-        "..": -10,
+    #   "..": -10,
     }
 
-    name_priorities = {"css": -1}
+    name_priorities = {} # {"css": -1}
 
     typ_order = {"plain": 0, "type": 1, "dyn": 2}
 
@@ -41,9 +41,9 @@ def sort_imports():
 
             preamble = []
 
-            # yes, don't use /* or empty lines or whatever
+            # yes, don't use /* for initial comment
             while i < len(lines):
-                if lines[i][:2] != "//":
+                if len(lines[i]) > 0 and lines[i][:2] != "//":
                     break
                 preamble.append(lines[i])
                 i += 1
@@ -91,15 +91,21 @@ def sort_imports():
                 if (w := imp.rfind("/")) != -1:
                     mod, name = (imp[:w], imp[w:])
 
+                #import_lines[get_key(typ, mod, name)].add((name, linetext))
+                
+                if typ == "dyn":
+                    print("sort imports warning: dynamic import?!")
+                
                 import_lines[get_key(typ, mod, name)].add((name, linetext))
-
+                
+               
                 i = j + 1
 
             end_of_imports = i
 
             for k in sorted(import_lines.keys()):
                 if len(import_lines[k]) == 0:
-                    print("Noooo!")
+                    print("sort imports error: empty import lines should have been skipped")
                     exit()
                 for _, line in sorted(import_lines[k]):
                     preamble.append(line)

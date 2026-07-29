@@ -1,16 +1,13 @@
-import type { RectangleMark } from "../bindings";
+import type { RectangleMark } from "@/bindings";
 
-const { useContext } = await import("react");
+import { useContext } from "react";
 
-const Box = (await import("@mui/material/Box")).default;
-const ToggleButton = (await import("@mui/material/ToggleButton")).default;
-const ToggleButtonGroup = (await import("@mui/material/ToggleButtonGroup"))
-  .default;
+import Box from "@mui/material/Box";
+import ToggleButton from "@mui/material/ToggleButton";
+import ToggleButtonGroup from "@mui/material/ToggleButtonGroup";
 
-await import("../App.css");
-
-const AppContext = (await import("../AppContext")).default;
-const { setClick } = await import("../utils");
+import AppContext from "@/AppContext";
+import { setClick } from "@/utils";
 
 type RectLabelGroupProps = {
   default: "click" | "place";

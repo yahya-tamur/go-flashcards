@@ -1,16 +1,14 @@
-const { useEffect, useState, useRef, useContext } = await import("react");
+import { useEffect, useState, useRef, useContext } from "react";
 
-const Box = (await import("@mui/material/Box")).default;
-const Button = (await import("@mui/material/Button")).default;
-const ButtonGroup = (await import("@mui/material/ButtonGroup")).default;
-const Paper = (await import("@mui/material/Paper")).default;
-const TextField = (await import("@mui/material/TextField")).default;
+import Box from "@mui/material/Box";
+import Button from "@mui/material/Button";
+import ButtonGroup from "@mui/material/ButtonGroup";
+import Paper from "@mui/material/Paper";
+import TextField from "@mui/material/TextField";
 
-await import("./App.css");
-
-const AppContext = (await import("./AppContext")).default;
-const { commands } = await import("./bindings");
-const { handleError } = await import("./utils");
+import AppContext from "@/AppContext";
+import { commands } from "@/bindings";
+import { handleError } from "@/utils";
 
 const CommentBox = () => {
   const {

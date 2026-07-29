@@ -1,5 +1,3 @@
-import type { PaletteMode, ThemeOptions, Theme } from "@mui/material";
-
 import type {
   ImageVariant,
   StudyPhaseType,
@@ -11,41 +9,39 @@ import type {
   PaintCursor,
   RectangleCursor,
   ThemeConfig,
-} from "./AppContext";
+} from "@/AppContext";
 import type {
   Color,
   MarkPaint,
   RectangleMark,
   Snapshot,
   StonePaint,
-} from "./bindings";
+} from "@/bindings";
 
-const { useState, useReducer, useRef, useEffect, useCallback } =
-  await import("react");
+import type { PaletteMode, ThemeOptions, Theme } from "@mui/material";
 
-const Button = (await import("@mui/material/Button")).default;
-const CssBaseline = (await import("@mui/material/CssBaseline")).default;
-const Dialog = (await import("@mui/material/Dialog")).default;
-const DialogActions = (await import("@mui/material/DialogActions")).default;
-const DialogContent = (await import("@mui/material/DialogContent")).default;
-const DialogContentText = (await import("@mui/material/DialogContentText"))
-  .default;
-const { ThemeProvider, createTheme } = await import("@mui/material/styles");
+import { useState, useReducer, useRef, useEffect, useCallback } from "react";
 
-const mime = (await import("mime")).default;
+import Button from "@mui/material/Button";
+import CssBaseline from "@mui/material/CssBaseline";
+import Dialog from "@mui/material/Dialog";
+import DialogActions from "@mui/material/DialogActions";
+import DialogContent from "@mui/material/DialogContent";
+import DialogContentText from "@mui/material/DialogContentText";
+import { ThemeProvider, createTheme } from "@mui/material/styles";
 
-await import("./App.css");
+import mime from "mime";
 
-await import("./AppContext");
-const AppContext = (await import("./AppContext")).default;
-const { commands } = await import("./bindings");
-const { wEquals, handleError } = await import("./utils");
+import AppContext from "@/AppContext";
 
-const EditingScreen = (await import("./Editing/Screen")).default;
+import { commands } from "@/bindings";
+import { wEquals, handleError } from "@/utils";
 
-const MainScreen = (await import("./Main/Screen")).default;
+import EditingScreen from "@/Editing/Screen";
 
-const StudyScreen = (await import("./Study/Screen")).default;
+import MainScreen from "@/Main/Screen";
+
+import StudyScreen from "@/Study/Screen";
 
 const theme_from_import = (theme_import: ThemeOptions): Theme => {
   const theme = createTheme({

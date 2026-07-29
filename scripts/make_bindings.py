@@ -34,7 +34,6 @@ def make_bindings():
 
     # will need to add here if using more tauri features!!
     lines = [
-        r'const { invoke : __TAURI_INVOKE, } = await import("@tauri-apps/api/core");',
         "",
         signature,
     ]
@@ -48,9 +47,7 @@ def make_bindings():
         if line[:28] == "export type DisplayableError":
             lines.append(f"// {line}")
             continue
-        if line[:6] == "import":
-            lines.append(f"// {line}")
-            continue
+
         if "typedError" in line:
             if "async function" in line:
                 lll = len(lines)

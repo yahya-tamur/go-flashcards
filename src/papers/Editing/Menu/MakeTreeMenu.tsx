@@ -1,25 +1,22 @@
-const { useEffect, useState, useContext } = await import("react");
+import { useEffect, useState, useContext } from "react";
 
-const AppContext = (await import("@/AppContext")).default;
-const { commands } = await import("@/bindings");
-const { handleError, setClick } = await import("@/utils");
+import AppContext from "@/AppContext";
+import { commands } from "@/bindings";
+import { handleError, setClick } from "@/utils";
 
-const BoardSlider = (await import("@/components/BoardSlider")).default;
-const PlaceMarkGroup = (await import("@/components/PlaceMarkGroup")).default;
-const RectLabelGroup = (await import("@/components/RectLabelGroup")).default;
+import BoardSlider from "@/components/BoardSlider";
+import PlaceMarkGroup from "@/components/PlaceMarkGroup";
+import RectLabelGroup from "@/components/RectLabelGroup";
 
-const CheckIcon = (await import("@mui/icons-material/Check")).default;
-const ClearIcon = (await import("@mui/icons-material/Clear")).default;
+import CheckIcon from "@mui/icons-material/Check";
+import ClearIcon from "@mui/icons-material/Clear";
 
-const Box = (await import("@mui/material/Box")).default;
-const Button = (await import("@mui/material/Button")).default;
-const Paper = (await import("@mui/material/Paper")).default;
-const TextField = (await import("@mui/material/TextField")).default;
-const ToggleButton = (await import("@mui/material/ToggleButton")).default;
-const ToggleButtonGroup = (await import("@mui/material/ToggleButtonGroup"))
-  .default;
-
-await import("./App.css");
+import Box from "@mui/material/Box";
+import Button from "@mui/material/Button";
+import Paper from "@mui/material/Paper";
+import TextField from "@mui/material/TextField";
+import ToggleButton from "@mui/material/ToggleButton";
+import ToggleButtonGroup from "@mui/material/ToggleButtonGroup";
 
 const MakeTreeMenu = () => {
   const {

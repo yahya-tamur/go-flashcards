@@ -1,15 +1,16 @@
 //import type { Color, Variant } from "../bindings";
-const { useEffect, /*useState, useRef, */ useContext, useReducer } =
-  await import("react");
+import {
+  useEffect,
+  /*useState, useRef, */ useContext,
+  useReducer,
+} from "react";
 
-const Box = (await import("@mui/material/Box")).default;
-//const { useTheme } = await import("@mui/material/styles");
+import Box from "@mui/material/Box";
+//import { useTheme } from "@mui/material/styles";
 
-await import("../App.css");
-
-const AppContext = (await import("../AppContext")).default;
-//const { commands } = await import("../bindings");
-//const { handleError } = await import("../utils");
+import AppContext from "@/AppContext";
+//import { commands } from "../bindings";
+//import { handleError } from "../utils";
 
 type Rect = {
   x: number;

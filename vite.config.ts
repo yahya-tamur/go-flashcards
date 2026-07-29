@@ -35,4 +35,25 @@ export default defineConfig(() => ({
       ignored: ["**/src-tauri/**"],
     },
   },
+  build: {
+    chunkSizeWarningLimit: 10_000_000, // should be ok since it's loaded from local?
+  }
+ /* build: {
+    rolldownOptions: {
+      output: {
+        codeSplitting: {
+          minSize: 50000,
+          groups: [
+            {
+              name: 'vendor',
+              test: /[\\/]node_modules[\\/]/,
+              priority: 10,
+              minSize: 100_000,
+              maxSize: 1_000_000,
+            },
+          ],
+        },
+      },
+    },
+  },*/
 }));

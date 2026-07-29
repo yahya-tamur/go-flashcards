@@ -1,14 +1,12 @@
-const EditingMenu = (await import("@/papers/Editing/Menu")).default;
+import EditingMenu from "@/papers/Editing/Menu";
 
-const Box = (await import("@mui/material/Box")).default;
+import Box from "@mui/material/Box";
 
-await import("../App.css");
+import Board from "@/Board";
+import CommentBox from "@/CommentBox";
+import Tree from "@/Tree";
 
-const Board = (await import("../Board")).default;
-const CommentBox = (await import("../CommentBox")).default;
-const Tree = (await import("../Tree")).default;
-
-const TopBar = (await import("./TopBar")).default;
+import TopBar from "./TopBar";
 
 const Screen = () => {
   return (
