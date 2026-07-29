@@ -8,7 +8,12 @@ if [[  $0 != "bash" || $(basename "$PWD") != "go-flashcards" ]]; then
     echo ""
     echo ". ./scripts/autocomplete_run_py.sh"
     echo ""
-    exit 0
+    
+    if [[ "${BASH_SOURCE[0]}" != "${0}" ]]; then
+        return 0
+    else
+        exit 0
+    fi
 fi
 
 _autocomplete_run_py() {
@@ -19,3 +24,4 @@ _autocomplete_run_py() {
 }
 
 complete -F _autocomplete_run_py ./scripts/run.py
+chmod +x ./scripts/run.py
