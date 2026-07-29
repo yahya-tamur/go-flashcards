@@ -12,18 +12,14 @@ import type {
   RectangleCursor,
   ThemeConfig,
 } from "./AppContext";
-
-import {
-  type Color,
-  type MarkPaint,
-  type RectangleMark,
-  type Snapshot,
-  type StonePaint,
+import type {
+  Color,
+  MarkPaint,
+  RectangleMark,
+  Snapshot,
+  StonePaint,
 } from "./bindings";
 
-const mime = (await import("mime")).default;
-
-const { commands } = await import("./bindings");
 const { useState, useReducer, useRef, useEffect, useCallback } =
   await import("react");
 
@@ -36,10 +32,13 @@ const DialogContentText = (await import("@mui/material/DialogContentText"))
   .default;
 const { ThemeProvider, createTheme } = await import("@mui/material/styles");
 
+const mime = (await import("mime")).default;
+
 await import("./App.css");
 
 await import("./AppContext");
 const AppContext = (await import("./AppContext")).default;
+const { commands } = await import("./bindings");
 const { wEquals, handleError } = await import("./utils");
 
 const EditingScreen = (await import("./Editing/Screen")).default;

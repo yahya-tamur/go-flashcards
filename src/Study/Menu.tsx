@@ -1,5 +1,7 @@
 const { useContext } = await import("react");
 
+const EditingMenu = (await import("@/papers/Editing/Menu")).default;
+
 const Box = (await import("@mui/material/Box")).default;
 const Button = (await import("@mui/material/Button")).default;
 const Paper = (await import("@mui/material/Paper")).default;
@@ -7,8 +9,6 @@ const Paper = (await import("@mui/material/Paper")).default;
 await import("../App.css");
 
 const AppContext = (await import("../AppContext")).default;
-const InitializeMenu = (await import("../InitializeMenu")).default;
-const MakeTreeMenu = (await import("../MakeTreeMenu")).default;
 const { commands } = await import("../bindings");
 const { cursorColor, handleError, setClick } = await import("../utils");
 const { studyStep } = await import("../utils");
@@ -17,7 +17,6 @@ const ProgressBar = (await import("../components/ProgressBar")).default;
 
 const Menu = () => {
   const {
-    c_editingPhase,
     c_studyPhase,
     c_data,
     c_setData,
@@ -171,10 +170,8 @@ const Menu = () => {
           <ProgressBar />
           <Box>{c_answerMessage}</Box>
         </Box>
-      ) : c_editingPhase === "Initialize" ? (
-        <InitializeMenu />
       ) : (
-        <MakeTreeMenu />
+        <EditingMenu />
       )}
     </Paper>
   );

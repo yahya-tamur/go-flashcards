@@ -21,7 +21,9 @@ UI overhaul
 
 Current Actual Goal
 --------------
-
+- reorganizing frontend
+  - folders for papers, files for elements, index.tsx
+  
 - customizable theme goal:
   - progress bar colors
   - config validation
@@ -49,12 +51,12 @@ bugs / small improvements
   - configsignal doesn't work
 - updating config doesn't update study sets automatically.
 - make this look better on default window size
-  - InitializeMenu, MakeTreeMenu just a little too tall for their box
+  - editconfig scroll
 - refactor movetree to return error instead of panic on array index
+  - prev, children
 - Ctrl - S
 - disable exercise loading when invalid config.
 - import from sgf ignored AB property in example sgf file!!
-- there's a fontsource: roboto??! what is it, why is it, and do I still need the local font?
 - reset label when moving exercises
   - increment number labels too
   - util

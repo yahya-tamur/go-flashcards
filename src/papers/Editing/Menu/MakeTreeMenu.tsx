@@ -1,5 +1,13 @@
 const { useEffect, useState, useContext } = await import("react");
 
+const AppContext = (await import("@/AppContext")).default;
+const { commands } = await import("@/bindings");
+const { handleError, setClick } = await import("@/utils");
+
+const BoardSlider = (await import("@/components/BoardSlider")).default;
+const PlaceMarkGroup = (await import("@/components/PlaceMarkGroup")).default;
+const RectLabelGroup = (await import("@/components/RectLabelGroup")).default;
+
 const CheckIcon = (await import("@mui/icons-material/Check")).default;
 const ClearIcon = (await import("@mui/icons-material/Clear")).default;
 
@@ -12,14 +20,6 @@ const ToggleButtonGroup = (await import("@mui/material/ToggleButtonGroup"))
   .default;
 
 await import("./App.css");
-
-const AppContext = (await import("./AppContext")).default;
-const { commands } = await import("./bindings");
-const { handleError, setClick } = await import("./utils");
-
-const BoardSlider = (await import("./components/BoardSlider")).default;
-const PlaceMarkGroup = (await import("./components/PlaceMarkGroup")).default;
-const RectLabelGroup = (await import("./components/RectLabelGroup")).default;
 
 const MakeTreeMenu = () => {
   const {

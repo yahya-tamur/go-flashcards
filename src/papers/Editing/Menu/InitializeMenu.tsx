@@ -5,16 +5,21 @@ const Button = (await import("@mui/material/Button")).default;
 const Paper = (await import("@mui/material/Paper")).default;
 const TextField = (await import("@mui/material/TextField")).default;
 
-await import("./App.css");
+const AppContext = (await import("../../../AppContext")).default;
+const { commands } = await import("../../../bindings");
+const { cursorColor, handleError } = await import("../../../utils");
 
-const AppContext = (await import("./AppContext")).default;
-const { commands } = await import("./bindings");
-const { cursorColor, handleError } = await import("./utils");
+const BoardSlider = (await import("../../../components/BoardSlider")).default;
+const PlaceMarkGroup = (await import("../../../components/PlaceMarkGroup"))
+  .default;
+const PlaceStoneGroup = (await import("../../../components/PlaceStoneGroup"))
 
-const BoardSlider = (await import("./components/BoardSlider")).default;
-const PlaceMarkGroup = (await import("./components/PlaceMarkGroup")).default;
-const PlaceStoneGroup = (await import("./components/PlaceStoneGroup")).default;
-const RectLabelGroup = (await import("./components/RectLabelGroup")).default;
+  .default;
+
+await import("@/App.css");
+
+const RectLabelGroup = (await import("../../../components/RectLabelGroup"))
+  .default;
 
 const InitializeMenu = () => {
   const {

@@ -70,7 +70,7 @@ def sort_imports():
                     match = re.search("""from "(.*)";""", linetext)
                     typ = "type"
                 elif "await import(" in linetext:
-                    match = re.search("""await import\("(.*)\"""", linetext)
+                    match = re.search("""await import\\("(.*)\"""", linetext)
                     typ = "dyn"
                 elif linetext[:8] == "import ":
                     match = re.search("""from "(.*)";""", linetext)

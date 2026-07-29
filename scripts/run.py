@@ -1,3 +1,5 @@
+#!/bin/python
+
 import os
 from pathlib import Path
 
@@ -50,7 +52,10 @@ def status():
     os.system("cloc ./src/ ./src-tauri/src/ ./scripts")
 
 
-commands = ["format", "lint", "status"]
+# This is also used by the autocomplete script.
+# Do not change the number of spaces around the commas or the equal sign.
+
+commands = ["format", "lint", "status", "blorp"]
 
 if __name__ == "__main__":
     import sys

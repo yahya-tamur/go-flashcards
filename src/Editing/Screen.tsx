@@ -1,22 +1,16 @@
-const { useContext } = await import("react");
+const EditingMenu = (await import("@/papers/Editing/Menu")).default;
 
 const Box = (await import("@mui/material/Box")).default;
 
 await import("../App.css");
 
-const AppContext = (await import("../AppContext")).default;
 const Board = (await import("../Board")).default;
 const CommentBox = (await import("../CommentBox")).default;
-const InitializeMenu = (await import("../InitializeMenu")).default;
-const MakeTreeMenu = (await import("../MakeTreeMenu")).default;
 const Tree = (await import("../Tree")).default;
 
 const TopBar = (await import("./TopBar")).default;
 
 const Screen = () => {
-  // useEffect: load exercise.
-  const { c_editingPhase } = useContext(AppContext);
-
   return (
     <main
       style={{
@@ -61,11 +55,7 @@ const Screen = () => {
             <Tree />
           </Box>
           <Box sx={{ flexBasis: "50%", minHeight: 0 }}>
-            {c_editingPhase === "Initialize" ? (
-              <InitializeMenu />
-            ) : (
-              <MakeTreeMenu />
-            )}
+            <EditingMenu />
           </Box>
           <Box sx={{ flexBasis: "27%", minHeight: 0 }}>
             <CommentBox />
