@@ -15,10 +15,10 @@ const BoardSlider = (props: BoardSliderProps) => {
   const {
     c_data,
     c_setData,
-    c_window,
-    c_setWindow,
     c_setErrorMessage,
     c_setErrorWindowOpen,
+    c_window,
+    c_setWindow,
   } = useContext(AppContext);
 
   const [l, r] = props.side === "row" ? [0, 1] : [2, 3];

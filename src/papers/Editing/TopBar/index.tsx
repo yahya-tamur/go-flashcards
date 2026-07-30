@@ -1,10 +1,4 @@
-import { useState, useContext } from "react";
-
-import AppContext from "@/AppContext";
-import { commands } from "@/bindings";
-import { editNewExercise, handleError } from "@/utils";
-
-import NumberSpinner from "@/components/NumberSpinner";
+import { useContext, useState } from "react";
 
 import ClearIcon from "@mui/icons-material/Clear";
 import DownloadIcon from "@mui/icons-material/Download";
@@ -22,18 +16,25 @@ import DialogContentText from "@mui/material/DialogContentText";
 import Paper from "@mui/material/Paper";
 import Tooltip from "@mui/material/Tooltip";
 
+import AppContext from "@/AppContext";
+import { commands } from "@/bindings";
+import { editNewExercise, handleError } from "@/utils";
+
+import NumberSpinner from "@/components/NumberSpinner";
+import ExitButton from "./ExitButton";
+
 const TopBar = () => {
   const {
+    c_cursorDispatch,
     c_data,
     c_setData,
-    c_cursorDispatch,
-    c_setNextLabel,
-    c_setPhase,
-    c_exerciseNumber,
-    c_setExerciseNumber,
     c_setEditingPhase,
     c_setErrorMessage,
     c_setErrorWindowOpen,
+    c_exerciseNumber,
+    c_setExerciseNumber,
+    c_setNextLabel,
+    c_setPhase,
   } = useContext(AppContext);
   const [dialogContent, setDialogContent] = useState("");
   const [savedMsgOpen, setSavedMsgOpen] = useState(false);
@@ -65,25 +66,7 @@ const TopBar = () => {
           alignItems: "center",
         }}
       >
-        <Button
-          variant="outlined"
-          color="button"
-          sx={{ height: "40px" }}
-          onClick={async () => {
-            commands
-              .mainMenu()
-              .then(() => {
-                c_setPhase("Main");
-                //c_setConfig(null);
-                c_setNextLabel("A");
-              })
-              .catch((e) =>
-                handleError(e, c_setErrorMessage, c_setErrorWindowOpen),
-              );
-          }}
-        >
-          Exit
-        </Button>
+        <ExitButton />
         <NumberSpinner
           size="small"
           value={c_exerciseNumber[0]}

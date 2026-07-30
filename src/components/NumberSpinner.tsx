@@ -4,13 +4,13 @@
 import type { NumberField as NF } from "@base-ui/react/number-field";
 
 import { NumberField as BaseNumberField } from "@base-ui/react/number-field";
-import Box from "@mui/material/Box";
 
 import React from "react";
 
 import AddIcon from "@mui/icons-material/Add";
 import RemoveIcon from "@mui/icons-material/Remove";
 
+import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import FormControl from "@mui/material/FormControl";
 import InputAdornment from "@mui/material/InputAdornment";

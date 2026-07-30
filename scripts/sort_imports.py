@@ -1,32 +1,105 @@
+from pathlib import Path
+from collections import defaultdict
+import re
+from time import perf_counter_ns
+import os
+
+
 def indent(s):
     return len(s) - len(s.lstrip())
 
 
+def sortMap(string, end, key=None):
+    left = string.rfind("{", 0, end)
+    if left == -1:
+        return string
+
+    right = string.find("}", left, end)
+
+    indent = None
+    if "\n" in string[left:right]:
+        indent = 0
+        while string[left + indent + 2] == " ":
+            indent += 1
+
+    words = [w.strip() for w in string[left + 1 : right].split(",") if w.strip()]
+
+    if key is not None:
+        words.sort(key=key)
+    else:
+        words.sort()
+
+    if indent is None:
+        return string[:left] + "{ " + ", ".join(words) + " " + string[right:]
+    else:
+        return (
+            string[:left]
+            + "{"
+            + "".join(["\n" + " " * indent + w + "," for w in words])
+            + "\n"
+            + " " * (indent - 2)
+            + string[right:]
+        )
+
+
+def sort_useContext():
+
+    def contextWordsKey(w):
+        if w[:5] == "c_set":
+            return w[5:].lower() + "1"
+        if w[:2] == "c_":
+            return w[2:].lower()
+        print(
+            "sort useContext warning: context variables should start with c_, but found: ",
+            w,
+        )
+        return w
+
+    print("\nsorting use context\n")
+
+    for path in Path("./src/").rglob("*"):
+        # for path in [Path("./src/theme.d.ts")]:
+        start = perf_counter_ns()
+        if path.suffix not in [".ts", ".tsx"]:
+            continue
+        with open(path) as file:
+            file = file.read()
+
+            end = file.find("useContext(AppContext)")
+            if end == -1:
+                continue
+
+            new_file = sortMap(file, end, contextWordsKey)
+
+        color_start, color_end = "\x1b[90m", "\x1b[0m"
+        change = "(unchanged)"
+        if new_file != file:
+            with open(path, "w") as file:
+                file.write(new_file)
+            color_start, color_end = "", ""
+            change = ""
+
+        print(
+            f"{color_start}{path}{color_end} {(perf_counter_ns() - start) // 1_000_000}ms {change}"
+        )
+
+
 def sort_imports():
-    from pathlib import Path
-    from collections import defaultdict
-    import re
-    from time import perf_counter_ns
-    import os
 
-    os.system("npx --loglevel silent prettier -w ./src")
-
-    mod_priorities = {
-        "react": -2,
-        "@tauri-apps": -1,
-        ".": 20,
-    #   "..": -10,
+    priorities = {
+        "react": -20,
+        "@tauri-apps": -10,
+        "@/": 20,
+        "..": 30,
+        ".": 40,
     }
 
-    name_priorities = {} # {"css": -1}
-
-    typ_order = {"plain": 0, "type": 1, "dyn": 2}
+    typ_order = {"type": 0, "plain": 1, "dyn": 2}
 
     def get_key(typ, mod, name):
-        mod_priority = sum(v for (k, v) in mod_priorities.items() if k in mod)
-        name_priority = sum(v for (k, v) in name_priorities.items() if k in name)
+        priority = sum(v for (k, v) in priorities.items() if k in mod + name)
 
-        return (typ_order[typ], mod_priority + name_priority, mod)
+        return (typ_order[typ], priority, mod)
 
     for path in Path("./src/").rglob("*"):
         # for path in [Path("./src/theme.d.ts")]:
@@ -72,8 +145,11 @@ def sort_imports():
                 elif "await import(" in linetext:
                     match = re.search("""await import\\("(.*)\"""", linetext)
                     typ = "dyn"
-                elif linetext[:8] == "import ":
+                elif linetext[:7] == "import " and "from" in linetext:
                     match = re.search("""from "(.*)";""", linetext)
+                    typ = "plain"
+                elif linetext[:7] == "import ":
+                    match = re.search("""import "(.*)";""", linetext)
                     typ = "plain"
                 elif len(linetext) == 0:
                     i += 1
@@ -82,7 +158,7 @@ def sort_imports():
                     break
 
                 if match is None:
-                    print("regex failed. line:")
+                    print("sort import error: regex failed. line:")
                     print(linetext)
                     exit()
 
@@ -91,21 +167,25 @@ def sort_imports():
                 if (w := imp.rfind("/")) != -1:
                     mod, name = (imp[:w], imp[w:])
 
-                #import_lines[get_key(typ, mod, name)].add((name, linetext))
-                
+                w = linetext.find("}")
+                if w != -1:
+                    linetext = sortMap(linetext, w + 1)
+
+                # import_lines[get_key(typ, mod, name)].add((name, linetext))
                 if typ == "dyn":
                     print("sort imports warning: dynamic import?!")
-                
+
                 import_lines[get_key(typ, mod, name)].add((name, linetext))
-                
-               
+
                 i = j + 1
 
             end_of_imports = i
 
             for k in sorted(import_lines.keys()):
                 if len(import_lines[k]) == 0:
-                    print("sort imports error: empty import lines should have been skipped")
+                    print(
+                        "sort imports error: empty import lines should have been skipped"
+                    )
                     exit()
                 for _, line in sorted(import_lines[k]):
                     preamble.append(line)
@@ -132,4 +212,7 @@ def sort_imports():
 
 
 if __name__ == "__main__":
+    os.system("npx --loglevel silent prettier -w ./src")
+
     sort_imports()
+    sort_useContext()

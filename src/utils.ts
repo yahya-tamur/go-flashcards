@@ -1,8 +1,8 @@
 import type { Dispatch, SetStateAction } from "react";
 
 import type {
-  CursorAction,
   Cursor,
+  CursorAction,
   EditingPhaseType,
   StudyPhaseType,
 } from "@/AppContext";

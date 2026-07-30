@@ -1,6 +1,6 @@
 import type { Dispatch, SetStateAction } from "react";
 
-import { useState, useContext } from "react";
+import { useContext, useState } from "react";
 
 import AddIcon from "@mui/icons-material/Add";
 import ClearIcon from "@mui/icons-material/Clear";
@@ -34,13 +34,13 @@ interface MenuProps {
 
 const Menu = (props: MenuProps) => {
   const {
-    c_setData,
-    c_setPhase,
     c_cursorDispatch,
+    c_setData,
     c_setEditingPhase,
-    c_setStudyPhase,
     c_setErrorMessage,
     c_setErrorWindowOpen,
+    c_setPhase,
+    c_setStudyPhase,
   } = useContext(AppContext);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [fileToDelete, setFileToDelete] = useState("");

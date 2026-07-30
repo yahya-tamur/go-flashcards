@@ -1,6 +1,6 @@
 import type { Color, Variant } from "@/bindings";
 
-import { useEffect, useState, useRef, useContext } from "react";
+import { useContext, useEffect, useRef } from "react";
 
 import Paper from "@mui/material/Paper";
 import { useTheme } from "@mui/material/styles";
@@ -12,14 +12,14 @@ import { handleError } from "@/utils";
 const Tree = () => {
   const {
     c_data,
-    c_images,
     c_setData,
     c_setErrorMessage,
     c_setErrorWindowOpen,
+    c_images,
   } = useContext(AppContext);
   const treeBox = useRef<HTMLDivElement>(null);
-  const [tableWidth, setTableWidth] = useState(100);
-  const [tableHeight, setTableHeight] = useState(100);
+  // const [tableWidth, setTableWidth] = useState(100);
+  // const [tableHeight, setTableHeight] = useState(100);
 
   const theme = useTheme();
   const square_size = 30;
@@ -134,98 +134,73 @@ const Tree = () => {
     return null;
   };
 
-  const [lines, setLines] = useState<[number, number, number, number][]>([]);
-  const [paths, setPaths] = useState<
-    [number, number, number, number, number, number, number, number][]
-  >([]);
-  const [moves, setMoves] = useState<
-    [number, number, Color, string, Variant, string][]
-  >([]);
+  // const [lines, setLines] = useState<[number, number, number, number][]>([]);
 
-  useEffect(() => {
-    if (c_data === null || c_data === undefined) {
-      return;
-    }
+  if (c_data === null || c_data === undefined) {
+    return;
+  }
 
-    const table = c_data.table;
-    const num_columns = table.reduce(
-      (m, a) => (a.length > m ? a.length : m),
-      1,
-    );
-    const num_rows = table.length;
-    setTableWidth(2 * margin + gap_size * (num_columns - 1) + square_size);
-    setTableHeight(2 * margin + gap_size * (num_rows - 1) + square_size);
+  const table = c_data.table;
+  const num_columns = table.reduce((m, a) => (a.length > m ? a.length : m), 1);
+  const num_rows = table.length;
+  const tableWidth = 2 * margin + gap_size * (num_columns - 1) + square_size;
+  const tableHeight = 2 * margin + gap_size * (num_rows - 1) + square_size;
 
-    const newLines: [number, number, number, number][] = [];
+  const lines: [number, number, number, number][] = [];
 
-    // horizontal lines
-    table.forEach((line, r) => {
-      for (let c = 0; c < line.length - 1; c++) {
-        if (line[c] !== null && line[c + 1] !== null) {
-          newLines.push([r, c, r, c + 1]);
-        }
+  // horizontal lines
+  table.forEach((line, r) => {
+    for (let c = 0; c < line.length - 1; c++) {
+      if (line[c] !== null && line[c + 1] !== null) {
+        lines.push([r, c, r, c + 1]);
       }
-    });
-    /*if (table[0].length > 1) {
+    }
+  });
+  /*if (table[0].length > 1) {
       newLines.push([0, 0, 0, 1]);
     }*/
-    setLines(newLines);
 
-    const newPaths: [
-      number,
-      number,
-      number,
-      number,
-      number,
-      number,
-      number,
-      number,
-    ][] = [];
-    //diagonal lines
-    for (let r = 1; r < table.length; r++) {
-      let c = 0;
-      while (table[r][c] === null) {
-        c += 1;
-      }
-      const c_ = c - 1;
-      let r_ = r - 1;
-      while (r_ > 0 && table[r_][c_] === null) {
-        r_ -= 1;
-      }
-      const x1 = margin + gap_size * c + square_size / 2;
-      const y1 = margin + gap_size * r + square_size / 2;
-      const x2 = margin + gap_size * c_ + square_size / 2;
-      const y2 = margin + gap_size * r_ + square_size / 2;
-      newPaths.push([
-        x2,
-        y2,
-        x2,
-        y2,
-        x1 - square_size,
-        y1 - square_size,
-        x1,
-        y1,
-      ]);
+  const paths: [
+    number,
+    number,
+    number,
+    number,
+    number,
+    number,
+    number,
+    number,
+  ][] = [];
+  //diagonal lines
+  for (let r = 1; r < table.length; r++) {
+    let c = 0;
+    while (table[r][c] === null) {
+      c += 1;
     }
-    setPaths(newPaths);
-
-    const newMoves: [number, number, Color, string, Variant, string][] = [];
-    table.forEach((line, r) => {
-      line.forEach((mov, c) => {
-        if (mov === null || (r === 0 && c === 0)) {
-          return;
-        }
-        const text =
-          mov.loc === null
-            ? "."
-            : `${"ABCDEFGHJKLMNOPQRST"[mov.loc[0]]}${19 - mov.loc[1]}`;
-        const key = JSON.stringify([r, c, mov.color, text, mov.variant]);
-        newMoves.push([r, c, mov.color, text, mov.variant, key]);
-      });
+    const c_ = c - 1;
+    let r_ = r - 1;
+    while (r_ > 0 && table[r_][c_] === null) {
+      r_ -= 1;
+    }
+    const x1 = margin + gap_size * c + square_size / 2;
+    const y1 = margin + gap_size * r + square_size / 2;
+    const x2 = margin + gap_size * c_ + square_size / 2;
+    const y2 = margin + gap_size * r_ + square_size / 2;
+    paths.push([x2, y2, x2, y2, x1 - square_size, y1 - square_size, x1, y1]);
+  }
+  const moves: [number, number, Color, string, Variant, string][] = [];
+  table.forEach((line, r) => {
+    line.forEach((mov, c) => {
+      if (mov === null || (r === 0 && c === 0)) {
+        return;
+      }
+      const text =
+        mov.loc === null
+          ? "."
+          : `${"ABCDEFGHJKLMNOPQRST"[mov.loc[0]]}${19 - mov.loc[1]}`;
+      const key = JSON.stringify([r, c, mov.color, text, mov.variant]);
+      moves.push([r, c, mov.color, text, mov.variant, key]);
     });
-    setMoves(newMoves);
-  }, [c_data]);
-
+  });
   return (
     <Paper
       sx={{

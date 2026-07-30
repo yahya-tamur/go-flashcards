@@ -14,7 +14,7 @@ type RectLabelGroupProps = {
 };
 
 const RectLabelGroup = (props: RectLabelGroupProps) => {
-  const { c_data, c_images, c_cursor, c_cursorDispatch } =
+  const { c_cursor, c_cursorDispatch, c_data, c_images } =
     useContext(AppContext);
 
   const img_size = "24px";

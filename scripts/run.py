@@ -55,7 +55,7 @@ def status():
 # This is also used by the autocomplete script.
 # Do not change the number of spaces around the commas or the equal sign.
 
-commands = ["format", "lint", "status", "blorp"]
+commands = ["format", "lint", "status"]
 
 if __name__ == "__main__":
     import sys

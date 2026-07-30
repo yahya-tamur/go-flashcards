@@ -1,7 +1,5 @@
 import { useContext } from "react";
 
-import EditingMenu from "@/papers/Editing/Menu";
-
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import Paper from "@mui/material/Paper";
@@ -12,20 +10,22 @@ import { cursorColor, handleError, setClick, studyStep } from "@/utils";
 
 import ProgressBar from "@/components/ProgressBar";
 
+import EditingMenu from "@/papers/Editing/Menu";
+
 const Menu = () => {
   const {
-    c_studyPhase,
-    c_data,
-    c_setData,
-    c_cursor,
-    c_setStudyPhase,
-    c_feedback,
-    c_setFeedback,
     c_answerMessage,
     c_setAnswerMessage,
+    c_cursor,
     c_cursorDispatch,
+    c_data,
+    c_setData,
     c_setErrorMessage,
     c_setErrorWindowOpen,
+    c_feedback,
+    c_setFeedback,
+    c_studyPhase,
+    c_setStudyPhase,
   } = useContext(AppContext);
 
   return (

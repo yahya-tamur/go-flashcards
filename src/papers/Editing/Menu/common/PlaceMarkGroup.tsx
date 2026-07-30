@@ -12,7 +12,7 @@ type DragLabelGroupProps = {
 };
 
 const DragLabelGroup = (props: DragLabelGroupProps) => {
-  const { c_data, c_images, c_cursor, c_cursorDispatch, c_nextLabel } =
+  const { c_cursor, c_cursorDispatch, c_data, c_images, c_nextLabel } =
     useContext(AppContext);
 
   const img_size = "24px";

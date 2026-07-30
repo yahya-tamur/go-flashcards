@@ -1,12 +1,4 @@
-import { useEffect, useState, useContext } from "react";
-
-import AppContext from "@/AppContext";
-import { commands } from "@/bindings";
-import { handleError, setClick } from "@/utils";
-
-import BoardSlider from "@/components/BoardSlider";
-import PlaceMarkGroup from "@/components/PlaceMarkGroup";
-import RectLabelGroup from "@/components/RectLabelGroup";
+import { useContext } from "react";
 
 import CheckIcon from "@mui/icons-material/Check";
 import ClearIcon from "@mui/icons-material/Clear";
@@ -18,26 +10,28 @@ import TextField from "@mui/material/TextField";
 import ToggleButton from "@mui/material/ToggleButton";
 import ToggleButtonGroup from "@mui/material/ToggleButtonGroup";
 
+import AppContext from "@/AppContext";
+import { commands } from "@/bindings";
+import { handleError, setClick } from "@/utils";
+
+import BoardSlider from "../common/BoardSlider";
+import PlaceMarkGroup from "../common/PlaceMarkGroup";
+import RectLabelGroup from "../common/RectLabelGroup";
+
 const MakeTreeMenu = () => {
   const {
-    c_data,
-    c_setData,
     c_cursor,
     c_cursorDispatch,
-    c_images,
-    c_nextLabel,
-    c_setNextLabel,
+    c_data,
+    c_setData,
     c_setEditingPhase,
     c_setErrorMessage,
     c_setErrorWindowOpen,
+    c_images,
+    c_nextLabel,
+    c_setNextLabel,
   } = useContext(AppContext);
-  const [variant, setVariant] = useState("None");
-
-  // i think the array access interfered with state ?
-
-  useEffect(() => {
-    setVariant(c_data?.variant ?? "None");
-  }, [c_data]);
+  const variant = c_data?.variant ?? "None";
 
   return (
     <Paper
@@ -170,7 +164,6 @@ const MakeTreeMenu = () => {
           exclusive
           size="small"
           onChange={async (_e, newValue) => {
-            setVariant(newValue);
             if (newValue === null) {
               newValue = "None";
             }

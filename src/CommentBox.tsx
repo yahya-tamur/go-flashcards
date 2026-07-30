@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef, useContext } from "react";
+import { useContext, useEffect, useRef, useState } from "react";
 
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
@@ -12,21 +12,26 @@ import { handleError } from "@/utils";
 
 const CommentBox = () => {
   const {
-    c_phase,
-    c_studyPhase,
     c_data,
-    c_images,
     c_setErrorMessage,
     c_setErrorWindowOpen,
+    c_images,
+    c_phase,
+    c_studyPhase,
   } = useContext(AppContext);
 
   const [comment, setComment] = useState("");
+
+  const data_comment = useRef("");
+
   useEffect(() => {
-    const comment = c_data?.comment ?? null;
-    if (comment !== null) {
-      setComment(comment);
+    const new_data_comment = c_data?.comment ?? "";
+    if (data_comment.current !== new_data_comment) {
+      data_comment.current = new_data_comment;
+      setComment(new_data_comment);
     }
   }, [c_data]);
+
   const img_size = "20px";
   const update_comment = (comment: string) => {
     commands

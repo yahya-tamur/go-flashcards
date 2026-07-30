@@ -1,13 +1,14 @@
-import { useEffect, useState, useContext } from "react";
+import { useContext, useEffect, useState } from "react";
 
 import Box from "@mui/material/Box";
 
 import AppContext from "@/AppContext";
-import { commands } from "@/bindings.js";
-import { handleError } from "@/utils.js";
 
 import EditConfig from "./EditConfig.jsx";
 import Menu from "./Menu.jsx";
+
+import { commands } from "@/bindings.js";
+import { handleError } from "@/utils.js";
 
 const Screen = () => {
   const [exercises, setExercises] = useState<string[]>([]);

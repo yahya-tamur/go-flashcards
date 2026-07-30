@@ -1,13 +1,15 @@
+import type { PaletteMode, Theme, ThemeOptions } from "@mui/material";
+
 import type {
-  ImageVariant,
-  StudyPhaseType,
-  EditingPhaseType,
-  Cursor,
-  PhaseType,
-  CursorAction,
   ClickCursor,
+  Cursor,
+  CursorAction,
+  EditingPhaseType,
+  ImageVariant,
   PaintCursor,
+  PhaseType,
   RectangleCursor,
+  StudyPhaseType,
   ThemeConfig,
 } from "@/AppContext";
 import type {
@@ -18,9 +20,7 @@ import type {
   StonePaint,
 } from "@/bindings";
 
-import type { PaletteMode, ThemeOptions, Theme } from "@mui/material";
-
-import { useState, useReducer, useRef, useEffect, useCallback } from "react";
+import { useCallback, useEffect, useReducer, useRef, useState } from "react";
 
 import Button from "@mui/material/Button";
 import CssBaseline from "@mui/material/CssBaseline";
@@ -33,9 +33,8 @@ import { ThemeProvider, createTheme } from "@mui/material/styles";
 import mime from "mime";
 
 import AppContext from "@/AppContext";
-
 import { commands } from "@/bindings";
-import { wEquals, handleError } from "@/utils";
+import { handleError, wEquals } from "@/utils";
 
 import EditingScreen from "@/Editing/Screen";
 
@@ -446,23 +445,7 @@ function App() {
       })
       .catch((e) => handleError(e, c_setErrorMessage, c_setErrorWindowOpen));
   }, [c_loadTheme]);
-  /*
-  useEffect(() => {
-    commands.getConfig()
-      .then((config) => {
-        let theme_options = 
-      })
-  }, [])
-  useEffect(() => {
-      
-      let d = document.getElementById("blob") as HTMLImageElement;
-      if (d) {
-        d.src = url;
-      }
 
-      console.log(url, d);
-    });
-  }, []);*/
 
   const [c_cursor, c_cursorDispatch] = useReducer(
     cursorReducer,

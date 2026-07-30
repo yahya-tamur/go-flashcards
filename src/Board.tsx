@@ -1,18 +1,19 @@
 import type { PaintTool, RectangleTool } from "./AppContext";
 import type { Grid } from "./bindings";
 
-import { useEffect, useState, useRef, useContext, useReducer } from "react";
+import { useContext, useEffect, useReducer, useRef, useState } from "react";
 
 import Paper from "@mui/material/Paper";
 
 import AppContext from "@/AppContext";
 import { commands } from "@/bindings";
 import {
-  handleError,
-  studyStep,
   cursorColor,
+  handleError,
+  markEquals,
   markEqualsCursor,
   setClick,
+  studyStep,
 } from "@/utils";
 
 const letters = "ABCDEFGHJKLMNOPQRST".split("");
@@ -67,21 +68,21 @@ const gridReducer = (grid: Grid, action: GridAction): Grid => {
       return grid;
     }
     case "set_grid": {
+      if (
+        action.grid.every((line, i) =>
+          line.every(
+            (loc, j) =>
+              grid[i][j].stone === loc.stone &&
+              markEquals(grid[i][j].mark, loc.mark),
+          ),
+        )
+      ) {
+        return grid;
+      }
       return action.grid;
     }
   }
 };
-
-/*
-  have: dragStart <works in DragRectangle, DragPlace>, dragCurrent
-
-  useEffect({if !dragStart {commands.setGrid(grid)} [grid, dragStart] )
-  useEffect setGhosts: probably ok, but maybe inline or usememo or something?
-
-  snapshot should return grid, not whatever it returns now.
-  can even change backend to use grid instead
-
-*/
 
 const ARRAY19 = [...Array(19)].map((_, i) => i);
 
@@ -89,21 +90,21 @@ const Board = () => {
   const [grid, gridDispatch] = useReducer(gridReducer, empty_grid);
 
   const {
-    c_phase,
-    c_images,
-    c_studyPhase,
-    c_data,
-    c_setData,
+    c_setAnswerMessage,
     c_cursor,
     c_cursorDispatch,
-    c_nextLabel,
-    c_window,
-    c_setFeedback,
-    c_setStudyPhase,
-    c_setAnswerMessage,
-    c_setWindow,
+    c_data,
+    c_setData,
     c_setErrorMessage,
     c_setErrorWindowOpen,
+    c_setFeedback,
+    c_images,
+    c_nextLabel,
+    c_phase,
+    c_studyPhase,
+    c_setStudyPhase,
+    c_window,
+    c_setWindow,
   } = useContext(AppContext);
   const board_svg = useRef<SVGSVGElement>(null);
   const paper = useRef<HTMLDivElement>(null);
@@ -117,24 +118,35 @@ const Board = () => {
   const [boardBoxWidth, setBoardBoxWidth] = useState("0px");
   const [boardBoxHeight, setBoardBoxHeight] = useState("0px");
 
+  const data_window = useRef<[number, number, number, number]>([0, 18, 0, 18]);
+
   useEffect(() => {
-    const contextdata = c_data;
-    if (contextdata === null) {
-      return;
+    const new_data_window = c_data?.window ?? [0, 18, 0, 18];
+    if (!data_window.current.every((v, i) => v === new_data_window[i])) {
+      data_window.current = new_data_window;
+      c_setWindow(new_data_window);
     }
-    c_setWindow((window) =>
-      window.every((val, index) => contextdata.window[index] === val)
-        ? window
-        : contextdata.window,
-    );
   }, [c_data, c_setWindow]);
 
-  const [viewBox, setViewBox] = useState<[number, number, number, number]>([
-    0,
-    0,
-    board_size,
-    board_size,
-  ]);
+  const [left, right, top, bottom] = c_window;
+
+  // Offset viewBox.
+
+  //maybe add bigger margin for edges or letters on every side
+  const vbleft = square_size * left + (left > 0 ? -partial_border : 0);
+  const vbtop = square_size * top + (top > 0 ? -partial_border : 0);
+  const vbwidth =
+    2 * margin +
+    (right - left) * square_size +
+    (left > 0 ? partial_border : 0) +
+    (right < 18 ? partial_border : 0);
+  const vbheight =
+    2 * margin +
+    (bottom - top) * square_size +
+    (top > 0 ? partial_border : 0) +
+    (bottom < 18 ? partial_border : 0);
+
+  const viewBox = [vbleft, vbtop, vbwidth, vbheight];
 
   const get_coord = (
     e: React.MouseEvent<SVGSVGElement>,
@@ -156,8 +168,6 @@ const Board = () => {
 
     i = (i - margin) / square_size;
     j = (j - margin) / square_size;
-
-    const [left, right, top, bottom] = c_window;
 
     // correction for partial boards
     i += left + (left > 0 ? -partial_border / square_size : 0);
@@ -204,26 +214,6 @@ const Board = () => {
       return;
     }
 
-    const [left, right, top, bottom] = c_window;
-
-    // Offset viewBox.
-
-    //maybe add bigger margin for edges or letters on every side
-    const vbleft = square_size * left + (left > 0 ? -partial_border : 0);
-    const vbtop = square_size * top + (top > 0 ? -partial_border : 0);
-    const vbwidth =
-      2 * margin +
-      (right - left) * square_size +
-      (left > 0 ? partial_border : 0) +
-      (right < 18 ? partial_border : 0);
-    const vbheight =
-      2 * margin +
-      (bottom - top) * square_size +
-      (top > 0 ? partial_border : 0) +
-      (bottom < 18 ? partial_border : 0);
-
-    setViewBox([vbleft, vbtop, vbwidth, vbheight]);
-
     const observer = new ResizeObserver(() => {
       if (paper.current === null) {
         return;
@@ -245,7 +235,7 @@ const Board = () => {
     return () => {
       observer.disconnect();
     };
-  }, [paper, c_window]);
+  }, [paper, vbwidth, vbheight]);
 
   useEffect(() => {
     if (c_data === null) {
@@ -253,73 +243,52 @@ const Board = () => {
     }
 
     gridDispatch({ type: "set_grid", grid: c_data.game.grid });
-  }, [c_window, c_data]);
+  }, [c_data]);
 
-  const [borders, setBorders] = useState<[number, number, string][]>([]);
-  const [partialRect, setPartialRect] = useState<
-    [number, number, number, number]
-  >([0, 0, board_size, board_size]);
+  const stroke_width = 0; // but it's 1??
 
-  useEffect(() => {
-    const [left, right, top, bottom] = c_window;
+  const partialLeft =
+    left > 0 ? margin + square_size * left - partial - stroke_width / 2 : 0;
 
-    const stroke_width = 0; // but it's 1??
+  const partialTop = top > 0 ? margin + square_size * top - partial : 0;
 
-    const partialLeft =
-      left > 0 ? margin + square_size * left - partial - stroke_width / 2 : 0;
+  const partialRight =
+    right < 18
+      ? margin + square_size * right + partial + stroke_width / 2
+      : board_size;
 
-    const partialTop = top > 0 ? margin + square_size * top - partial : 0;
+  const partialBottom =
+    bottom < 18 ? margin + square_size * bottom + partial : board_size;
 
-    const partialRight =
-      right < 18
-        ? margin + square_size * right + partial + stroke_width / 2
-        : board_size;
-
-    const partialBottom =
-      bottom < 18 ? margin + square_size * bottom + partial : board_size;
-
-    setPartialRect([
-      partialLeft,
-      partialTop,
-      partialRight - partialLeft,
-      partialBottom - partialTop,
-    ]);
-
-    const newBorders: [number, number, string][] = [];
-    if (left == 0) {
-      for (let j = top; j <= bottom; j++) {
-        newBorders.push([
-          margin - 70,
-          margin + square_size * j,
-          String(19 - j),
-        ]);
-      }
+  const borders: [number, number, string][] = [];
+  if (left == 0) {
+    for (let j = top; j <= bottom; j++) {
+      borders.push([margin - 70, margin + square_size * j, String(19 - j)]);
     }
-    if (right == 18) {
-      for (let j = top; j <= bottom; j++) {
-        newBorders.push([
-          board_size - margin + 70,
-          margin + square_size * j,
-          String(19 - j),
-        ]);
-      }
+  }
+  if (right == 18) {
+    for (let j = top; j <= bottom; j++) {
+      borders.push([
+        board_size - margin + 70,
+        margin + square_size * j,
+        String(19 - j),
+      ]);
     }
-    if (top == 0) {
-      for (let i = left; i <= right; i++) {
-        newBorders.push([margin + square_size * i, margin - 70, letters[i]]);
-      }
+  }
+  if (top == 0) {
+    for (let i = left; i <= right; i++) {
+      borders.push([margin + square_size * i, margin - 70, letters[i]]);
     }
-    if (bottom == 18) {
-      for (let i = left; i <= right; i++) {
-        newBorders.push([
-          margin + square_size * i,
-          board_size - margin + 70,
-          letters[i],
-        ]);
-      }
+  }
+  if (bottom == 18) {
+    for (let i = left; i <= right; i++) {
+      borders.push([
+        margin + square_size * i,
+        board_size - margin + 70,
+        letters[i],
+      ]);
     }
-    setBorders(newBorders);
-  }, [c_window, board_size]);
+  }
 
   return (
     <Paper
@@ -514,19 +483,19 @@ const Board = () => {
           <defs>
             <mask id="viewMask" maskUnits="objectBoundingBox">
               <rect
-                x={partialRect[0]}
-                y={partialRect[1]}
-                width={partialRect[2]}
-                height={partialRect[3]}
+                x={partialLeft}
+                y={partialTop}
+                width={partialRight - partialLeft}
+                height={partialBottom - partialTop}
                 fill="white"
               />
             </mask>
             <mask id="labelMask" maskUnits="objectBoundingBox">
               <rect
-                x={partialRect[0]}
-                y={partialRect[1]}
-                width={partialRect[2]}
-                height={partialRect[3]}
+                x={partialLeft}
+                y={partialTop}
+                width={partialRight - partialLeft}
+                height={partialBottom - partialTop}
                 fill="white"
               />
               {ARRAY19.flatMap((i) => ARRAY19.map((j) => [i, j]))
@@ -610,7 +579,6 @@ const Board = () => {
               {[3, 9, 15]
                 .flatMap((i) => [3, 9, 15].map((j) => [i, j]))
                 .filter(([i, j]) => {
-                  const [left, right, top, bottom] = c_window;
                   return top <= j && j <= bottom && left <= i && i <= right;
                 })
                 .map(([i, j]) => (

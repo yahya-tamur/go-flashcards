@@ -1,13 +1,15 @@
+import type { ReactCodeMirrorRef } from "@uiw/react-codemirror";
+
 import type { Dispatch, SetStateAction } from "react";
 
 import type { ValidationResult } from "@/bindings";
 
-import type { ReactCodeMirrorRef } from "@uiw/react-codemirror";
+import CodeMirror from "@uiw/react-codemirror";
 
-import { useEffect, useState, useRef, useContext } from "react";
+import { useContext, useEffect, useRef, useState } from "react";
 
 import { StreamLanguage } from "@codemirror/language";
-import { StateField, StateEffect } from "@codemirror/state";
+import { StateEffect, StateField } from "@codemirror/state";
 import { Decoration, EditorView } from "@codemirror/view";
 
 import { toml } from "@codemirror/legacy-modes/mode/toml";
@@ -17,7 +19,6 @@ import Button from "@mui/material/Button";
 import Paper from "@mui/material/Paper";
 
 import { vscodeDark as editorTheme } from "@uiw/codemirror-theme-vscode";
-import CodeMirror from "@uiw/react-codemirror";
 
 import AppContext from "@/AppContext";
 import { commands } from "@/bindings";
@@ -71,7 +72,7 @@ const scrollStyle = EditorView.theme({
     borderBottom: "3px solid red",
     backgroundColor: "#5d6e4dff",
   },
-  ".cm-content": { minHeight: "calc(100vh - 90px)" },
+  ".cm-content": { minHeight: "calc(100vh - 110px)" },
 });
 
 interface EditConfigProps {

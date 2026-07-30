@@ -1,10 +1,10 @@
-import EditingMenu from "@/papers/Editing/Menu";
-
 import Box from "@mui/material/Box";
 
 import Board from "@/Board";
 import CommentBox from "@/CommentBox";
 import Tree from "@/Tree";
+
+import EditingMenu from "@/papers/Editing/Menu";
 
 import TopBar from "./TopBar";
 

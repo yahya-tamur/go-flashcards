@@ -1,11 +1,8 @@
 //import type { Color, Variant } from "../bindings";
-import {
-  useEffect,
-  /*useState, useRef, */ useContext,
-  useReducer,
-} from "react";
+import { useContext, useEffect, useReducer } from "react";
 
 import Box from "@mui/material/Box";
+
 //import { useTheme } from "@mui/material/styles";
 
 import AppContext from "@/AppContext";

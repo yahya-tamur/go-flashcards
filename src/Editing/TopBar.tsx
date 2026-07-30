@@ -1,4 +1,4 @@
-import { useState, useContext } from "react";
+import { useContext, useState } from "react";
 
 import ClearIcon from "@mui/icons-material/Clear";
 import DownloadIcon from "@mui/icons-material/Download";
@@ -24,16 +24,16 @@ import NumberSpinner from "@/components/NumberSpinner";
 
 const TopBar = () => {
   const {
+    c_cursorDispatch,
     c_data,
     c_setData,
-    c_cursorDispatch,
-    c_setNextLabel,
-    c_setPhase,
-    c_exerciseNumber,
-    c_setExerciseNumber,
     c_setEditingPhase,
     c_setErrorMessage,
     c_setErrorWindowOpen,
+    c_exerciseNumber,
+    c_setExerciseNumber,
+    c_setNextLabel,
+    c_setPhase,
   } = useContext(AppContext);
   const [dialogContent, setDialogContent] = useState("");
   const [savedMsgOpen, setSavedMsgOpen] = useState(false);

@@ -12,19 +12,19 @@ import NumberSpinner from "@/components/NumberSpinner";
 
 const TopBar = () => {
   const {
-    c_studyPhase,
+    c_cursorDispatch,
     c_data,
     c_setData,
-    c_exerciseNumber,
-    c_setExerciseNumber,
-    c_setNextLabel,
-    c_setStudyPhase,
-    c_setPhase,
-    c_setFeedback,
-    c_cursorDispatch,
     c_setEditingPhase,
     c_setErrorMessage,
     c_setErrorWindowOpen,
+    c_exerciseNumber,
+    c_setExerciseNumber,
+    c_setFeedback,
+    c_setNextLabel,
+    c_setPhase,
+    c_studyPhase,
+    c_setStudyPhase,
   } = useContext(AppContext);
   return (
     <Paper
