@@ -7,8 +7,11 @@ pub trait OsFileSystem: Sized {
     //later, read that from file.
     fn initialize(app: &tauri::AppHandle) -> Result<Self>;
 
-    // should open with read = true, write = true, create = true, truncate = false
-    fn open_file(&self, folders: &[&str], file: &str) -> Result<(bool, File)>;
+    fn file_exists(&self, folders: &[&str], file: &str) -> Result<bool>;
+
+    // should open with equivalent of read = true, write = true, create = true, truncate = false
+    fn open_file(&self, folders: &[&str], file: &str) -> Result<File>;
+
     fn delete_file(&self, folders: &[&str], file: &str) -> Result<()>;
     fn list_exercises(&self) -> Result<Vec<String>>;
     fn pick_sgf(&self) -> Result<Option<File>>;

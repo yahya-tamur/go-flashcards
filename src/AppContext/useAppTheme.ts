@@ -1,7 +1,5 @@
 import type { Dispatch } from "react";
 
-import type { ImageVariant, ThemeConfig } from "./types";
-
 import { startTransition, useActionState, useCallback, useEffect } from "react";
 
 import {
@@ -14,6 +12,8 @@ import {
 import mime from "mime";
 
 import { commands } from "@/bindings";
+
+import { APP_IMAGES, type AppImage, type ThemeConfig } from "./types";
 
 const theme_from_import = (theme_import: ThemeOptions): Theme => {
   const theme = createTheme({
@@ -46,26 +46,39 @@ const theme_from_import = (theme_import: ThemeOptions): Theme => {
   });
 };
 
-const assets = new Map();
+const assets = new Map<string, Asset>();
+
+type Asset = {
+  src: string;
+  found: boolean;
+};
 
 // can throw! (probably replace this with eslint ignore)
-const getAsset = async (asset: string): Promise<string> => {
-  if (assets.has(asset)) {
-    return assets.get(asset);
+const getAsset = async (name: string): Promise<Asset> => {
+  try {
+    const map_asset = assets.get(name);
+    if (map_asset != undefined) {
+      return map_asset;
+    }
+    const binary = await commands.getAsset(name);
+    const type = mime.getType(name) ?? "application/octet-stream";
+    const blob = new Blob([binary], { type });
+    const url = URL.createObjectURL(blob);
+    const asset = { src: url, found: true };
+
+    assets.set(name, asset);
+
+    return asset;
+  } catch {
+    return { src: "./placeholder", found: false };
   }
-  const binary = await commands.getAsset(asset);
-  const type = mime.getType(asset) ?? "application/octet-stream";
-  const blob = new Blob([binary], { type });
-  const url = URL.createObjectURL(blob);
-  assets.set(asset, url);
-  return url;
 };
 
 export type AppTheme = {
   name: string;
-  images: Record<ImageVariant, string>;
+  images: Record<AppImage, string>;
   theme: Theme;
-  error: null | unknown;
+  error: null | string;
 };
 
 const themeReducer = async (
@@ -82,28 +95,34 @@ const themeReducer = async (
     );
 
     const theme = theme_from_import(theme_config.themeOptions);
-    const images = {
-      Delete: await getAsset(theme_config.images.Delete),
-      DeleteMark: await getAsset(theme_config.images.DeleteMark),
-      Black: await getAsset(theme_config.images.Black),
-      White: await getAsset(theme_config.images.White),
-      Triangle: await getAsset(theme_config.images.Triangle),
-      Circle: await getAsset(theme_config.images.Circle),
-      Cross: await getAsset(theme_config.images.Cross),
-      Square: await getAsset(theme_config.images.Square),
-      BlackTerritory: await getAsset(theme_config.images.BlackTerritory),
-      WhiteTerritory: await getAsset(theme_config.images.WhiteTerritory),
-      Board: await getAsset(theme_config.images.Board),
-    };
+    const images = new Object() as Record<AppImage, string>;
+
+    const errors = [];
+
+    for (const name of APP_IMAGES) {
+      const asset = await getAsset(theme_config.images[name]);
+      if (!asset.found) {
+        errors.push(theme_config.images[name]);
+      }
+      images[name] = asset.src;
+    }
+
+    const error =
+      errors.length == 0
+        ? null
+        : "could not find image" +
+          (errors.length === 1 ? "" : "s") +
+          ": " +
+          errors.join(", ");
 
     return {
       name: newTheme,
       theme,
       images,
-      error: null,
+      error,
     };
-  } catch (e) {
-    return { ...defaultAppTheme(), error: e };
+  } catch {
+    return { ...defaultAppTheme(), error: "invalid theme." };
   }
 };
 
@@ -129,7 +148,8 @@ const defaultAppTheme = () => ({
 
 const useAppTheme = (
   handleError: (e: unknown) => void,
-): [Theme, Record<ImageVariant, string>, Dispatch<string>, boolean] => {
+  setInitialLoad: (e: boolean) => void,
+): [Theme, Record<AppImage, string>, Dispatch<string>, boolean] => {
   const [theme, themeAction, themePending] = useActionState(
     themeReducer,
     defaultAppTheme(),
@@ -144,9 +164,12 @@ const useAppTheme = (
   );
 
   useEffect(() => {
-    commands.getConfig().then((config) => {
-      setTheme(config.theme);
-    }).catch(e => handleError(e));
+    commands
+      .getConfig()
+      .then((config) => {
+        setTheme(config.theme);
+      })
+      .catch((e) => handleError(e));
   }, [setTheme, handleError]);
 
   //maybe reconsider, but can't put this inside themeAction, so idk.
@@ -155,6 +178,12 @@ const useAppTheme = (
       handleError(theme.error);
     }
   }, [theme, handleError]);
+
+  useEffect(() => {
+    if (!themePending) {
+      setInitialLoad(false);
+    }
+  }, [setInitialLoad, themePending]);
 
   return [theme.theme, theme.images, setTheme, themePending];
 };

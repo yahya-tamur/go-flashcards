@@ -23,7 +23,7 @@ Current Actual Goal
 --------------
 - comment doesn't change on move
 - replace some events with useSyncExternalStore (listening to component size changes)
-
+- new exercise doesn't work
 - reorganizing frontend
   - folders for papers, files for elements, index.tsx
   
@@ -59,6 +59,7 @@ bugs / small improvements
   - prev, children
 - Ctrl - S
 - disable exercise loading when invalid config.
+  - also check for theme error
 - import from sgf ignored AB property in example sgf file!!
 - reset label when moving exercises
   - increment number labels too

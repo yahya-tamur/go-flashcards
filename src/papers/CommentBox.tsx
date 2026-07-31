@@ -54,7 +54,6 @@ const CommentBox = () => {
       // just in case
       textAreaHeight -= 1;
       const heightPerRow = 23;
-      console.log(Math.max(2, Math.floor(textAreaHeight / heightPerRow)));
       setRows(Math.max(2, Math.floor(textAreaHeight / heightPerRow)));
     });
 

@@ -1,6 +1,6 @@
-import { useReducer } from "react";
+import type { Color, MarkPaint, RectangleMark, StonePaint } from "@/bindings";
 
-import { Color, MarkPaint, RectangleMark, StonePaint } from "@/bindings";
+import { useReducer } from "react";
 
 export type ClickTool =
   { value: "Black"; layer: "stone" } | { value: "White"; layer: "stone" };

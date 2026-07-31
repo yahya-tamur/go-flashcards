@@ -45,18 +45,17 @@ impl OsFileSystem for WindowsLinuxFileSystem {
         })
     }
 
-    fn open_file(&self, folders: &[&str], file: &str) -> Result<(bool, File)> {
-        let exists = self.resolve(folders, file).try_exists()?;
-        let path = self.resolve(folders, file);
-
-        let file = OpenOptions::new()
+    fn open_file(&self, folders: &[&str], file: &str) -> Result<File> {
+        Ok(OpenOptions::new()
             .read(true)
             .write(true)
             .create(true)
             .truncate(false)
-            .open(path)?;
+            .open(self.resolve(folders, file))?)
+    }
 
-        Ok((!exists, file))
+    fn file_exists(&self, folders: &[&str], file: &str) -> Result<bool> {
+        Ok(self.resolve(folders, file).try_exists()?)
     }
 
     fn delete_file(&self, folders: &[&str], file: &str) -> Result<()> {

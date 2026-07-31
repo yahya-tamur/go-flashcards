@@ -22,8 +22,6 @@ function App() {
 
   const { c_closeErrorWindow } = useDispatchContext();
 
-  console.log(c_phase === "Main");
-
   return (
     <>
       {c_phase === "Main" ? (

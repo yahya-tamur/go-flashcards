@@ -1,8 +1,8 @@
 import { defineConfig } from "vite";
-import react, { reactCompilerPreset } from '@vitejs/plugin-react';
-import babel from '@rolldown/plugin-babel';
+import react, { reactCompilerPreset } from "@vitejs/plugin-react";
+import babel from "@rolldown/plugin-babel";
 import process from "node:process";
-import path from 'path';
+import path from "path";
 
 const host = process.env.TAURI_DEV_HOST;
 
@@ -11,21 +11,30 @@ export default defineConfig(({ command }) => ({
   plugins: [
     react(),
     babel({
-      presets: [reactCompilerPreset()]
+      presets: [reactCompilerPreset()],
     }),
-     {
-      name: 'inject-react-devtools-script',
-      transformIndexHtml(html) {
-        if (command === 'serve') {
-          return {
-            html,
-            tags: [
-              {
-                tag: 'script',
-                attrs: { src: 'http://localhost:8097' },
-                injectTo: 'head',
-              },
-            ],
+    {
+      name: "inject-react-devtools-script",
+      async transformIndexHtml(html) {
+        if (command === "serve") {
+          try {
+            const resp = await fetch("http://localhost:8097", {
+              method: "HEAD",
+            });
+            if (resp.ok) {
+              return {
+                html,
+                tags: [
+                  {
+                    tag: "script",
+                    attrs: { src: "http://localhost:8097" },
+                    injectTo: "head",
+                  },
+                ],
+              };
+            }
+          } catch {
+            console.log("Could not connect to react devtools.");
           }
         }
       },
@@ -33,8 +42,8 @@ export default defineConfig(({ command }) => ({
   ],
   resolve: {
     alias: {
-      "@": path.resolve(__dirname, './src'),
-    }
+      "@": path.resolve(__dirname, "./src"),
+    },
   },
 
   // Vite options tailored for Tauri development and only applied in `tauri dev` or `tauri build`
@@ -60,8 +69,8 @@ export default defineConfig(({ command }) => ({
   },
   build: {
     chunkSizeWarningLimit: 10_000_000, // should be ok since it's loaded from local?
-  }
- /* build: {
+  },
+  /* build: {
     rolldownOptions: {
       output: {
         codeSplitting: {

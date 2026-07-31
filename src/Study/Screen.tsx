@@ -2,9 +2,9 @@ import Box from "@mui/material/Box";
 import Paper from "@mui/material/Paper";
 
 import { usePhaseContext } from "@/AppContext";
-import Board from "@/Board";
-import CommentBox from "@/CommentBox";
-import Tree from "@/Tree";
+import Board from "@/papers/Board";
+import CommentBox from "@/papers/CommentBox";
+import Tree from "@/papers/Tree";
 
 import Menu from "./Menu";
 import TopBar from "./TopBar";

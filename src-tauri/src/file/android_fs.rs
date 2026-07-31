@@ -110,24 +110,25 @@ impl OsFileSystem for AndroidFileSystem {
         })
     }
 
-    fn open_file(&self, folders: &[&str], file: &str) -> Result<(bool, File)> {
-        let mut created = false;
-
+    fn open_file(&self, folders: &[&str], file: &str) -> Result<File> {
         let path = self.resolve_path(folders)?;
 
         let file_path = match check_directory(&self.app, &path, EntryQuery::File { name: file })? {
             Some(path_) => path_,
-            None => {
-                created = true;
-                self.app.android_fs().create_new_file(&path, file, None)?
-            }
+            None => self.app.android_fs().create_new_file(&path, file, None)?,
         };
 
         let file = self
             .app
             .android_fs()
             .open_file(&file_path, FileAccessMode::ReadWrite)?;
-        Ok((created, file))
+        Ok(file)
+    }
+
+    fn file_exists(&self, folders: &[&str], file: &str) -> Result<bool> {
+        let path = self.resolve_path(folders)?;
+
+        Ok(check_directory(&self.app, &path, EntryQuery::File { name: file })?.is_some())
     }
 
     fn delete_file(&self, folders: &[&str], file: &str) -> Result<()> {

@@ -1,5 +1,3 @@
-import ClearIcon from "@mui/icons-material/Clear";
-
 import Box from "@mui/material/Box";
 import ToggleButton from "@mui/material/ToggleButton";
 import ToggleButtonGroup from "@mui/material/ToggleButtonGroup";
@@ -67,7 +65,10 @@ const PlaceStoneGroup = (props: PlaceStoneGroupProps) => {
           />
         </ToggleButton>
         <ToggleButton value={JSON.stringify({ type: "paint", tool: "Delete" })}>
-          <ClearIcon color="error" sx={{ height: img_size, width: img_size }} />
+          <img
+            src={c_images["Delete"]}
+            style={{ height: img_size, width: img_size }}
+          />
         </ToggleButton>
       </ToggleButtonGroup>
     </Box>

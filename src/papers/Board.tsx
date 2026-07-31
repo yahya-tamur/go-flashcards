@@ -25,6 +25,8 @@ import {
 
 const letters = "ABCDEFGHJKLMNOPQRST".split("");
 
+const ARRAY19 = [...Array(19)].map((_, i) => i);
+
 type GridAction =
   | {
       type: "set_temp";
@@ -37,8 +39,8 @@ type GridAction =
       grid: Grid;
     };
 
-const empty_grid = Array.from({ length: 19 }, () =>
-  Array(19).fill({ stone: null, mark: null }),
+const empty_grid = ARRAY19.map(() =>
+  ARRAY19.map(() => ({ stone: null, mark: null })),
 ) as Grid;
 
 const gridReducer = (grid: Grid, action: GridAction): Grid => {
@@ -90,8 +92,6 @@ const gridReducer = (grid: Grid, action: GridAction): Grid => {
     }
   }
 };
-
-const ARRAY19 = [...Array(19)].map((_, i) => i);
 
 const Board = () => {
   const [grid, gridDispatch] = useReducer(gridReducer, empty_grid);

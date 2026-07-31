@@ -9,7 +9,7 @@ use indexmap::IndexMap;
 use serde::{de::DeserializeOwned, Serialize};
 use specta::Type;
 
-use crate::{game::Problem, Result};
+use crate::{error::error, game::Problem, Result};
 
 #[derive(Debug)]
 pub struct FileSystemWrapper<FS>
@@ -43,9 +43,9 @@ where
         let key = Self::path_key(folders, file);
         let mut created = false;
         if !self.open_files.contains_key(&key) {
-            let (created_, file) = self.osfs.open_file(folders, file)?;
+            created = self.osfs.file_exists(folders, file)?;
+            let file = self.osfs.open_file(folders, file)?;
             self.open_files.insert(key.clone(), file);
-            created = created_;
         }
 
         let file = &mut self.open_files[&key];
@@ -154,6 +154,10 @@ where
     }
 
     pub fn load_asset(&mut self, asset: &str) -> Result<Vec<u8>> {
+        if !self.osfs.file_exists(&["assets"], asset)? {
+            return Err(error(&format!("couldn't find asset {asset}")));
+        }
+
         let (_, file) = self.open_file(&["assets"], asset)?;
 
         let mut contents = Vec::new();

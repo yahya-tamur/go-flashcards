@@ -17,9 +17,9 @@ import {
 import { commands } from "@/bindings";
 import { setClick } from "@/utils";
 
-import BoardSlider from "../common/BoardSlider";
-import PlaceMarkGroup from "../common/PlaceMarkGroup";
-import RectLabelGroup from "../common/RectLabelGroup";
+import BoardSlider from "./components/BoardSlider";
+import PlaceMarkGroup from "./components/PlaceMarkGroup";
+import RectLabelGroup from "./components/RectLabelGroup";
 
 const MakeTreeMenu = () => {
   const { c_cursor, c_nextLabel } = useCursorContext();

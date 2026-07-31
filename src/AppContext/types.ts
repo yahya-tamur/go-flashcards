@@ -2,11 +2,9 @@ import type { Dispatch, SetStateAction } from "react";
 
 import type { ThemeOptions } from "@mui/material";
 
-import type {
-  Snapshot,
-} from "@/bindings";
+import type { Snapshot } from "@/bindings";
 
-import type { Cursor } from "./useCursor";
+import type { Cursor, CursorAction } from "./useCursor";
 
 export type PhaseType = "Main" | "Editing" | "Study";
 
@@ -14,22 +12,25 @@ export type EditingPhaseType = "Initialize" | "MakeTree";
 
 export type StudyPhaseType = "Guess" | "UnknownGuess" | "View" | "Edit";
 
-export type ImageVariant =
-  | "Board"
-  | "Delete"
-  | "DeleteMark"
-  | "Black"
-  | "White"
-  | "Triangle"
-  | "Circle"
-  | "Cross"
-  | "Square"
-  | "BlackTerritory"
-  | "WhiteTerritory";
+export const APP_IMAGES = [
+  "Board",
+  "Delete",
+  "DeleteMark",
+  "Black",
+  "White",
+  "Triangle",
+  "Circle",
+  "Cross",
+  "Square",
+  "BlackTerritory",
+  "WhiteTerritory",
+] as const;
+
+export type AppImage = (typeof APP_IMAGES)[number];
 
 export type ThemeConfig = {
   themeOptions: ThemeOptions;
-  images: Record<ImageVariant, string>;
+  images: Record<AppImage, string>;
 };
 
 export type WindowValue = {
@@ -37,7 +38,7 @@ export type WindowValue = {
 };
 
 export type ImagesValue = {
-  c_images: Record<ImageVariant, string>;
+  c_images: Record<AppImage, string>;
 };
 
 export type ErrorValue = {

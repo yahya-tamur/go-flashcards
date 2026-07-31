@@ -5,7 +5,7 @@ import type {
   CursorAction,
   EditingPhaseType,
   StudyPhaseType,
-} from "@/AppContext";
+} from "@/AppContext/types";
 import type {
   Mark,
   MarkPaint,

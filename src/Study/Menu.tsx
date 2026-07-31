@@ -14,7 +14,7 @@ import { cursorColor, setClick, studyStep } from "@/utils";
 
 import ProgressBar from "@/components/ProgressBar";
 
-import EditingMenu from "@/papers/Editing/Menu";
+import EditingMenu from "@/papers/EditingMenu";
 
 const Menu = () => {
   const { c_feedback, c_answerMessage } = useFeedbackContext();

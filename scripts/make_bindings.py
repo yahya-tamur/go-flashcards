@@ -75,7 +75,7 @@ def make_bindings():
         lines[lll] = "/*" + lines[lll]
         lines[rrr] = lines[rrr] + "*/"
 
-    with open("./src/bindings.ts") as file:
+    with open("./src/bindings.ts", "w") as file:
         file.write("\n".join(lines))
     if __name__ == "__main__":
         make_bindings()
