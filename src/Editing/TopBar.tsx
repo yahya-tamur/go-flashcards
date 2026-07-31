@@ -1,4 +1,4 @@
-import { useContext, useState } from "react";
+import { useState } from "react";
 
 import ClearIcon from "@mui/icons-material/Clear";
 import DownloadIcon from "@mui/icons-material/Download";
@@ -16,25 +16,29 @@ import DialogContentText from "@mui/material/DialogContentText";
 import Paper from "@mui/material/Paper";
 import Tooltip from "@mui/material/Tooltip";
 
-import AppContext from "@/AppContext";
+import {
+  useDataContext,
+  useDispatchContext,
+  useExerciseNumberContext,
+} from "@/AppContext";
 import { commands } from "@/bindings";
-import { editNewExercise, handleError } from "@/utils";
+import { editNewExercise } from "@/utils";
 
 import NumberSpinner from "@/components/NumberSpinner";
 
 const TopBar = () => {
+  const { c_exerciseNumber } = useExerciseNumberContext();
+
+  const { c_data } = useDataContext();
   const {
-    c_cursorDispatch,
-    c_data,
     c_setData,
-    c_setEditingPhase,
-    c_setErrorMessage,
-    c_setErrorWindowOpen,
-    c_exerciseNumber,
+    c_cursorDispatch,
     c_setExerciseNumber,
-    c_setNextLabel,
     c_setPhase,
-  } = useContext(AppContext);
+    c_setEditingPhase,
+    c_setNextLabel,
+    c_handleError,
+  } = useDispatchContext();
   const [dialogContent, setDialogContent] = useState("");
   const [savedMsgOpen, setSavedMsgOpen] = useState(false);
   //  useEffect(
@@ -80,9 +84,7 @@ const TopBar = () => {
                 //c_setConfig(null);
                 c_setNextLabel("A");
               })
-              .catch((e) =>
-                handleError(e, c_setErrorMessage, c_setErrorWindowOpen),
-              );
+              .catch((e) => c_handleError(e));
           }}
         >
           Exit
@@ -105,9 +107,7 @@ const TopBar = () => {
               })
               .then(() => commands.getExerciseNumber())
               .then((e) => c_setExerciseNumber(e))
-              .catch((e) =>
-                handleError(e, c_setErrorMessage, c_setErrorWindowOpen),
-              );
+              .catch((e) => c_handleError(e));
           }}
         />
 
@@ -128,9 +128,7 @@ const TopBar = () => {
                   })
                   .then(() => commands.getExerciseNumber())
                   .then((e) => c_setExerciseNumber(e))
-                  .catch((e) =>
-                    handleError(e, c_setErrorMessage, c_setErrorWindowOpen),
-                  );
+                  .catch((e) => c_handleError(e));
               }}
             >
               <ClearIcon color="error" />
@@ -151,9 +149,7 @@ const TopBar = () => {
                   })
                   .then(() => commands.getExerciseNumber())
                   .then((e) => c_setExerciseNumber(e))
-                  .catch((e) =>
-                    handleError(e, c_setErrorMessage, c_setErrorWindowOpen),
-                  );
+                  .catch((e) => c_handleError(e));
               }}
             >
               <KeyboardArrowDownOutlinedIcon />
@@ -175,9 +171,7 @@ const TopBar = () => {
                   })
                   .then(() => commands.getExerciseNumber())
                   .then((e) => c_setExerciseNumber(e))
-                  .catch((e) =>
-                    handleError(e, c_setErrorMessage, c_setErrorWindowOpen),
-                  );
+                  .catch((e) => c_handleError(e));
               }}
             >
               <KeyboardArrowRightOutlinedIcon />
@@ -206,9 +200,7 @@ const TopBar = () => {
                     })
                     .then(() => commands.getExerciseNumber())
                     .then((e) => c_setExerciseNumber(e))
-                    .catch((e) =>
-                      handleError(e, c_setErrorMessage, c_setErrorWindowOpen),
-                    );
+                    .catch((e) => c_handleError(e));
                 }}
               >
                 <DownloadIcon />
@@ -230,9 +222,7 @@ const TopBar = () => {
                       setDialogContent("Export complete.");
                       setSavedMsgOpen(true);
                     })
-                    .catch((e) =>
-                      handleError(e, c_setErrorMessage, c_setErrorWindowOpen),
-                    );
+                    .catch((e) => c_handleError(e));
                 }}
               >
                 <FileUploadIcon />
@@ -252,9 +242,7 @@ const TopBar = () => {
                 setDialogContent("Saved.");
                 setSavedMsgOpen(true);
               })
-              .catch((e) =>
-                handleError(e, c_setErrorMessage, c_setErrorWindowOpen),
-              );
+              .catch((e) => c_handleError(e));
           }}
         >
           Save

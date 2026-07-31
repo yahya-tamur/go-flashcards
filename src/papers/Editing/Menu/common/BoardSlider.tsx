@@ -1,10 +1,11 @@
-import { useContext } from "react";
-
 import Slider from "@mui/material/Slider";
 
-import AppContext from "@/AppContext";
+import {
+  useDataContext,
+  useDispatchContext,
+  useWindowContext,
+} from "@/AppContext";
 import { commands } from "@/bindings";
-import { handleError } from "@/utils";
 
 type BoardSliderProps = {
   side: "row" | "column";
@@ -12,14 +13,9 @@ type BoardSliderProps = {
 };
 
 const BoardSlider = (props: BoardSliderProps) => {
-  const {
-    c_data,
-    c_setData,
-    c_setErrorMessage,
-    c_setErrorWindowOpen,
-    c_window,
-    c_setWindow,
-  } = useContext(AppContext);
+  const { c_data } = useDataContext();
+  const { c_window } = useWindowContext();
+  const { c_setWindow, c_setData, c_handleError } = useDispatchContext();
 
   const [l, r] = props.side === "row" ? [0, 1] : [2, 3];
 
@@ -72,9 +68,7 @@ const BoardSlider = (props: BoardSliderProps) => {
           .then((data) => {
             c_setData(data);
           })
-          .catch((e) =>
-            handleError(e, c_setErrorMessage, c_setErrorWindowOpen),
-          );
+          .catch((e) => c_handleError(e));
       }}
       step={1}
       min={0}

@@ -7,12 +7,29 @@ import path from 'path';
 const host = process.env.TAURI_DEV_HOST;
 
 // https://vite.dev/config/
-export default defineConfig(() => ({
+export default defineConfig(({ command }) => ({
   plugins: [
     react(),
     babel({
       presets: [reactCompilerPreset()]
     }),
+     {
+      name: 'inject-react-devtools-script',
+      transformIndexHtml(html) {
+        if (command === 'serve') {
+          return {
+            html,
+            tags: [
+              {
+                tag: 'script',
+                attrs: { src: 'http://localhost:8097' },
+                injectTo: 'head',
+              },
+            ],
+          }
+        }
+      },
+    },
   ],
   resolve: {
     alias: {

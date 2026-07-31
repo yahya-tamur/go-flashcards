@@ -1,20 +1,14 @@
-import { useContext } from "react";
-
 import Button from "@mui/material/Button";
 
-import AppContext from "@/AppContext";
+import { useCursorContext, useDispatchContext } from "@/AppContext";
 import { commands } from "@/bindings";
-import { cursorColor, handleError } from "@/utils";
+import { cursorColor } from "@/utils";
 
 const StartButton = () => {
-  const {
-    c_cursor,
-    c_cursorDispatch,
-    c_setData,
-    c_setEditingPhase,
-    c_setErrorMessage,
-    c_setErrorWindowOpen,
-  } = useContext(AppContext);
+  const { c_cursor } = useCursorContext();
+
+  const { c_handleError, c_setData, c_setEditingPhase, c_cursorDispatch } =
+    useDispatchContext();
 
   return (
     <Button
@@ -36,9 +30,7 @@ const StartButton = () => {
               c_setData(data);
               c_setEditingPhase("MakeTree");
             })
-            .catch((e) =>
-              handleError(e, c_setErrorMessage, c_setErrorWindowOpen),
-            );
+            .catch((e) => c_handleError(e));
         }
       }}
     >

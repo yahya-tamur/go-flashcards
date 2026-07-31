@@ -1,5 +1,3 @@
-import { useContext } from "react";
-
 import CheckIcon from "@mui/icons-material/Check";
 import ClearIcon from "@mui/icons-material/Clear";
 
@@ -10,27 +8,31 @@ import TextField from "@mui/material/TextField";
 import ToggleButton from "@mui/material/ToggleButton";
 import ToggleButtonGroup from "@mui/material/ToggleButtonGroup";
 
-import AppContext from "@/AppContext";
+import {
+  useCursorContext,
+  useDataContext,
+  useDispatchContext,
+  useImagesContext,
+} from "@/AppContext";
 import { commands } from "@/bindings";
-import { handleError, setClick } from "@/utils";
+import { setClick } from "@/utils";
 
 import BoardSlider from "../common/BoardSlider";
 import PlaceMarkGroup from "../common/PlaceMarkGroup";
 import RectLabelGroup from "../common/RectLabelGroup";
 
 const MakeTreeMenu = () => {
+  const { c_cursor, c_nextLabel } = useCursorContext();
+
+  const { c_data } = useDataContext();
+  const { c_images } = useImagesContext();
   const {
-    c_cursor,
-    c_cursorDispatch,
-    c_data,
+    c_handleError,
     c_setData,
+    c_cursorDispatch,
     c_setEditingPhase,
-    c_setErrorMessage,
-    c_setErrorWindowOpen,
-    c_images,
-    c_nextLabel,
     c_setNextLabel,
-  } = useContext(AppContext);
+  } = useDispatchContext();
   const variant = c_data?.variant ?? "None";
 
   return (
@@ -147,9 +149,7 @@ const MakeTreeMenu = () => {
               .then((data) => {
                 c_setData(data);
               })
-              .catch((e) =>
-                handleError(e, c_setErrorMessage, c_setErrorWindowOpen),
-              );
+              .catch((e) => c_handleError(e));
           }}
           color="button"
           variant="outlined"
@@ -173,9 +173,7 @@ const MakeTreeMenu = () => {
               .then((data) => {
                 c_setData(data);
               })
-              .catch((e) =>
-                handleError(e, c_setErrorMessage, c_setErrorWindowOpen),
-              );
+              .catch((e) => c_handleError(e));
           }}
         >
           <ToggleButton value="Correct">
@@ -211,9 +209,7 @@ const MakeTreeMenu = () => {
                   value: "Black",
                 });
               })
-              .catch((e) =>
-                handleError(e, c_setErrorMessage, c_setErrorWindowOpen),
-              );
+              .catch((e) => c_handleError(e));
           }}
           color="button"
           variant="outlined"
@@ -232,9 +228,7 @@ const MakeTreeMenu = () => {
               .then((data) => {
                 c_setData(data);
               })
-              .catch((e) =>
-                handleError(e, c_setErrorMessage, c_setErrorWindowOpen),
-              );
+              .catch((e) => c_handleError(e));
           }}
         >
           Delete Branch

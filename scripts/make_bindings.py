@@ -1,5 +1,5 @@
-import re
 import os
+import re
 
 # obviously, this is an 'unsafe' and overly complicated fix to a small annoyance.
 # but:
@@ -25,57 +25,57 @@ def make_bindings():
     # to help the indent heuristic at the end be more robust
     os.system("npx --loglevel silent prettier -w ./src/bindings.ts")
 
-    file = open("./src/bindings.ts").read()
+    with open("./src/bindings.ts") as file:
+        file = file.read()
 
-    if signature in file:
-        return
+        if signature in file:
+            return
 
-    lll = 0
+        lll = 0
 
-    # will need to add here if using more tauri features!!
-    lines = [
-        "",
-        signature,
-    ]
-    for i, line in enumerate(file.splitlines()):
-        if "export const commands" in line:
-            lines.append(line)
-            lines.append(
-                '	getAsset: (asset: string) : Promise<ArrayBuffer> => (__TAURI_INVOKE("get_asset", { asset })),'
-            )
-            continue
-        if line[:28] == "export type DisplayableError":
-            lines.append(f"// {line}")
-            continue
-
-        if "typedError" in line:
-            if "async function" in line:
-                lll = len(lines)
-            else:
-                line = re.sub(
-                    r'=> typedError<(.*), DisplayableError>\(__TAURI_INVOKE\("',
-                    r': Promise<\1> => (__TAURI_INVOKE("',
-                    line,
-                    count=1,
+        # will need to add here if using more tauri features!!
+        lines = [
+            "",
+            signature,
+        ]
+        for i, line in enumerate(file.splitlines()):
+            if "export const commands" in line:
+                lines.append(line)
+                lines.append(
+                    '	getAsset: (asset: string) : Promise<ArrayBuffer> => (__TAURI_INVOKE("get_asset", { asset })),'
                 )
-        lines.append(line)
+                continue
+            if line[:28] == "export type DisplayableError":
+                lines.append(f"// {line}")
+                continue
 
-    def indent(s):
-        return len(s) - len(s.lstrip())
+            if "typedError" in line:
+                if "async function" in line:
+                    lll = len(lines)
+                else:
+                    line = re.sub(
+                        r'=> typedError<(.*), DisplayableError>\(__TAURI_INVOKE\("',
+                        r': Promise<\1> => (__TAURI_INVOKE("',
+                        line,
+                        count=1,
+                    )
+            lines.append(line)
 
-    startindent = indent(lines[lll])
-    for rrr in range(lll + 1, len(lines)):
-        if indent(lines[rrr]) == startindent:
-            break
+        def indent(s):
+            return len(s) - len(s.lstrip())
 
-    if rrr == len(lines):
-        lines.append("")
+        startindent = indent(lines[lll])
+        for rrr in range(lll + 1, len(lines)):
+            if indent(lines[rrr]) == startindent:
+                break
 
-    lines[lll] = "/*" + lines[lll]
-    lines[rrr] = lines[rrr] + "*/"
+        if rrr == len(lines):
+            lines.append("")
 
-    open("./src/bindings.ts", "w").write("\n".join(lines))
+        lines[lll] = "/*" + lines[lll]
+        lines[rrr] = lines[rrr] + "*/"
 
-
-if __name__ == "__main__":
-    make_bindings()
+    with open("./src/bindings.ts") as file:
+        file.write("\n".join(lines))
+    if __name__ == "__main__":
+        make_bindings()

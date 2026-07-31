@@ -1,32 +1,35 @@
-import { useContext } from "react";
-
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import Paper from "@mui/material/Paper";
 
-import AppContext from "@/AppContext";
+import {
+  useCursorContext,
+  useDataContext,
+  useDispatchContext,
+  useFeedbackContext,
+  usePhaseContext,
+} from "@/AppContext";
 import { commands } from "@/bindings";
-import { cursorColor, handleError, setClick, studyStep } from "@/utils";
+import { cursorColor, setClick, studyStep } from "@/utils";
 
 import ProgressBar from "@/components/ProgressBar";
 
 import EditingMenu from "@/papers/Editing/Menu";
 
 const Menu = () => {
+  const { c_feedback, c_answerMessage } = useFeedbackContext();
+  const { c_studyPhase } = usePhaseContext();
+  const { c_cursor } = useCursorContext();
+
+  const { c_data } = useDataContext();
   const {
-    c_answerMessage,
-    c_setAnswerMessage,
-    c_cursor,
-    c_cursorDispatch,
-    c_data,
     c_setData,
-    c_setErrorMessage,
-    c_setErrorWindowOpen,
-    c_feedback,
-    c_setFeedback,
-    c_studyPhase,
+    c_cursorDispatch,
     c_setStudyPhase,
-  } = useContext(AppContext);
+    c_setFeedback,
+    c_handleError,
+    c_setAnswerMessage,
+  } = useDispatchContext();
 
   return (
     <Paper
@@ -77,9 +80,7 @@ const Menu = () => {
                       c_setAnswerMessage,
                     );
                   })
-                  .catch((e) =>
-                    handleError(e, c_setErrorMessage, c_setErrorWindowOpen),
-                  );
+                  .catch((e) => c_handleError(e));
               }}
               variant="contained"
             >
@@ -121,9 +122,7 @@ const Menu = () => {
                     setClick(data, c_cursorDispatch);
                     c_setStudyPhase("Guess");
                   })
-                  .catch((e) =>
-                    handleError(e, c_setErrorMessage, c_setErrorWindowOpen),
-                  );
+                  .catch((e) => c_handleError(e));
               }}
             >
               Back
@@ -138,9 +137,7 @@ const Menu = () => {
                     c_setStudyPhase("View");
                     c_setFeedback("");
                   })
-                  .catch((e) =>
-                    handleError(e, c_setErrorMessage, c_setErrorWindowOpen),
-                  );
+                  .catch((e) => c_handleError(e));
               }}
             >
               View Problem

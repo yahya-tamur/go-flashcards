@@ -1,15 +1,22 @@
-import type { PaintTool, RectangleTool } from "./AppContext";
-import type { Grid } from "./bindings";
+import type { Grid } from "@/bindings";
 
-import { useContext, useEffect, useReducer, useRef, useState } from "react";
+import type { PaintTool, RectangleTool } from "@/AppContext/types";
+
+import { useEffect, useReducer, useRef, useState } from "react";
 
 import Paper from "@mui/material/Paper";
 
-import AppContext from "@/AppContext";
+import {
+  useCursorContext,
+  useDataContext,
+  useDispatchContext,
+  useImagesContext,
+  usePhaseContext,
+  useWindowContext,
+} from "@/AppContext";
 import { commands } from "@/bindings";
 import {
   cursorColor,
-  handleError,
   markEquals,
   markEqualsCursor,
   setClick,
@@ -89,23 +96,22 @@ const ARRAY19 = [...Array(19)].map((_, i) => i);
 const Board = () => {
   const [grid, gridDispatch] = useReducer(gridReducer, empty_grid);
 
+  const { c_window } = useWindowContext();
+  const { c_phase, c_studyPhase } = usePhaseContext();
+  const { c_cursor, c_nextLabel } = useCursorContext();
+
+  const { c_data } = useDataContext();
+  const { c_images } = useImagesContext();
   const {
-    c_setAnswerMessage,
-    c_cursor,
-    c_cursorDispatch,
-    c_data,
+    c_handleError,
     c_setData,
-    c_setErrorMessage,
-    c_setErrorWindowOpen,
-    c_setFeedback,
-    c_images,
-    c_nextLabel,
-    c_phase,
-    c_studyPhase,
+    c_cursorDispatch,
     c_setStudyPhase,
-    c_window,
     c_setWindow,
-  } = useContext(AppContext);
+    c_setFeedback,
+    c_setAnswerMessage,
+  } = useDispatchContext();
+
   const board_svg = useRef<SVGSVGElement>(null);
   const paper = useRef<HTMLDivElement>(null);
 
@@ -389,9 +395,7 @@ const Board = () => {
                         old_phase === "UnknownGuess" ? "Guess" : old_phase,
                       );
                     })
-                    .catch((e) =>
-                      handleError(e, c_setErrorMessage, c_setErrorWindowOpen),
-                    );
+                    .catch((e) => c_handleError(e));
                 }
               } else {
                 if (w !== null) {
@@ -418,9 +422,7 @@ const Board = () => {
                         );
                       }
                     })
-                    .catch((e) =>
-                      handleError(e, c_setErrorMessage, c_setErrorWindowOpen),
-                    );
+                    .catch((e) => c_handleError(e));
                 }
               }
             } else if (c_cursor.type === "paint") {
@@ -429,9 +431,7 @@ const Board = () => {
                   .paint(c_cursor.tool, c_cursor.dragging, c_nextLabel)
                   .then(() => commands.getData())
                   .then((data) => c_setData(data))
-                  .catch((e) =>
-                    handleError(e, c_setErrorMessage, c_setErrorWindowOpen),
-                  );
+                  .catch((e) => c_handleError(e));
               }
             } else if (c_cursor.type === "rectangle") {
               if (w !== null && c_cursor.start !== null) {
@@ -442,9 +442,7 @@ const Board = () => {
                   ])
                   .then(() => commands.getData())
                   .then((data) => c_setData(data))
-                  .catch((e) =>
-                    handleError(e, c_setErrorMessage, c_setErrorWindowOpen),
-                  );
+                  .catch((e) => c_handleError(e));
               }
             }
             c_cursorDispatch({
@@ -458,9 +456,7 @@ const Board = () => {
                   .paint(c_cursor.tool, c_cursor.dragging, c_nextLabel)
                   .then(() => commands.getData())
                   .then((data) => c_setData(data))
-                  .catch((e) =>
-                    handleError(e, c_setErrorMessage, c_setErrorWindowOpen),
-                  );
+                  .catch((e) => c_handleError(e));
               }
             }
             c_cursorDispatch({ type: "up" });
@@ -472,9 +468,7 @@ const Board = () => {
                   .paint(c_cursor.tool, c_cursor.dragging, c_nextLabel)
                   .then(() => commands.getData())
                   .then((data) => c_setData(data))
-                  .catch((e) =>
-                    handleError(e, c_setErrorMessage, c_setErrorWindowOpen),
-                  );
+                  .catch((e) => c_handleError(e));
               }
             }
             c_cursorDispatch({ type: "up" });

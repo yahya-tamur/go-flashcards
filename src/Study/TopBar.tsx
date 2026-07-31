@@ -1,31 +1,35 @@
-import { useContext } from "react";
-
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import Paper from "@mui/material/Paper";
 
-import AppContext from "@/AppContext";
+import {
+  useDataContext,
+  useDispatchContext,
+  useExerciseNumberContext,
+  usePhaseContext,
+} from "@/AppContext";
 import { commands } from "@/bindings";
-import { handleError, setClick } from "@/utils";
+import { setClick } from "@/utils";
 
 import NumberSpinner from "@/components/NumberSpinner";
 
 const TopBar = () => {
+  const { c_exerciseNumber } = useExerciseNumberContext();
+  const { c_studyPhase } = usePhaseContext();
+
+  const { c_data } = useDataContext();
   const {
-    c_cursorDispatch,
-    c_data,
     c_setData,
-    c_setEditingPhase,
-    c_setErrorMessage,
-    c_setErrorWindowOpen,
-    c_exerciseNumber,
-    c_setExerciseNumber,
-    c_setFeedback,
-    c_setNextLabel,
-    c_setPhase,
-    c_studyPhase,
+    c_cursorDispatch,
     c_setStudyPhase,
-  } = useContext(AppContext);
+    c_setFeedback,
+    c_setExerciseNumber,
+    c_setPhase,
+    c_setEditingPhase,
+    c_setNextLabel,
+    c_handleError,
+  } = useDispatchContext();
+
   return (
     <Paper
       sx={{
@@ -64,9 +68,7 @@ const TopBar = () => {
                 //c_setConfig(null);
                 c_setNextLabel("A");
               })
-              .catch((e) =>
-                handleError(e, c_setErrorMessage, c_setErrorWindowOpen),
-              );
+              .catch((e) => c_handleError(e));
           }}
         >
           Exit
@@ -90,9 +92,7 @@ const TopBar = () => {
               })
               .then(() => commands.getExerciseNumber())
               .then((e) => c_setExerciseNumber(e))
-              .catch((e) =>
-                handleError(e, c_setErrorMessage, c_setErrorWindowOpen),
-              );
+              .catch((e) => c_handleError(e));
           }}
         />
         {c_studyPhase === "Edit" ? (
@@ -111,9 +111,7 @@ const TopBar = () => {
                   c_setStudyPhase("View");
                   c_setNextLabel("A");
                 })
-                .catch((e) =>
-                  handleError(e, c_setErrorMessage, c_setErrorWindowOpen),
-                );
+                .catch((e) => c_handleError(e));
             }}
           >
             Save
@@ -148,9 +146,7 @@ const TopBar = () => {
                   c_setStudyPhase("View");
                   c_setNextLabel("A");
                 })
-                .catch((e) =>
-                  handleError(e, c_setErrorMessage, c_setErrorWindowOpen),
-                );
+                .catch((e) => c_handleError(e));
             }}
           >
             Discard
@@ -174,9 +170,7 @@ const TopBar = () => {
                 })
                 .then(() => commands.getExerciseNumber())
                 .then((e) => c_setExerciseNumber(e))
-                .catch((e) =>
-                  handleError(e, c_setErrorMessage, c_setErrorWindowOpen),
-                );
+                .catch((e) => c_handleError(e));
             }}
           >
             Next

@@ -1,20 +1,19 @@
-import { useContext, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 
 import Box from "@mui/material/Box";
 
-import AppContext from "@/AppContext";
+import { useDispatchContext } from "@/AppContext";
 
 import EditConfig from "./EditConfig.jsx";
 import Menu from "./Menu.jsx";
 
 import { commands } from "@/bindings.js";
-import { handleError } from "@/utils.js";
 
 const Screen = () => {
   const [exercises, setExercises] = useState<string[]>([]);
   const [studies, setStudies] = useState<string[]>([]);
   const [configSignal, setConfigSignal] = useState(0);
-  const { c_setErrorMessage, c_setErrorWindowOpen } = useContext(AppContext);
+  const { c_handleError } = useDispatchContext();
 
   useEffect(() => {
     commands
@@ -22,14 +21,14 @@ const Screen = () => {
       .then((a) => {
         setExercises(a);
       })
-      .catch((e) => handleError(e, c_setErrorMessage, c_setErrorWindowOpen));
+      .catch((e) => c_handleError(e));
     commands
       .listStudies()
       .then((a) => {
         setStudies(a);
       })
-      .catch((e) => handleError(e, c_setErrorMessage, c_setErrorWindowOpen));
-  }, [c_setErrorMessage, c_setErrorWindowOpen]);
+      .catch((e) => c_handleError(e));
+  }, [c_handleError]);
 
   return (
     <main

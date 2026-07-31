@@ -1,8 +1,9 @@
-from pathlib import Path
-from collections import defaultdict
-import re
-from time import perf_counter_ns
 import os
+import re
+import sys
+from collections import defaultdict
+from pathlib import Path
+from time import perf_counter_ns
 
 
 def indent(s):
@@ -65,9 +66,11 @@ def sort_useContext():
         with open(path) as file:
             file = file.read()
 
-            end = file.find("useContext(AppContext)")
+            end = file.find("useDispatchContext")
             if end == -1:
                 continue
+            else:
+                print("AAA")
 
             new_file = sortMap(file, end, contextWordsKey)
 
@@ -160,7 +163,7 @@ def sort_imports():
                 if match is None:
                     print("sort import error: regex failed. line:")
                     print(linetext)
-                    exit()
+                    sys.exit()
 
                 imp = match.groups()[0]
                 mod, name = imp, imp
@@ -186,7 +189,7 @@ def sort_imports():
                     print(
                         "sort imports error: empty import lines should have been skipped"
                     )
-                    exit()
+                    sys.exit()
                 for _, line in sorted(import_lines[k]):
                     preamble.append(line)
                 preamble.append("")
@@ -215,4 +218,4 @@ if __name__ == "__main__":
     os.system("npx --loglevel silent prettier -w ./src")
 
     sort_imports()
-    sort_useContext()
+    # sort_useContext()

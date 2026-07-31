@@ -1,9 +1,7 @@
-import { useContext } from "react";
-
 import Box from "@mui/material/Box";
 import Paper from "@mui/material/Paper";
 
-import AppContext from "@/AppContext";
+import { usePhaseContext } from "@/AppContext";
 import Board from "@/Board";
 import CommentBox from "@/CommentBox";
 import Tree from "@/Tree";
@@ -12,7 +10,7 @@ import Menu from "./Menu";
 import TopBar from "./TopBar";
 
 const Screen = () => {
-  const { c_studyPhase } = useContext(AppContext);
+  const { c_studyPhase } = usePhaseContext();
 
   return (
     <main

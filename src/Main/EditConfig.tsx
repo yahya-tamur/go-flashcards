@@ -6,7 +6,7 @@ import type { ValidationResult } from "@/bindings";
 
 import CodeMirror from "@uiw/react-codemirror";
 
-import { useContext, useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { StreamLanguage } from "@codemirror/language";
 import { StateEffect, StateField } from "@codemirror/state";
@@ -20,9 +20,9 @@ import Paper from "@mui/material/Paper";
 
 import { vscodeDark as editorTheme } from "@uiw/codemirror-theme-vscode";
 
-import AppContext from "@/AppContext";
+import { useDispatchContext } from "@/AppContext";
 import { commands } from "@/bindings";
-import { configStatusEquals, handleError } from "@/utils";
+import { configStatusEquals } from "@/utils";
 
 interface HighlightPayload {
   from: number;
@@ -81,7 +81,7 @@ interface EditConfigProps {
 }
 
 const EditConfig = ({ setStudies, configSignal }: EditConfigProps) => {
-  const { c_setErrorMessage, c_setErrorWindowOpen } = useContext(AppContext);
+  const { c_handleError } = useDispatchContext();
   const [code, setCode] = useState<string | null>(null);
   const [lastSaved, setLastSaved] = useState<string | null>(null);
   const [configStatus, setConfigStatus] = useState<ValidationResult>({
@@ -97,7 +97,7 @@ const EditConfig = ({ setStudies, configSignal }: EditConfigProps) => {
       commands
         .listStudies()
         .then((studies) => setStudies(studies))
-        .catch((e) => handleError(e, c_setErrorMessage, c_setErrorWindowOpen));
+        .catch((e) => c_handleError(e));
     } else {
       setStudies([]);
       if (configStatus.range !== null) {
@@ -113,7 +113,7 @@ const EditConfig = ({ setStudies, configSignal }: EditConfigProps) => {
         }
       }
     }
-  }, [configStatus, setStudies, c_setErrorMessage, c_setErrorWindowOpen]);
+  }, [configStatus, setStudies, c_handleError]);
 
   useEffect(() => {
     commands
@@ -130,8 +130,9 @@ const EditConfig = ({ setStudies, configSignal }: EditConfigProps) => {
             : newConfigStatus,
         );
       })
-      .catch((e) => handleError(e, c_setErrorMessage, c_setErrorWindowOpen));
-  }, [configSignal, setConfigStatus, c_setErrorMessage, c_setErrorWindowOpen]);
+
+      .catch((e) => c_handleError(e));
+  }, [configSignal, setConfigStatus, c_handleError]);
 
   return (
     <>
@@ -221,9 +222,8 @@ const EditConfig = ({ setStudies, configSignal }: EditConfigProps) => {
                       : newConfigStatus,
                   );
                 })
-                .catch((e) =>
-                  handleError(e, c_setErrorMessage, c_setErrorWindowOpen),
-                );
+
+                .catch((e) => c_handleError(e));
             }}
           >
             {code === lastSaved && configStatus.result === "Valid"

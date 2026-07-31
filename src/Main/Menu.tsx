@@ -1,6 +1,6 @@
 import type { Dispatch, SetStateAction } from "react";
 
-import { useContext, useState } from "react";
+import { useState } from "react";
 
 import AddIcon from "@mui/icons-material/Add";
 import ClearIcon from "@mui/icons-material/Clear";
@@ -19,9 +19,9 @@ import Paper from "@mui/material/Paper";
 import SwipeableDrawer from "@mui/material/SwipeableDrawer";
 import TextField from "@mui/material/TextField";
 
-import AppContext from "@/AppContext";
+import { useDispatchContext } from "@/AppContext";
 import { commands } from "@/bindings";
-import { editNewExercise, handleError, setClick } from "@/utils";
+import { editNewExercise, setClick } from "@/utils";
 
 interface MenuProps {
   drawerWidth: string;
@@ -34,14 +34,14 @@ interface MenuProps {
 
 const Menu = (props: MenuProps) => {
   const {
-    c_cursorDispatch,
     c_setData,
-    c_setEditingPhase,
-    c_setErrorMessage,
-    c_setErrorWindowOpen,
-    c_setPhase,
+    c_cursorDispatch,
     c_setStudyPhase,
-  } = useContext(AppContext);
+    c_handleError,
+    c_setPhase,
+    c_setEditingPhase,
+    c_setExerciseNumber,
+  } = useDispatchContext();
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [fileToDelete, setFileToDelete] = useState("");
 
@@ -157,9 +157,9 @@ const Menu = (props: MenuProps) => {
                         c_setPhase("Editing");
                         c_setData(data);
                       })
-                      .catch((e) =>
-                        handleError(e, c_setErrorMessage, c_setErrorWindowOpen),
-                      );
+                      .then(() => commands.getExerciseNumber())
+                      .then((en) => c_setExerciseNumber(en))
+                      .catch((e) => c_handleError(e));
                   }}
                 >
                   <ListItemText primary={e} />
@@ -177,9 +177,9 @@ const Menu = (props: MenuProps) => {
                     c_setPhase("Editing");
                     editNewExercise(data, c_cursorDispatch, c_setEditingPhase);
                   })
-                  .catch((e) =>
-                    handleError(e, c_setErrorMessage, c_setErrorWindowOpen),
-                  );
+                  .then(() => commands.getExerciseNumber())
+                  .then((en) => c_setExerciseNumber(en))
+                  .catch((e) => c_handleError(e));
               }}
             >
               <ListItem
@@ -271,9 +271,9 @@ const Menu = (props: MenuProps) => {
                         //c_setConfig(config);
                         c_setPhase("Study");
                       })
-                      .catch((e) =>
-                        handleError(e, c_setErrorMessage, c_setErrorWindowOpen),
-                      );
+                      .then(() => commands.getExerciseNumber())
+                      .then((en) => c_setExerciseNumber(en))
+                      .catch((e) => c_handleError(e));
                   }}
                 >
                   <ListItemText primary={e} />
@@ -327,9 +327,7 @@ const Menu = (props: MenuProps) => {
                     props.setConfigSignal(props.configSignal + 1);
                   });
                 })
-                .catch((e) =>
-                  handleError(e, c_setErrorMessage, c_setErrorWindowOpen),
-                );
+                .catch((e) => c_handleError(e));
             }}
           >
             Yes

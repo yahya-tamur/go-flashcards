@@ -1,11 +1,11 @@
 //import type { Color, Variant } from "../bindings";
-import { useContext, useEffect, useReducer } from "react";
+import { useEffect, useReducer } from "react";
 
 import Box from "@mui/material/Box";
 
 //import { useTheme } from "@mui/material/styles";
 
-import AppContext from "@/AppContext";
+import { useDataContext } from "@/AppContext";
 //import { commands } from "../bindings";
 //import { handleError } from "../utils";
 
@@ -60,7 +60,7 @@ export type NumberAction = {
 };
 
 const ProgressBar = () => {
-  const { c_data } = useContext(AppContext);
+  const { c_data } = useDataContext();
 
   const [pictureData, setPictureData] = useReducer(pictureReducer, {
     rects: [],

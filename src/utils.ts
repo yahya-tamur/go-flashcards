@@ -52,12 +52,6 @@ export const cursorColor = (cursor: Cursor): "Black" | "White" | null => {
   return null;
 };
 
-export const wEquals = (
-  a: [number, number] | null,
-  b: [number, number] | null,
-): boolean =>
-  a === null || b === null ? a === b : a[0] === b[0] && a[1] === b[1];
-
 export const markEquals = (a: Mark | null, b: Mark | null): boolean => {
   if (a === null || b === null) {
     return a === b;
@@ -80,26 +74,6 @@ export const markEqualsCursor = (
   } else {
     return a.type === b;
   }
-};
-
-export const handleError = async <T>(
-  error: T,
-  c_setErrorMessage: Dispatch<SetStateAction<string>>,
-  c_setErrorWindowOpen: Dispatch<SetStateAction<boolean>>,
-) => {
-  if (
-    error !== null &&
-    typeof error === "object" &&
-    "message" in error &&
-    typeof error.message === "string"
-  ) {
-    c_setErrorMessage(error.message);
-  } else if (typeof error === "string") {
-    c_setErrorMessage(error);
-  } else {
-    c_setErrorMessage("Unknown type of error.");
-  }
-  c_setErrorWindowOpen(true);
 };
 
 export const editNewExercise = (

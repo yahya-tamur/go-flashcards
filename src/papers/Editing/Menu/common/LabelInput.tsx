@@ -1,12 +1,11 @@
-import { useContext } from "react";
-
 import TextField from "@mui/material/TextField";
 
-import AppContext from "@/AppContext";
+import { useCursorContext, useDispatchContext } from "@/AppContext";
 
 const LabelInput = () => {
-  const { c_nextLabel, c_setNextLabel, c_cursorDispatch } =
-    useContext(AppContext);
+  const { c_nextLabel } = useCursorContext();
+
+  const { c_cursorDispatch, c_setNextLabel } = useDispatchContext();
 
   return (
     <TextField

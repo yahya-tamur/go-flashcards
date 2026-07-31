@@ -1,12 +1,15 @@
-import { useContext } from "react";
-
 import ClearIcon from "@mui/icons-material/Clear";
 
 import Box from "@mui/material/Box";
 import ToggleButton from "@mui/material/ToggleButton";
 import ToggleButtonGroup from "@mui/material/ToggleButtonGroup";
 
-import AppContext from "@/AppContext";
+import {
+  useCursorContext,
+  useDataContext,
+  useDispatchContext,
+  useImagesContext,
+} from "@/AppContext";
 import { setClick } from "@/utils";
 
 type PlaceStoneGroupProps = {
@@ -14,8 +17,11 @@ type PlaceStoneGroupProps = {
 };
 
 const PlaceStoneGroup = (props: PlaceStoneGroupProps) => {
-  const { c_cursor, c_cursorDispatch, c_data, c_images } =
-    useContext(AppContext);
+  const { c_cursor } = useCursorContext();
+
+  const { c_data } = useDataContext();
+  const { c_images } = useImagesContext();
+  const { c_cursorDispatch } = useDispatchContext();
 
   const img_size = "25px";
 

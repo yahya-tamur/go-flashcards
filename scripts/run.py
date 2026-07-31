@@ -3,19 +3,20 @@
 import os
 from pathlib import Path
 
-
 old_vars = vars()
 
 
 def format():
-    from sort_imports import sort_imports
     from make_bindings import make_bindings
+    from sort_imports import sort_imports
 
     print("\nMaking Bindings.")
     make_bindings()
 
     print("\nSorting imports.\n")
     sort_imports()
+
+    # sort_useContext()
 
     print("\nFormatting javascript.\n")
     os.system("npx --quiet prettier ./src -w")
@@ -63,7 +64,7 @@ if __name__ == "__main__":
     if Path.cwd().name != "go-flashcards":
         print("This script is designed to be called from the project root folder.")
         if input("Type 'continue' to run anyway. ") != "continue":
-            exit()
+            sys.exit()
 
     if sum(comm in sys.argv for comm in commands) != 1:
         print(

@@ -21,6 +21,9 @@ UI overhaul
 
 Current Actual Goal
 --------------
+- comment doesn't change on move
+- replace some events with useSyncExternalStore (listening to component size changes)
+
 - reorganizing frontend
   - folders for papers, files for elements, index.tsx
   
@@ -142,6 +145,8 @@ Maybe don't do
 
 - ? reconsider snapshot ~> location.
 - ? separate default config file
+
+- ? aria labels / useId
 
 Small things, but do not do for now
 ------------

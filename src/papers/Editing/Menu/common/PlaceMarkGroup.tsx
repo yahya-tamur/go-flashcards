@@ -1,10 +1,13 @@
-import { useContext } from "react";
-
 import Box from "@mui/material/Box";
 import ToggleButton from "@mui/material/ToggleButton";
 import ToggleButtonGroup from "@mui/material/ToggleButtonGroup";
 
-import AppContext from "@/AppContext";
+import {
+  useCursorContext,
+  useDataContext,
+  useDispatchContext,
+  useImagesContext,
+} from "@/AppContext";
 import { setClick } from "@/utils";
 
 type DragLabelGroupProps = {
@@ -12,9 +15,11 @@ type DragLabelGroupProps = {
 };
 
 const DragLabelGroup = (props: DragLabelGroupProps) => {
-  const { c_cursor, c_cursorDispatch, c_data, c_images, c_nextLabel } =
-    useContext(AppContext);
+  const { c_cursor, c_nextLabel } = useCursorContext();
 
+  const { c_data } = useDataContext();
+  const { c_images } = useImagesContext();
+  const { c_cursorDispatch } = useDispatchContext();
   const img_size = "24px";
 
   return (
