@@ -53,6 +53,7 @@ bugs / small improvements
 - config doesn't automatically update on add exericse
   - configsignal doesn't work
 - updating config doesn't update study sets automatically.
+  - is should also set theme
 - make this look better on default window size
   - editconfig scroll
 - refactor movetree to return error instead of panic on array index

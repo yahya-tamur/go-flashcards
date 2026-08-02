@@ -1,18 +1,19 @@
 import type { Dispatch, SetStateAction } from "react";
 
 import type {
-  Cursor,
-  CursorAction,
-  EditingPhaseType,
-  StudyPhaseType,
-} from "@/AppContext/types";
-import type {
   Mark,
   MarkPaint,
   RectangleMark,
   Snapshot,
   ValidationResult,
 } from "@/bindings";
+
+import type {
+  Cursor,
+  CursorAction,
+  EditingPhaseType,
+  StudyPhaseType,
+} from "@/AppContext/types";
 
 import { commands } from "@/bindings";
 

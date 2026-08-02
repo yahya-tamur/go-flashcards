@@ -1,13 +1,12 @@
 import Box from "@mui/material/Box";
 import Paper from "@mui/material/Paper";
 
-import StartButton from "./components/StartButton";
-
 import BoardSlider from "./components/BoardSlider";
 import LabelInput from "./components/LabelInput";
 import PlaceMarkGroup from "./components/PlaceMarkGroup";
 import PlaceStoneGroup from "./components/PlaceStoneGroup";
 import RectLabelGroup from "./components/RectLabelGroup";
+import StartButton from "./components/StartButton";
 
 const InitializeMenu = () => {
   return (

@@ -33,10 +33,12 @@ export const AppContextProvider = ({ children }: AppContextProviderProps) => {
   const [c_errorMessage, c_errorWindowOpen, c_handleError, c_closeErrorWindow] =
     useErrorHandler();
 
-
   const [initialLoad, setInitialLoad] = useState<boolean>(false);
 
-  const [c_theme, c_images, c_setTheme] = useAppTheme(c_handleError, setInitialLoad);
+  const [c_theme, c_images, c_setTheme] = useAppTheme(
+    c_handleError,
+    setInitialLoad,
+  );
 
   const [c_cursor, c_cursorDispatch] = useCursor();
 
@@ -56,48 +58,53 @@ export const AppContextProvider = ({ children }: AppContextProviderProps) => {
 
   const [c_data, c_setData] = useState<Snapshot | null>(null);
 
-
   return (
-    <ThemeProvider theme={c_theme}>
-      <CssBaseline />
-      <WindowContext value={{ c_window }}>
-        <ImagesContext value={{ c_images }}>
-          <ErrorContext value={{ c_errorMessage, c_errorWindowOpen }}>
-            <ExerciseNumberContext value={{ c_exerciseNumber }}>
-              <FeedbackContext value={{ c_feedback, c_answerMessage }}>
-                <CursorContext value={{ c_cursor, c_nextLabel }}>
-                  <DataContext value={{ c_data }}>
-                    <PhaseContext
-                      value={{ c_phase, c_editingPhase, c_studyPhase }}
-                    >
-                      <DispatchContext
-                        value={{
-                          c_setPhase,
-                          c_setEditingPhase,
-                          c_setStudyPhase,
-                          c_setFeedback,
-                          c_setData,
-                          c_cursorDispatch,
-                          c_setNextLabel,
-                          c_setWindow,
-                          c_setTheme,
-                          c_handleError,
-                          c_closeErrorWindow,
-                          c_setAnswerMessage,
-                          c_setExerciseNumber,
-                        }}
-                      >
-                        {initialLoad && children}
-                      </DispatchContext>
-                    </PhaseContext>
-                  </DataContext>
-                </CursorContext>
-              </FeedbackContext>
-            </ExerciseNumberContext>
-          </ErrorContext>
-        </ImagesContext>
-      </WindowContext>
-    </ThemeProvider>
+    <>
+      {initialLoad && (
+        <ThemeProvider theme={c_theme}>
+          <>
+            <CssBaseline />
+            <WindowContext value={{ c_window }}>
+              <ImagesContext value={{ c_images }}>
+                <ErrorContext value={{ c_errorMessage, c_errorWindowOpen }}>
+                  <ExerciseNumberContext value={{ c_exerciseNumber }}>
+                    <FeedbackContext value={{ c_feedback, c_answerMessage }}>
+                      <CursorContext value={{ c_cursor, c_nextLabel }}>
+                        <DataContext value={{ c_data }}>
+                          <PhaseContext
+                            value={{ c_phase, c_editingPhase, c_studyPhase }}
+                          >
+                            <DispatchContext
+                              value={{
+                                c_setPhase,
+                                c_setEditingPhase,
+                                c_setStudyPhase,
+                                c_setFeedback,
+                                c_setData,
+                                c_cursorDispatch,
+                                c_setNextLabel,
+                                c_setWindow,
+                                c_setTheme,
+                                c_handleError,
+                                c_closeErrorWindow,
+                                c_setAnswerMessage,
+                                c_setExerciseNumber,
+                              }}
+                            >
+                              {children}
+                            </DispatchContext>
+                          </PhaseContext>
+                        </DataContext>
+                      </CursorContext>
+                    </FeedbackContext>
+                  </ExerciseNumberContext>
+                </ErrorContext>
+              </ImagesContext>
+            </WindowContext>
+          </>
+        </ThemeProvider>
+      )}
+    </>
   );
 };
 // ??? is eslint really okay with this?? what to do instead??

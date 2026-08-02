@@ -43,7 +43,7 @@ where
         let key = Self::path_key(folders, file);
         let mut created = false;
         if !self.open_files.contains_key(&key) {
-            created = self.osfs.file_exists(folders, file)?;
+            created = !self.osfs.file_exists(folders, file)?;
             let file = self.osfs.open_file(folders, file)?;
             self.open_files.insert(key.clone(), file);
         }
@@ -59,7 +59,6 @@ where
         T: DeserializeOwned + Serialize + std::fmt::Debug,
     {
         let (created, file) = self.open_file(folders, name)?;
-
         if created {
             self.write_compressed(folders, name, &Vec::<T>::new())?;
             return Ok(Vec::new());

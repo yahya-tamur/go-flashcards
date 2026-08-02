@@ -26,7 +26,7 @@ import { editNewExercise } from "@/utils";
 
 import NumberSpinner from "@/components/NumberSpinner";
 
-import ExitButton from "./ExitButton";
+import ExitButton from "./components/ExitButton";
 
 const TopBar = () => {
   const { c_exerciseNumber } = useExerciseNumberContext();

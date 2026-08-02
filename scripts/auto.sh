@@ -6,7 +6,7 @@ if [[  $(basename "$0") != "bash" || $(basename "$PWD") != "go-flashcards" ]]; t
     echo "It needs to be sourced, not run, from the project root folder."
     echo "For example, by running the following command:"
     echo ""
-    echo ". ./scripts/autocomplete_run_py.sh"
+    echo ". ./scripts/auto.sh"
     echo ""
     
     if [[ "${BASH_SOURCE[0]}" != "${0}" ]]; then

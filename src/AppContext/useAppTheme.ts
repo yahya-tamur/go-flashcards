@@ -1,6 +1,12 @@
 import type { Dispatch } from "react";
 
-import { startTransition, useActionState, useCallback, useEffect } from "react";
+import {
+  startTransition,
+  useActionState,
+  useCallback,
+  useEffect,
+  useState,
+} from "react";
 
 import {
   PaletteMode,
@@ -122,13 +128,16 @@ const themeReducer = async (
       error,
     };
   } catch {
-    return { ...defaultAppTheme(), error: "invalid theme." };
+    console.log("BB");
+    return { ...defaultAppTheme(), name: newTheme, error: "invalid theme." };
   }
 };
 
+const random_name = () => "none_" + Math.random().toString(36).substring(2);
+
 // maybe make this the dark theme later
 const defaultAppTheme = () => ({
-  name: "none_" + Math.random().toString(36).substring(2),
+  name: random_name(),
   images: {
     Delete: "./placeholder.png",
     DeleteMark: "./placeholder.png",
@@ -154,6 +163,8 @@ const useAppTheme = (
     themeReducer,
     defaultAppTheme(),
   );
+  const [initialTheme, setInitialTheme] = useState<string>(random_name);
+
   const setTheme = useCallback(
     (s: string) => {
       startTransition(() => {
@@ -168,9 +179,13 @@ const useAppTheme = (
       .getConfig()
       .then((config) => {
         setTheme(config.theme);
+        setInitialTheme(config.theme);
       })
-      .catch((e) => handleError(e));
-  }, [setTheme, handleError]);
+      .catch((e) => {
+        handleError(e);
+        setInitialLoad(true);
+      });
+  }, [setTheme, handleError, setInitialLoad]);
 
   //maybe reconsider, but can't put this inside themeAction, so idk.
   useEffect(() => {
@@ -180,10 +195,10 @@ const useAppTheme = (
   }, [theme, handleError]);
 
   useEffect(() => {
-    if (!themePending) {
-      setInitialLoad(false);
+    if (!themePending && theme.name === initialTheme) {
+      setInitialLoad(true);
     }
-  }, [setInitialLoad, themePending]);
+  }, [setInitialLoad, themePending, theme, initialTheme]);
 
   return [theme.theme, theme.images, setTheme, themePending];
 };
