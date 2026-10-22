@@ -1,5 +1,13 @@
 Current Status
 ------------------
+I worked on this project last summer, only using the AI in google search.
+It's pretty far along, and maybe the biggest project I've made, so I made it
+public. However, I think it needs user testing and to finish both mobile
+and dekstop UI's before I'd consider it complete.
+
+------------------------------------------------------
+
+
 
 - ok, maybe it won't be done in the summer. maybe this year??
 
